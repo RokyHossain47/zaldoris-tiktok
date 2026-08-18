@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Zaldoris - Live Shopping Feed. Experience real-time live video shopping, featured streams, and exclusive deals.">
+    <title>Live Shopping Feed - Zaldoris Live Commerce Platform</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="shortcut icon" href="assets/favicon.png">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="css/style.css" rel="stylesheet">
+</head>
+<body>
+
+<!-- NAVBAR / HEADER -->
+<header class="zal-navbar">
+    <div class="zal-navbar-inner">
+        <!-- Logo -->
+        <a class="zal-brand" href="index.html">
+            <img src="assets/logo.png" alt="Zaldoris" class="zal-brand-logo">
+        </a>
+
+        <!-- Center Nav Links -->
+        <ul class="zal-nav-menu">
+            <li><a href="index.html" class="zal-nav-link">Home</a></li>
+            <li><a href="live-shopping.html" class="zal-nav-link active">Live Shopping</a></li>
+            <li><a href="live-auction.html" class="zal-nav-link">Live Auction</a></li>
+            <li><a href="live-academy.html" class="zal-nav-link">Live Academy</a></li>
+            <li><a href="live-streaming.html" class="zal-nav-link">Live Streaming</a></li>
+            <li><a href="pit-battle.html" class="zal-nav-link">PK Battle</a></li>
+        </ul>
+
+        <!-- Right Action Icons -->
+        <div class="zal-nav-actions">
+            <a href="search.html" class="nav-icon-btn" title="Search"><i class="bi bi-search"></i></a>
+            <button class="nav-icon-btn" id="navTicketBtn" title="Wallet"><i class="bi bi-wallet2"></i></button>
+            <a href="notification.html" class="nav-icon-btn" title="Notifications">
+                <i class="bi bi-bell"></i>
+                <span class="icon-badge-dot"></span>
+            </a>
+            <a href="cart.html" class="nav-icon-btn" title="Cart">
+                <i class="bi bi-cart3"></i>
+                <span class="icon-badge-num" id="globalCartBadge">2</span>
+            </a>
+            <a href="profile.html" class="nav-avatar-btn" title="Profile">
+                <img src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100&auto=format&fit=crop&q=80" alt="Profile">
+            </a>
+        </div>
+    </div>
+</header>
+
+<!-- MAIN CONTAINER -->
+<main class="page-container">
+
+    <!-- TOP CATEGORIES SECTION -->
+    <section class="section-spacing">
+        <h2 class="section-title mb-3">Top Categories</h2>
+        <div class="top-categories-row">
+            <button type="button" class="category-pill-btn active">
+                <i class="bi bi-bag-heart"></i> Fashion
+            </button>
+            <button type="button" class="category-pill-btn">
+                <i class="bi bi-phone"></i> Electronics
+            </button>
+            <button type="button" class="category-pill-btn">
+                <i class="bi bi-scissors"></i> Beauty
+            </button>
+            <button type="button" class="category-pill-btn">
+                <i class="bi bi-house"></i> Home
+            </button>
+            <button type="button" class="category-pill-btn">
+                <i class="bi bi-controller"></i> Gaming
+            </button>
+            <button type="button" class="category-pill-btn">
+                <i class="bi bi-dribbble"></i> Sports
+            </button>
+            <button type="button" class="category-pill-btn">
+                <i class="bi bi-emoji-smile"></i> Toys
+            </button>
+            <button type="button" class="category-pill-btn">
+                <i class="bi bi-gem"></i> Accessories
+            </button>
+        </div>
+    </section>
+
+    <!-- FEATURED LIVE SECTION -->
+    <section class="section-spacing">
+        <div class="section-header-row">
+            <h2 class="section-title">Featured Live</h2>
+            <a href="#" class="view-all-link">View All <i class="bi bi-arrow-right"></i></a>
+        </div>
+
+        <div class="grid-5-col">
+            <!-- Card 1 -->
+            <a href="live-product-room.html" class="zal-card">
+                <div class="live-card-thumb">
+                    <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80" alt="Limited Sneaker">
+                    <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
+                    <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.2k</div>
+                </div>
+                <div class="live-card-body">
+                    <div class="live-card-title">Limited Sneaker ...</div>
+                    <div class="host-row">
+                        <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&auto=format&fit=crop&q=80" alt="Sarah Fashion Studio" class="host-avatar">
+                        <span class="host-name">Sarah Fashion Studio</span>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Card 2 -->
+            <a href="live-product-room.html" class="zal-card">
+                <div class="live-card-thumb">
+                    <img src="https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=600&auto=format&fit=crop&q=80" alt="Glass Skin Secret">
+                    <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
+                    <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.2k</div>
+                </div>
+                <div class="live-card-body">
+                    <div class="live-card-title">Glass Skin Secret...</div>
+                    <div class="host-row">
+                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" alt="Gadget Hub Pro" class="host-avatar">
+                        <span class="host-name">Gadget Hub Pro</span>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Card 3 -->
+            <a href="live-product-room.html" class="zal-card">
+                <div class="live-card-thumb">
+                    <img src="https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&auto=format&fit=crop&q=80" alt="Luxury Handbags">
+                    <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
+                    <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.2k</div>
+                </div>
+                <div class="live-card-body">
+                    <div class="live-card-title">Luxury Handbags...</div>
+                    <div class="host-row">
+                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="Beauty Glow Official" class="host-avatar">
+                        <span class="host-name">Beauty Glow Official</span>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Card 4 -->
+            <a href="live-product-room.html" class="zal-card">
+                <div class="live-card-thumb">
+                    <img src="https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&auto=format&fit=crop&q=80" alt="Luxury Handbags">
+                    <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
+                    <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.2k</div>
+                </div>
+                <div class="live-card-body">
+                    <div class="live-card-title">Luxury Handbags...</div>
+                    <div class="host-row">
+                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="Beauty Glow Official" class="host-avatar">
+                        <span class="host-name">Beauty Glow Official</span>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Card 5 -->
+            <a href="live-product-room.html" class="zal-card">
+                <div class="live-card-thumb">
+                    <img src="https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&auto=format&fit=crop&q=80" alt="Luxury Handbags">
+                    <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
+                    <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.2k</div>
+                </div>
+                <div class="live-card-body">
+                    <div class="live-card-title">Luxury Handbags...</div>
+                    <div class="host-row">
+                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="Beauty Glow Official" class="host-avatar">
+                        <span class="host-name">Beauty Glow Official</span>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </section>
+
+    <!-- ON GOING LIVE SECTION -->
+    <section class="section-spacing">
+        <div class="section-header-row">
+            <h2 class="section-title">On Going Live</h2>
+            <a href="#" class="view-all-link">View All <i class="bi bi-arrow-right"></i></a>
+        </div>
+
+        <!-- 2 Rows of 5 Cards Grid -->
+        <div class="grid-5-col">
+            <!-- Row 1 Card 1 -->
+            <a href="live-product-room.html" class="zal-card">
+                <div class="live-card-thumb">
+                    <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80" alt="Limited Sneaker">
+                    <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
+                    <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.2k</div>
+                </div>
+                <div class="live-card-body">
+                    <div class="live-card-title">Limited Sneaker ...</div>
+                    <div class="host-row">
+                        <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80" alt="Sarah Fashion Studio" class="host-avatar">
+                        <span class="host-name">Sarah Fashion Studio</span>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Row 1 Card 2 -->
+            <a href="live-product-room.html" class="zal-card">
+                <div class="live-card-thumb">
+                    <img src="https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=600&auto=format&fit=crop&q=80" alt="Glass Skin Secret">
+                    <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
+                    <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.3k</div>
+                </div>
+                <div class="live-card-body">
+                    <div class="live-card-title">Glass Skin Secret...</div>
+                    <div class="host-row">
+                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" alt="Gadget Hub Pro" class="host-avatar">
+                        <span class="host-name">Gadget Hub Pro</span>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Row 1 Card 3 -->
+            <a href="live-product-room.html" class="zal-card">
+                <div class="live-card-thumb">
+                    <img src="https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&auto=format&fit=crop&q=80" alt="Luxury Handbags">
+                    <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
+                    <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.3k</div>
+                </div>
+                <div class="live-card-body">
+                    <div class="live-card-title">Luxury Handbags...</div>
+                    <div class="host-row">
+                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="Beauty Glow Official" class="host-avatar">
+                        <span class="host-name">Beauty Glow Official</span>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Row 1 Card 4 -->
+            <a href="live-product-room.html" class="zal-card">
+                <div class="live-card-thumb">
+                    <img src="https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&auto=format&fit=crop&q=80" alt="Luxury Handbags">
+                    <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
+                    <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.2k</div>
+                </div>
+                <div class="live-card-body">
+                    <div class="live-card-title">Luxury Handbags...</div>
+                    <div class="host-row">
+                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="Beauty Glow Official" class="host-avatar">
+                        <span class="host-name">Beauty Glow Official</span>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Row 1 Card 5 -->
+            <a href="live-product-room.html" class="zal-card">
+                <div class="live-card-thumb">
+                    <img src="https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&auto=format&fit=crop&q=80" alt="Luxury Handbags">
+                    <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
+                    <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.3k</div>
+                </div>
+                <div class="live-card-body">
+                    <div class="live-card-title">Luxury Handbags...</div>
+                    <div class="host-row">
+                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="Beauty Glow Official" class="host-avatar">
+                        <span class="host-name">Beauty Glow Official</span>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Row 2 Card 6 -->
+            <a href="live-product-room.html" class="zal-card">
+                <div class="live-card-thumb">
+                    <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80" alt="Limited Sneaker">
+                    <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
+                    <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.2k</div>
+                </div>
+                <div class="live-card-body">
+                    <div class="live-card-title">Limited Sneaker ...</div>
+                    <div class="host-row">
+                        <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80" alt="Sarah Fashion Studio" class="host-avatar">
+                        <span class="host-name">Sarah Fashion Studio</span>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Row 2 Card 7 -->
+            <a href="live-product-room.html" class="zal-card">
+                <div class="live-card-thumb">
+                    <img src="https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=600&auto=format&fit=crop&q=80" alt="Glass Skin Secret">
+                    <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
+                    <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.3k</div>
+                </div>
+                <div class="live-card-body">
+                    <div class="live-card-title">Glass Skin Secret...</div>
+                    <div class="host-row">
+                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" alt="Gadget Hub Pro" class="host-avatar">
+                        <span class="host-name">Gadget Hub Pro</span>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Row 2 Card 8 -->
+            <a href="live-product-room.html" class="zal-card">
+                <div class="live-card-thumb">
+                    <img src="https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&auto=format&fit=crop&q=80" alt="Luxury Handbags">
+                    <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
+                    <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.2k</div>
+                </div>
+                <div class="live-card-body">
+                    <div class="live-card-title">Luxury Handbags...</div>
+                    <div class="host-row">
+                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="Beauty Glow Official" class="host-avatar">
+                        <span class="host-name">Beauty Glow Official</span>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Row 2 Card 9 -->
+            <a href="live-product-room.html" class="zal-card">
+                <div class="live-card-thumb">
+                    <img src="https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&auto=format&fit=crop&q=80" alt="Luxury Handbags">
+                    <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
+                    <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.2k</div>
+                </div>
+                <div class="live-card-body">
+                    <div class="live-card-title">Luxury Handbags...</div>
+                    <div class="host-row">
+                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="Beauty Glow Official" class="host-avatar">
+                        <span class="host-name">Beauty Glow Official</span>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Row 2 Card 10 -->
+            <a href="live-product-room.html" class="zal-card">
+                <div class="live-card-thumb">
+                    <img src="https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&auto=format&fit=crop&q=80" alt="Luxury Handbags">
+                    <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
+                    <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.3k</div>
+                </div>
+                <div class="live-card-body">
+                    <div class="live-card-title">Luxury Handbags...</div>
+                    <div class="host-row">
+                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="Beauty Glow Official" class="host-avatar">
+                        <span class="host-name">Beauty Glow Official</span>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </section>
+
+    <!-- NEVER MISS A DROP NEWSLETTER BANNER -->
+    <div class="never-miss-banner">
+        <div class="never-miss-content">
+            <h2 class="never-miss-title">Never Miss A Drop</h2>
+            <p class="never-miss-sub">
+                Get notifications for your favorite creators, early access to limited auctions, and weekly live shopping highlights.
+            </p>
+        </div>
+        <form onsubmit="handleSubscribeNewsletter(event)" class="never-miss-form">
+            <input type="email" id="newsletterEmail" placeholder="Enter Your Email" class="newsletter-input" required autocomplete="email">
+            <button type="submit" class="btn-newsletter-subscribe" id="btnSubscribe">Subscribe</button>
+        </form>
+    </div>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="zal-footer-center">
+    <div class="container">
+        <!-- Center Logo -->
+        <a href="index.html">
+            <img src="assets/logo.png" alt="Zaldoris" class="footer-logo-img">
+        </a>
+        <p class="footer-tagline-text">
+            Experience the future of shopping with realtime interaction, live demonstrations, and exclusive community deals.
+        </p>
+        <div class="footer-copyright-line">
+            © 2024 LiveStreamShop. All rights reserved.
+        </div>
+    </div>
+</footer>
+
+<!-- FLOATING WIDGET BUTTON -->
+<button class="floating-action-widget" title="Live Chat">
+    <i class="bi bi-chat-dots-fill"></i>
+</button>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/main.js"></script>
+<script>
+    // Category pills toggle handler
+    const categoryPills = document.querySelectorAll('.category-pill-btn');
+    categoryPills.forEach(pill => {
+        pill.addEventListener('click', () => {
+            categoryPills.forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+        });
+    });
+
+    // Newsletter subscription form handler
+    function handleSubscribeNewsletter(event) {
+        event.preventDefault();
+        const btn = document.getElementById('btnSubscribe');
+        const input = document.getElementById('newsletterEmail');
+        if (btn && input) {
+            btn.disabled = true;
+            btn.textContent = 'Subscribed ✓';
+            btn.style.background = '#12181E';
+            btn.style.color = '#00F0C8';
+            input.value = '';
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.textContent = 'Subscribe';
+                btn.style.background = '#090D10';
+            }, 3000);
+        }
+    }
+</script>
+</body>
+</html>
