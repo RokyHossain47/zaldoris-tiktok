@@ -1,0 +1,13 @@
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 60' width='240' height='60'>
+  <!-- Zaldoris Logo Mark -->
+  <g transform='translate(5, 5)'>
+    <!-- Top purple bar of Z -->
+    <path d='M10 2 L45 2 L35 18 L0 18 Z' fill='#6C38FF' />
+    <!-- Middle Pink Play Button ▶ -->
+    <path d='M15 15 L38 25 L15 35 Z' fill='#FF2D55' />
+    <!-- Bottom cyan bar of Z -->
+    <path d='M10 32 L45 32 L35 48 L0 48 Z' fill='#00F0C8' />
+  </g>
+  <!-- Text Zaldoris -->
+  <text x='62' y='37' font-family='Outfit, Inter, sans-serif' font-weight='700' font-size='32' fill='#FF2D55' letter-spacing='-0.5'>Zaldoris</text>
+</svg>
