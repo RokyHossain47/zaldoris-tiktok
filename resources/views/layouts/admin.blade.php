@@ -407,7 +407,7 @@
             </li>
 
             <li>
-                <a href="{{ route('admin.dashboard') }}#users-section" class="sidebar-link">
+                <a href="{{ route('admin.users.index') }}" class="sidebar-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
                     <div class="sidebar-link-inner">
                         <i class="bi bi-people nav-icon"></i>
                         <span>User</span>
@@ -415,41 +415,11 @@
                     <i class="bi bi-chevron-right" style="font-size: 11px;"></i>
                 </a>
             </li>
-
-            <li>
-                <a href="{{ route('admin.fraud') }}" class="sidebar-link {{ request()->routeIs('admin.fraud') ? 'active' : '' }}">
-                    <div class="sidebar-link-inner">
-                        <i class="bi bi-shield-check nav-icon"></i>
-                        <span>Security Team</span>
-                    </div>
-                </a>
-            </li>
-
-            <li>
-                <a href="{{ route('admin.moderation') }}" class="sidebar-link {{ request()->routeIs('admin.moderation') ? 'active' : '' }}">
-                    <div class="sidebar-link-inner">
-                        <i class="bi bi-mic nav-icon"></i>
-                        <span>Host Management</span>
-                    </div>
-                    <i class="bi bi-chevron-right" style="font-size: 11px;"></i>
-                </a>
-            </li>
-
             <li>
                 <a href="{{ route('admin.disputes') }}" class="sidebar-link {{ request()->routeIs('admin.disputes') ? 'active' : '' }}">
                     <div class="sidebar-link-inner">
                         <i class="bi bi-building nav-icon"></i>
                         <span>Agency</span>
-                    </div>
-                    <i class="bi bi-chevron-right" style="font-size: 11px;"></i>
-                </a>
-            </li>
-
-            <li>
-                <a href="{{ route('admin.dashboard') }}" class="sidebar-link">
-                    <div class="sidebar-link-inner">
-                        <i class="bi bi-currency-dollar nav-icon"></i>
-                        <span>Salary Management</span>
                     </div>
                     <i class="bi bi-chevron-right" style="font-size: 11px;"></i>
                 </a>

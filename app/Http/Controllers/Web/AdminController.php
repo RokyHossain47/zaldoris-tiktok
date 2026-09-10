@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use App\Models\Stream;
 use App\Models\Order;
@@ -123,6 +124,158 @@ class AdminController extends Controller
     }
 
     /**
+     * Dedicated User Management Page.
+     */
+    public function users(Request $request)
+    {
+        $filter = $request->query('filter', 'all'); // all, active, blocked, hosts, vip
+        $role = $request->query('role', '');
+        $search = $request->query('search', '');
+
+        $query = User::with(['sellerProfile', 'creatorProfile']);
+
+        if ($filter === 'active') {
+            $query->where('is_suspended', false);
+        } elseif ($filter === 'blocked' || $filter === 'banned') {
+            $query->where('is_suspended', true);
+        } elseif ($filter === 'hosts') {
+            $query->whereIn('role', ['creator', 'seller']);
+        } elseif ($filter === 'vip') {
+            $query->where('is_vip', true);
+        }
+
+        if ($role) {
+            $query->where('role', $role);
+        }
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('username', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%");
+            });
+        }
+
+        $users = $query->orderBy('id', 'desc')->paginate(15)->withQueryString();
+
+        $totalUsers = User::count();
+        $activeUsers = User::where('is_suspended', false)->count();
+        $bannedUsers = User::where('is_suspended', true)->count();
+        $vipUsers = User::where('is_vip', true)->count();
+
+        return view('admin.users.index', compact(
+            'users',
+            'filter',
+            'role',
+            'search',
+            'totalUsers',
+            'activeUsers',
+            'bannedUsers',
+            'vipUsers'
+        ));
+    }
+
+    /**
+     * Create / Store New User.
+     */
+    public function storeUser(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:191',
+            'username' => 'required|string|max:191|unique:users,username|regex:/^[a-zA-Z0-9._]+$/',
+            'email' => 'required|email|max:191|unique:users,email',
+            'phone' => 'nullable|string|max:30',
+            'password' => 'required|string|min:6',
+            'role' => 'required|in:buyer,creator,seller,moderator,admin,dispute_manager',
+            'coin_balance' => 'nullable|integer|min:0',
+            'is_vip' => 'nullable',
+            'is_verified' => 'nullable',
+        ]);
+
+        $user = User::create([
+            'name' => $validated['name'],
+            'username' => strtolower($validated['username']),
+            'email' => strtolower($validated['email']),
+            'phone' => $validated['phone'] ?? null,
+            'password' => Hash::make($validated['password']),
+            'role' => $validated['role'],
+            'coin_balance' => $validated['coin_balance'] ?? 0,
+            'is_vip' => $request->boolean('is_vip'),
+            'is_verified' => $request->boolean('is_verified'),
+            'email_verified_at' => now(),
+        ]);
+
+        if ($user->role === 'seller') {
+            SellerProfile::firstOrCreate(['user_id' => $user->id], [
+                'business_name' => $user->name . "'s Shop",
+                'is_verified' => true,
+            ]);
+        }
+
+        return redirect()->route('admin.users.index')->with('success', "User '{$user->name}' created successfully.");
+    }
+
+    /**
+     * Update Existing User.
+     */
+    public function updateUser(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:191',
+            'username' => 'required|string|max:191|regex:/^[a-zA-Z0-9._]+$/|unique:users,username,' . $id,
+            'email' => 'required|email|max:191|unique:users,email,' . $id,
+            'phone' => 'nullable|string|max:30',
+            'password' => 'nullable|string|min:6',
+            'role' => 'required|in:buyer,creator,seller,moderator,admin,dispute_manager',
+            'coin_balance' => 'required|integer|min:0',
+            'is_vip' => 'nullable',
+            'is_verified' => 'nullable',
+            'is_suspended' => 'nullable',
+        ]);
+
+        $user->name = $validated['name'];
+        $user->username = strtolower($validated['username']);
+        $user->email = strtolower($validated['email']);
+        $user->phone = $validated['phone'] ?? null;
+        $user->role = $validated['role'];
+        $user->coin_balance = $validated['coin_balance'];
+        $user->is_vip = $request->boolean('is_vip');
+        $user->is_verified = $request->boolean('is_verified');
+
+        if (!($user->isAdmin() && $user->id === auth()->id())) {
+            $user->is_suspended = $request->boolean('is_suspended');
+        }
+
+        if (!empty($validated['password'])) {
+            $user->password = Hash::make($validated['password']);
+        }
+
+        $user->save();
+
+        return redirect()->route('admin.users.index')->with('success', "User '{$user->name}' updated successfully.");
+    }
+
+    /**
+     * Delete User.
+     */
+    public function deleteUser($id)
+    {
+        $user = User::findOrFail($id);
+
+        if ($user->id === auth()->id()) {
+            return back()->withErrors(['error' => 'You cannot delete your own logged-in admin account.']);
+        }
+
+        $name = $user->name;
+        $user->delete();
+
+        return redirect()->route('admin.users.index')->with('success', "User '{$name}' has been permanently deleted.");
+    }
+
+    /**
      * Toggle User Block/Suspension status.
      */
     public function toggleUserBlock($id)
@@ -136,7 +289,7 @@ class AdminController extends Controller
         $user->is_suspended = !$user->is_suspended;
         $user->save();
 
-        $status = $user->is_suspended ? 'suspended/blocked' : 'unblocked/active';
+        $status = $user->is_suspended ? 'suspended/banned' : 'unbanned/active';
         return back()->with('success', "User #{$user->id} ({$user->name}) is now {$status}.");
     }
 
@@ -202,14 +355,7 @@ class AdminController extends Controller
         return back()->with('success', "Ad '{$ad->title}' status updated.");
     }
 
-    /**
-     * Fraud Detection & Security.
-     */
-    public function fraud()
-    {
-        $alerts = FraudAlert::with('user')->orderBy('id', 'desc')->paginate(15);
-        return view('admin.fraud', compact('alerts'));
-    }
+
 
     /**
      * Disputes Management.
@@ -232,14 +378,5 @@ class AdminController extends Controller
         $dispute->save();
 
         return back()->with('success', 'Dispute resolution recorded.');
-    }
-
-    /**
-     * AI Moderation Logs.
-     */
-    public function moderation()
-    {
-        $logs = AiModerationLog::with('user')->orderBy('id', 'desc')->paginate(15);
-        return view('admin.moderation', compact('logs'));
     }
 }

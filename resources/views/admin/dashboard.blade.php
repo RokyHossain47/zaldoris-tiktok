@@ -15,8 +15,8 @@
         </div>
 
         <div style="display: flex; gap: 10px;">
-            <a href="#users-section" style="background: var(--bg-card); border: 1px solid var(--border-color); color: #fff; padding: 10px 18px; border-radius: 10px; font-size: 13px; font-weight: 700; text-decoration: none; display: flex; align-items: center; gap: 8px;">
-                <i class="bi bi-people-fill"></i> User Hub
+            <a href="{{ route('admin.users.index') }}" style="background: var(--bg-card); border: 1px solid var(--border-color); color: #fff; padding: 10px 18px; border-radius: 10px; font-size: 13px; font-weight: 700; text-decoration: none; display: flex; align-items: center; gap: 8px;">
+                <i class="bi bi-people-fill"></i> User Management Page
             </a>
             <a href="{{ route('admin.dashboard') }}" style="background: var(--pink-accent); color: #fff; padding: 10px 18px; border-radius: 10px; font-size: 13px; font-weight: 700; text-decoration: none; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(254, 44, 85, 0.4);">
                 <i class="bi bi-shield-fill"></i> Admin Panel

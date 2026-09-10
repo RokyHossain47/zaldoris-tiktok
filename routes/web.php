@@ -75,7 +75,11 @@ Route::prefix('admin')->middleware('admin')->group(function () {
 
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
 
-    // User Management
+    // Dedicated User Management
+    Route::get('/users', [AdminController::class, 'users'])->name('admin.users.index');
+    Route::post('/users', [AdminController::class, 'storeUser'])->name('admin.users.store');
+    Route::put('/users/{id}', [AdminController::class, 'updateUser'])->name('admin.users.update');
+    Route::delete('/users/{id}', [AdminController::class, 'deleteUser'])->name('admin.users.delete');
     Route::post('/users/{id}/toggle-block', [AdminController::class, 'toggleUserBlock'])->name('admin.users.toggle_block');
     Route::post('/users/{id}/update-coins', [AdminController::class, 'updateUserCoins'])->name('admin.users.update_coins');
     Route::post('/users/{id}/update-role', [AdminController::class, 'updateUserRole'])->name('admin.users.update_role');
@@ -84,9 +88,6 @@ Route::prefix('admin')->middleware('admin')->group(function () {
     Route::get('/ads', [AdminController::class, 'ads'])->name('admin.ads');
     Route::post('/ads/{id}/toggle', [AdminController::class, 'toggleAd'])->name('admin.ads.toggle');
 
-    // Security & Fraud
-    Route::get('/fraud', [AdminController::class, 'fraud'])->name('admin.fraud');
     Route::get('/disputes', [AdminController::class, 'disputes'])->name('admin.disputes');
     Route::post('/disputes/{id}/resolve', [AdminController::class, 'resolveDispute'])->name('admin.disputes.resolve');
-    Route::get('/moderation', [AdminController::class, 'moderation'])->name('admin.moderation');
 });
