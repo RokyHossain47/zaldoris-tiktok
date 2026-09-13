@@ -9,11 +9,13 @@ use App\Models\Product;
 use App\Models\Auction;
 use App\Models\Advertisement;
 use App\Models\User;
+use App\Models\Category;
 
 class HomeController extends Controller
 {
     public function index(Request $request)
     {
+        $categories = Category::where('is_active', true)->orderBy('sort_order', 'asc')->get();
         $liveStreams = Stream::with(['host', 'products'])
             ->where('is_live', true)
             ->orderBy('is_boosted', 'desc')
@@ -34,26 +36,90 @@ class HomeController extends Controller
             ->take(6)
             ->get();
 
-        $featuredProducts = Product::with('seller')
+        // Featured Products
+        $featuredProducts = Product::with(['seller', 'category'])
             ->where('status', 'active')
+            ->where('is_featured', true)
             ->take(8)
             ->get();
+
+        if ($featuredProducts->isEmpty()) {
+            $featuredProducts = Product::with(['seller', 'category'])
+                ->where('status', 'active')
+                ->take(8)
+                ->get();
+        }
+
+        // Trending Products
+        $trendingProducts = Product::with(['seller', 'category'])
+            ->where('status', 'active')
+            ->where('is_trending', true)
+            ->take(6)
+            ->get();
+
+        if ($trendingProducts->isEmpty()) {
+            $trendingProducts = Product::with(['seller', 'category'])
+                ->where('status', 'active')
+                ->latest()
+                ->take(6)
+                ->get();
+        }
+
+        // Recently Viewed Products from Browser Session
+        $recentIds = session()->get('recently_viewed_products', []);
+        $recentlyViewedProducts = !empty($recentIds)
+            ? Product::with(['seller', 'category'])
+                ->whereIn('id', $recentIds)
+                ->where('status', 'active')
+                ->get()
+                ->sortBy(function ($p) use ($recentIds) {
+                    return array_search($p->id, $recentIds);
+                })
+                ->values()
+            : Product::with(['seller', 'category'])
+                ->where('status', 'active')
+                ->take(4)
+                ->get();
 
         $topCreators = User::where('role', 'creator')
             ->with('creatorProfile')
             ->take(5)
             ->get();
 
-        $banners = Advertisement::where('is_active', true)
-            ->where('ad_type', 'banner')
+        // Dynamic Banners (Slider & Sidebar)
+        $mainBanners = Advertisement::where('is_active', true)
+            ->where(function($q) {
+                $q->where('placement', 'homepage_banner')
+                  ->orWhereNull('placement');
+            })
+            ->latest()
             ->get();
 
+        if ($mainBanners->isEmpty()) {
+            $mainBanners = Advertisement::where('is_active', true)->latest()->get();
+        }
+
+        $mainBanner = $mainBanners->first();
+
+        $sidebarBanner = Advertisement::where('is_active', true)
+            ->where('placement', 'homepage_sidebar')
+            ->latest()
+            ->first();
+
+        $banners = Advertisement::where('is_active', true)->get();
+
         return view('home', compact(
+            'categories',
             'liveStreams',
             'liveShoppingStreams',
             'activeAuctions',
             'featuredProducts',
+            'trendingProducts',
+            'recentlyViewedProducts',
             'topCreators',
+            'mainBanner',
+            'mainBanners',
+            'sidebarBanner',
             'banners'
         ));
     }

@@ -1,87 +1,457 @@
-@extends('layouts.app')
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Zaldoris - Search Results page with filters for live streams, shopping products, and live auctions.">
+    <title>Search Results - Zaldoris Live Commerce Platform</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ asset('assets/favicon.png') }}">
+    <link rel="shortcut icon" href="{{ asset('assets/favicon.png') }}">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="{{ asset('css/style.css') }}" rel="stylesheet">
+</head>
+<body>
 
-@section('title', 'Search & Discover - Zaldoris')
+<!-- NAVBAR / HEADER -->
+<header class="zal-navbar">
+    <div class="zal-navbar-inner">
+        <!-- Logo -->
+        <a class="zal-brand" href="{{ route('home') }}">
+            <img src="{{ asset('assets/logo.png') }}" alt="Zaldoris" class="zal-brand-logo">
+        </a>
 
-@section('content')
-<div style="max-width: 1200px; margin: 0 auto;">
+        <!-- Center Nav Links -->
+        <ul class="zal-nav-menu">
+            <li><a href="{{ route('home') }}" class="zal-nav-link">Home</a></li>
+            <li><a href="{{ route('shop.index') }}" class="zal-nav-link">Live Shopping</a></li>
+            <li><a href="{{ route('auctions.index') }}" class="zal-nav-link">Live Auction</a></li>
+            <li><a href="#" class="zal-nav-link">Live Academy</a></li>
+            <li><a href="{{ route('streams.index') }}" class="zal-nav-link">Live Streaming</a></li>
+            <li><a href="{{ route('streams.pk_battle', 1) }}" class="zal-nav-link">PK Battle</a></li>
+        </ul>
 
-    <!-- SEARCH & VOICE SEARCH BAR -->
-    <div class="zal-card" style="background: #16161f; border-radius: 20px; padding: 30px; margin-bottom: 30px; text-align: center;">
-        <h1 style="font-size: 24px; font-weight: 800; margin-bottom: 16px;">Search Live Streams, Auctions & Products</h1>
-
-        <form action="{{ route('search') }}" method="GET" style="max-width: 600px; margin: 0 auto; display: flex; gap: 10px;">
-            <div style="flex: 1; position: relative;">
-                <input type="text" name="q" id="searchInput" value="{{ $query }}" placeholder="Search sneakers, live cards, streetwear..." style="width: 100%; background: #1f1f2a; border: 1px solid #333; color: #fff; padding: 12px 16px; padding-right: 46px; border-radius: 25px; font-size: 14px; outline: none;">
-                <button type="button" onclick="startVoiceSearch()" title="Voice Search" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #FE2C55; font-size: 18px; cursor: pointer;">
-                    <i class="bi bi-mic-fill"></i>
-                </button>
-            </div>
-            <button type="submit" class="zal-btn-primary" style="padding: 12px 24px; border-radius: 25px; border: none; font-weight: 800; background: #FE2C55; color: #fff; cursor: pointer;">
-                Search
-            </button>
-        </form>
-
-        <div id="voiceStatus" style="font-size: 12px; color: #25F4EE; margin-top: 10px; display: none;">
-            🎙️ Listening for voice query... ("Find Jordan 1 sneakers", "Pokemon auctions")
+                <!-- Right Action Icons -->
+        <div class="zal-nav-actions">
+            <a href="{{ route('search') }}" class="nav-icon-btn" title="Search"><i class="bi bi-search"></i></a>
+            @auth
+                <button class="nav-icon-btn" id="navTicketBtn" title="Wallet"><i class="bi bi-wallet2"></i></button>
+                <a href="{{ route('notifications') }}" class="nav-icon-btn" title="Notifications">
+                    <i class="bi bi-bell"></i>
+                    <span class="icon-badge-dot"></span>
+                </a>
+                <a href="{{ route('shop.cart') }}" class="nav-icon-btn" title="Cart">
+                    <i class="bi bi-cart3"></i>
+                    <span class="icon-badge-num" id="globalCartBadge">2</span>
+                </a>
+                <a href="{{ route('dashboard.creator') }}" class="nav-avatar-btn" title="Profile">
+                    <img src="{{ auth()->user()->avatar_url ?? 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100&auto=format&fit=crop&q=80' }}" alt="{{ auth()->user()->name }}">
+                </a>
+            @else
+                <a href="{{ route('login') }}" class="btn-login-nav" style="background: linear-gradient(135deg, var(--cyan-accent, #00F0C8), #1ed6d0); color: #090D10; text-decoration: none; padding: 7px 18px; border-radius: 20px; font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; margin-left: 8px;">
+                    <i class="bi bi-box-arrow-in-right"></i> Log In
+                </a>
+            @endauth
         </div>
     </div>
+</header>
 
-    <!-- MATCHED LIVE STREAMS -->
-    @if($streams->isNotEmpty())
-        <h2 style="font-size: 18px; font-weight: 800; margin-bottom: 16px;"><i class="bi bi-broadcast" style="color: #FE2C55;"></i> Matched Live Streams</h2>
-        <div class="grid-4-col" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; margin-bottom: 30px;">
-            @foreach($streams as $st)
-                <a href="{{ route('streams.show', $st->id) }}" class="zal-card" style="text-decoration: none; color: inherit; padding: 10px;">
-                    <div style="height: 180px; border-radius: 10px; overflow: hidden; margin-bottom: 8px;">
-                        <img src="{{ $st->thumbnail_url }}" alt="{{ $st->title }}" style="width: 100%; height: 100%; object-fit: cover;">
-                    </div>
-                    <div style="font-weight: 700; font-size: 13px;">{{ $st->title }}</div>
-                </a>
-            @endforeach
-        </div>
-    @endif
+<!-- MAIN CONTAINER -->
+<main class="page-container">
 
-    <!-- MATCHED PRODUCTS -->
-    @if($products->isNotEmpty())
-        <h2 style="font-size: 18px; font-weight: 800; margin-bottom: 16px;"><i class="bi bi-bag-fill" style="color: #25F4EE;"></i> Matched Products</h2>
-        <div class="grid-4-col" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; margin-bottom: 30px;">
-            @foreach($products as $prod)
-                <div class="zal-card" style="padding: 12px;">
-                    <a href="{{ route('shop.product', $prod->id) }}" style="text-decoration: none; color: inherit;">
-                        <div style="height: 160px; border-radius: 8px; overflow: hidden; margin-bottom: 10px;">
-                            <img src="{{ $prod->primary_image }}" alt="{{ $prod->title }}" style="width: 100%; height: 100%; object-fit: cover;">
-                        </div>
-                        <div style="font-weight: 700; font-size: 13px; height: 38px; overflow: hidden;">{{ $prod->title }}</div>
-                        <div style="font-size: 16px; font-weight: 800; color: #FE2C55; margin-top: 8px;">${{ number_format($prod->price, 2) }}</div>
-                    </a>
+    <!-- TWO-COLUMN LAYOUT (FILTERS SIDEBAR + SEARCH CONTENT) -->
+    <div class="search-layout-grid">
+
+        <!-- LEFT SIDEBAR: FILTERS -->
+        <aside class="filter-sidebar-card">
+            <!-- Sidebar Title -->
+            <div class="filter-header-title">
+                <i class="bi bi-sliders"></i>
+                <span>Filters</span>
+            </div>
+
+            <!-- Filter Group 1: Categories -->
+            <div class="filter-section-group">
+                <div class="filter-group-header">
+                    <span>Categories</span>
+                    <i class="bi bi-chevron-down"></i>
                 </div>
-            @endforeach
+                <div class="filter-checkbox-list">
+                    <label class="filter-checkbox-item checked">
+                        <input type="checkbox" checked>
+                        <span>Shopping</span>
+                    </label>
+                    <label class="filter-checkbox-item">
+                        <input type="checkbox">
+                        <span>Auction</span>
+                    </label>
+                    <label class="filter-checkbox-item">
+                        <input type="checkbox">
+                        <span>Academy</span>
+                    </label>
+                    <label class="filter-checkbox-item">
+                        <input type="checkbox">
+                        <span>Streaming</span>
+                    </label>
+                    <label class="filter-checkbox-item">
+                        <input type="checkbox">
+                        <span>PK Battle</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Filter Group 2: Categories (Sub-Types) -->
+            <div class="filter-section-group">
+                <div class="filter-group-header">
+                    <span>Categories</span>
+                    <i class="bi bi-chevron-down"></i>
+                </div>
+                <div class="filter-checkbox-list">
+                    <label class="filter-checkbox-item checked">
+                        <input type="checkbox" checked>
+                        <span>Electronics</span>
+                    </label>
+                    <label class="filter-checkbox-item">
+                        <input type="checkbox">
+                        <span>Fashion</span>
+                    </label>
+                    <label class="filter-checkbox-item">
+                        <input type="checkbox">
+                        <span>Beauty</span>
+                    </label>
+                    <label class="filter-checkbox-item">
+                        <input type="checkbox">
+                        <span>Collectibles</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Filter Group 3: Price Range -->
+            <div class="filter-section-group">
+                <div class="filter-title-simple">Price Range</div>
+                <div class="price-slider-wrap">
+                    <input type="range" class="zal-range-slider" min="0" max="2000" value="1200" id="priceRangeInput">
+                </div>
+                <div class="price-range-labels">
+                    <span>C$0</span>
+                    <span>C$2,000</span>
+                </div>
+            </div>
+
+            <!-- Filter Group 4: Condition -->
+            <div class="filter-section-group">
+                <div class="filter-title-simple">Condition</div>
+                <div class="condition-pill-group">
+                    <button type="button" class="condition-pill active">New</button>
+                    <button type="button" class="condition-pill">Used</button>
+                    <button type="button" class="condition-pill">Refurbished</button>
+                </div>
+            </div>
+
+            <!-- Filter Group 5: Availability -->
+            <div class="filter-section-group">
+                <div class="filter-title-simple">Availability</div>
+                <div class="filter-radio-list">
+                    <label class="filter-radio-item active">
+                        <input type="radio" name="availability" checked>
+                        <span>In Stock</span>
+                    </label>
+                    <label class="filter-radio-item">
+                        <input type="radio" name="availability">
+                        <span>Live Selling Only</span>
+                    </label>
+                    <label class="filter-radio-item">
+                        <input type="radio" name="availability">
+                        <span>Auction Available</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Clear All Filters Button -->
+            <button type="button" class="btn-clear-filters" id="btnClearFilters">
+                Clear All Filter
+            </button>
+        </aside>
+
+        <!-- RIGHT MAIN COLUMN: SEARCH RESULTS SECTIONS -->
+        <div class="search-main-content">
+
+            <!-- SECTION 1: SEARCH RESULTS TABS & FEATURED MATCHES -->
+            <section class="search-results-section">
+                <!-- Title Row with Cyan Back Arrow -->
+                <div class="search-section-header">
+                    <div class="search-title-wrap">
+                        <a href="{{ route('home') }}" class="search-back-cyan-btn" title="Back">
+                            <i class="bi bi-arrow-left"></i>
+                        </a>
+                        <h1 class="search-results-title">Search Results</h1>
+                    </div>
+                </div>
+
+                <!-- Tabs Row -->
+                <div class="search-tabs-row">
+                    <a href="#" class="search-tab-link active">All</a>
+                    <a href="#" class="search-tab-link">Products</a>
+                    <a href="#" class="search-tab-link">Live Streams</a>
+                    <a href="#" class="search-tab-link">Auctions</a>
+                </div>
+
+                <!-- 3 Cards Grid -->
+                <div class="grid-3-col">
+                    <!-- Card 1 -->
+                    <div class="zal-card">
+                        <div class="live-card-thumb">
+                            <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80" alt="Limited Sneaker">
+                            <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
+                            <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.2k</div>
+                        </div>
+                        <div class="live-card-body">
+                            <div class="live-card-title">Limited Sneaker ...</div>
+                            <div class="host-row">
+                                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80" alt="Sarah Fashion" class="host-avatar">
+                                <span class="host-name">Sarah Fashion Studio</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 2 -->
+                    <div class="zal-card">
+                        <div class="live-card-thumb">
+                            <img src="https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=600&auto=format&fit=crop&q=80" alt="Glass Skin Secret">
+                            <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
+                            <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.2k</div>
+                        </div>
+                        <div class="live-card-body">
+                            <div class="live-card-title">Glass Skin Secret...</div>
+                            <div class="host-row">
+                                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" alt="Gadget Hub Pro" class="host-avatar">
+                                <span class="host-name">Gadget Hub Pro</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 3 -->
+                    <div class="zal-card">
+                        <div class="live-card-thumb">
+                            <img src="https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&auto=format&fit=crop&q=80" alt="Luxury Handbags">
+                            <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
+                            <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.2k</div>
+                        </div>
+                        <div class="live-card-body">
+                            <div class="live-card-title">Luxury Handbags...</div>
+                            <div class="host-row">
+                                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="Beauty Glow Official" class="host-avatar">
+                                <span class="host-name">Beauty Glow Official</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 2: LIVE SHOPPING STREAMS -->
+            <section class="search-results-section">
+                <div class="search-section-header">
+                    <h2 class="search-block-title">Live Shopping Streams</h2>
+                    <a href="{{ route('shop.index') }}" class="view-all-link">View All <i class="bi bi-arrow-right"></i></a>
+                </div>
+
+                <!-- 3 Cards Grid -->
+                <div class="grid-3-col">
+                    <!-- Card 1 -->
+                    <div class="zal-card">
+                        <div class="live-card-thumb">
+                            <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80" alt="Limited Sneaker">
+                            <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
+                            <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.2k</div>
+                        </div>
+                        <div class="live-card-body">
+                            <div class="live-card-title">Limited Sneaker ...</div>
+                            <div class="host-row">
+                                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80" alt="Sarah Fashion Studio" class="host-avatar">
+                                <span class="host-name">Sarah Fashion Studio</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 2 -->
+                    <div class="zal-card">
+                        <div class="live-card-thumb">
+                            <img src="https://images.unsplash.com/photo-1552346154-21d32810aba3?w=600&auto=format&fit=crop&q=80" alt="Glass Skin Secret">
+                            <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
+                            <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.2k</div>
+                        </div>
+                        <div class="live-card-body">
+                            <div class="live-card-title">Glass Skin Secret...</div>
+                            <div class="host-row">
+                                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" alt="Gadget Hub Pro" class="host-avatar">
+                                <span class="host-name">Gadget Hub Pro</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 3 -->
+                    <div class="zal-card">
+                        <div class="live-card-thumb">
+                            <img src="https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&auto=format&fit=crop&q=80" alt="Luxury Handbags">
+                            <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
+                            <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.2k</div>
+                        </div>
+                        <div class="live-card-body">
+                            <div class="live-card-title">Luxury Handbags...</div>
+                            <div class="host-row">
+                                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="Beauty Glow Official" class="host-avatar">
+                                <span class="host-name">Beauty Glow Official</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 3: LIVE AUCTIONS -->
+            <section class="search-results-section">
+                <div class="search-section-header">
+                    <h2 class="search-block-title">Live Auctions</h2>
+                    <a href="{{ route('auctions.index') }}" class="view-all-link">View All <i class="bi bi-arrow-right"></i></a>
+                </div>
+
+                <!-- 3 Auction Cards Grid -->
+                <div class="grid-3-col">
+                    <!-- Auction Card 1 -->
+                    <div class="zal-card">
+                        <div class="live-card-thumb">
+                            <img src="https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=600&auto=format&fit=crop&q=80" alt="Luxury Dress">
+                            <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
+                            <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.2k</div>
+                        </div>
+                        <div class="live-card-body">
+                            <div class="live-card-title">Luxury Dress For..</div>
+                            <div class="auction-card-meta">
+                                <div class="bid-info-group">
+                                    <span class="bid-label">Current Bid</span>
+                                    <span class="auction-bid-val">C$2,850</span>
+                                </div>
+                                <div class="bid-info-group text-end">
+                                    <span class="bid-label">Time Left</span>
+                                    <span class="time-val-pink countdown" data-time="02:14:55">02:14:55</span>
+                                </div>
+                            </div>
+                            <button type="button" class="btn-place-bid-cyan" onclick="handlePlaceBid(this, 'Luxury Dress For..')">Place Bid</button>
+                        </div>
+                    </div>
+
+                    <!-- Auction Card 2 -->
+                    <div class="zal-card">
+                        <div class="live-card-thumb">
+                            <img src="https://images.unsplash.com/photo-1613771404784-3a5686aa2be3?w=600&auto=format&fit=crop&q=80" alt="First Edition Rare">
+                            <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
+                            <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.2k</div>
+                        </div>
+                        <div class="live-card-body">
+                            <div class="live-card-title">First Edition Rare...</div>
+                            <div class="auction-card-meta">
+                                <div class="bid-info-group">
+                                    <span class="bid-label">Current Bid</span>
+                                    <span class="auction-bid-val">C$2,850</span>
+                                </div>
+                                <div class="bid-info-group text-end">
+                                    <span class="bid-label">Time Left</span>
+                                    <span class="time-val-pink countdown" data-time="02:14:55">02:14:55</span>
+                                </div>
+                            </div>
+                            <button type="button" class="btn-place-bid-cyan" onclick="handlePlaceBid(this, 'First Edition Rare...')">Place Bid</button>
+                        </div>
+                    </div>
+
+                    <!-- Auction Card 3 -->
+                    <div class="zal-card">
+                        <div class="live-card-thumb">
+                            <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80" alt="Vintage Rolex">
+                            <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
+                            <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.2k</div>
+                        </div>
+                        <div class="live-card-body">
+                            <div class="live-card-title">Vintage Rolex Su...</div>
+                            <div class="auction-card-meta">
+                                <div class="bid-info-group">
+                                    <span class="bid-label">Current Bid</span>
+                                    <span class="auction-bid-val">C$2,850</span>
+                                </div>
+                                <div class="bid-info-group text-end">
+                                    <span class="bid-label">Time Left</span>
+                                    <span class="time-val-pink countdown" data-time="02:14:55">02:14:55</span>
+                                </div>
+                            </div>
+                            <button type="button" class="btn-place-bid-cyan" onclick="handlePlaceBid(this, 'Vintage Rolex Su...')">Place Bid</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
         </div>
-    @endif
 
-    @if($streams->isEmpty() && $products->isEmpty() && $auctions->isEmpty())
-        <div class="zal-card" style="text-align: center; padding: 50px; color: #888;">
-            No items matched your search "{{ $query }}". Try searching for "Jordan", "Charizard", or "Supreme".
+    </div>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="zal-footer-center">
+    <div class="container">
+        <!-- Center Logo -->
+        <a href="{{ route('home') }}">
+            <img src="{{ asset('assets/logo.png') }}" alt="Zaldoris" class="footer-logo-img">
+        </a>
+        <p class="footer-tagline-text">
+            Experience the future of shopping with realtime interaction, live demonstrations, and exclusive community deals.
+        </p>
+        <div class="footer-copyright-line">
+            © 2024 LiveStreamShop. All rights reserved.
         </div>
-    @endif
+    </div>
+</footer>
 
-</div>
+<!-- FLOATING WIDGET BUTTON -->
+<button class="floating-action-widget" title="Live Chat">
+    <i class="bi bi-chat-dots-fill"></i>
+</button>
 
-@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ asset('js/main.js') }}"></script>
 <script>
-    function startVoiceSearch() {
-        const status = document.getElementById('voiceStatus');
-        status.style.display = 'block';
-        status.innerText = '🎙️ Listening... Say what you want to buy (e.g., "Find Nike shoes")';
+    // Condition pills toggle state
+    const conditionPills = document.querySelectorAll('.condition-pill');
+    conditionPills.forEach(pill => {
+        pill.addEventListener('click', () => {
+            conditionPills.forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+        });
+    });
 
-        setTimeout(() => {
-            document.getElementById('searchInput').value = 'Nike Air Jordan';
-            status.innerText = '✨ Voice detected: "Nike Air Jordan" - Searching...';
-            setTimeout(() => {
-                document.querySelector('form').submit();
-            }, 600);
-        }, 1200);
+    // Clear filters handler
+    const btnClearFilters = document.getElementById('btnClearFilters');
+    if (btnClearFilters) {
+        btnClearFilters.addEventListener('click', () => {
+            document.querySelectorAll('.filter-checkbox-item input').forEach(cb => cb.checked = false);
+            document.querySelectorAll('.filter-checkbox-item').forEach(item => item.classList.remove('checked'));
+            document.querySelectorAll('.condition-pill').forEach(pill => pill.classList.remove('active'));
+            if (conditionPills[0]) conditionPills[0].classList.add('active');
+            const slider = document.getElementById('priceRangeInput');
+            if (slider) slider.value = 1200;
+        });
     }
+
+    // Tabs toggle state
+    const tabs = document.querySelectorAll('.search-tab-link');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', (e) => {
+            e.preventDefault();
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+        });
+    });
 </script>
-@endpush
-@endsection
+</body>
+</html>

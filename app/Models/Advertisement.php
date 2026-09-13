@@ -11,9 +11,12 @@ class Advertisement extends Model
 
     protected $fillable = [
         'title',
+        'subtitle',
         'ad_type',
+        'placement',
         'media_url',
         'link_url',
+        'button_text',
         'interval_minutes',
         'impressions',
         'clicks',

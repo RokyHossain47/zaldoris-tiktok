@@ -1,34 +1,224 @@
-@extends('layouts.app')
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Zaldoris - OTP Verification. Enter your one-time password to complete payment securely.">
+    <title>Enter OTP - Zaldoris Live Commerce Platform</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ asset('assets/favicon.png') }}">
+    <link rel="shortcut icon" href="{{ asset('assets/favicon.png') }}">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="{{ asset('css/style.css') }}" rel="stylesheet">
+</head>
+<body>
 
-@section('title', 'Verify Phone OTP - Zaldoris')
+<!-- NAVBAR / HEADER -->
+<header class="zal-navbar">
+    <div class="zal-navbar-inner">
+        <!-- Logo -->
+        <a class="zal-brand" href="{{ route('home') }}">
+            <img src="{{ asset('assets/logo.png') }}" alt="Zaldoris" class="zal-brand-logo">
+        </a>
 
-@section('content')
-<div style="max-width: 440px; margin: 40px auto; text-align: center;">
+        <!-- Center Nav Links -->
+        <ul class="zal-nav-menu">
+            <li><a href="{{ route('home') }}" class="zal-nav-link active">Home</a></li>
+            <li><a href="{{ route('shop.index') }}" class="zal-nav-link">Live Shopping</a></li>
+            <li><a href="{{ route('auctions.index') }}" class="zal-nav-link">Live Auction</a></li>
+            <li><a href="#" class="zal-nav-link">Live Academy</a></li>
+            <li><a href="{{ route('streams.index') }}" class="zal-nav-link">Live Streaming</a></li>
+            <li><a href="{{ route('streams.pk_battle', 1) }}" class="zal-nav-link">PK Battle</a></li>
+        </ul>
 
-    <div class="zal-card" style="background: #16161f; border-radius: 20px; padding: 36px 28px;">
-        
-        <div style="font-size: 48px; margin-bottom: 16px;">📱</div>
-        <h1 style="font-size: 22px; font-weight: 800; color: #fff; margin-bottom: 8px;">Phone Verification</h1>
-        <p style="color: #888; font-size: 13px; margin-bottom: 24px;">
-            To ensure fair auctions and prevent fake bot accounts (SRS #3), please enter the 6-digit OTP code sent to your phone.
-        </p>
+                <!-- Right Action Icons -->
+        <div class="zal-nav-actions">
+            <a href="{{ route('search') }}" class="nav-icon-btn" title="Search"><i class="bi bi-search"></i></a>
+            @auth
+                <button class="nav-icon-btn" id="navTicketBtn" title="Wallet"><i class="bi bi-wallet2"></i></button>
+                <a href="{{ route('notifications') }}" class="nav-icon-btn" title="Notifications">
+                    <i class="bi bi-bell"></i>
+                    <span class="icon-badge-dot"></span>
+                </a>
+                <a href="{{ route('shop.cart') }}" class="nav-icon-btn" title="Cart">
+                    <i class="bi bi-cart3"></i>
+                    <span class="icon-badge-num" id="globalCartBadge">2</span>
+                </a>
+                <a href="{{ route('dashboard.creator') }}" class="nav-avatar-btn" title="Profile">
+                    <img src="{{ auth()->user()->avatar_url ?? 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100&auto=format&fit=crop&q=80' }}" alt="{{ auth()->user()->name }}">
+                </a>
+            @else
+                <a href="{{ route('login') }}" class="btn-login-nav" style="background: linear-gradient(135deg, var(--cyan-accent, #00F0C8), #1ed6d0); color: #090D10; text-decoration: none; padding: 7px 18px; border-radius: 20px; font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; margin-left: 8px;">
+                    <i class="bi bi-box-arrow-in-right"></i> Log In
+                </a>
+            @endauth
+        </div>
+    </div>
+</header>
 
-        <form action="{{ route('auth.otp.verify') }}" method="POST">
-            @csrf
-            <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 24px;">
-                <input type="text" name="otp_code" maxlength="6" value="123456" required style="letter-spacing: 12px; font-size: 24px; font-weight: 900; text-align: center; width: 220px; background: #1f1f2a; border: 2px solid #FE2C55; color: #25F4EE; padding: 10px; border-radius: 10px; outline: none;">
+<!-- MAIN CONTAINER -->
+<main class="page-container" style="position: relative;">
+
+    <!-- Back Button on Top Left -->
+    <div style="max-width: 1200px; margin: 0 auto 1rem;">
+        <a href="{{ route('shop.payment') }}" class="auth-back-btn" title="Back to Payment">
+            <i class="bi bi-chevron-left"></i>
+        </a>
+    </div>
+
+    <!-- CENTERED OTP FORM CONTAINER -->
+    <div class="otp-page-container">
+
+        <!-- Shield Lock Icon Badge -->
+        <div class="otp-shield-badge">
+            <i class="bi bi-shield-lock"></i>
+        </div>
+
+        <!-- Title -->
+        <h1 class="otp-title">Enter OTP</h1>
+
+        <!-- Subtitle -->
+        <p class="otp-subtitle">Total Payable Amount <strong>C$973.43</strong></p>
+
+        <!-- 6-Digit OTP Inputs Row -->
+        <form onsubmit="handleVerifyOTP(event)" class="w-100 flex-column align-items-center">
+            <div class="otp-input-row" id="otpInputsGroup">
+                <input type="text" class="otp-digit-box" maxlength="1" value="4" autocomplete="off" inputmode="numeric">
+                <input type="text" class="otp-digit-box" maxlength="1" value="5" autocomplete="off" inputmode="numeric">
+                <input type="text" class="otp-digit-box" maxlength="1" value="5" autocomplete="off" inputmode="numeric">
+                <input type="text" class="otp-digit-box" maxlength="1" value="5" autocomplete="off" inputmode="numeric">
+                <input type="text" class="otp-digit-box" maxlength="1" value="1" autocomplete="off" inputmode="numeric">
+                <input type="text" class="otp-digit-box active" maxlength="1" autocomplete="off" inputmode="numeric" autofocus>
             </div>
 
-            <button type="submit" class="zal-btn-primary" style="width: 100%; padding: 12px; border-radius: 10px; border: none; font-size: 14px; font-weight: 800; background: linear-gradient(135deg, #FE2C55, #FF0055); color: #fff; cursor: pointer;">
-                Verify & Continue
-            </button>
-        </form>
+            <!-- Timer Countdown -->
+            <div class="otp-timer-line">
+                Request a new code in <span id="otpTimer">00:53</span>
+            </div>
 
-        <p style="font-size: 12px; color: #666; margin-top: 20px;">
-            Demo OTP code: <strong style="color: #25F4EE;">123456</strong>
-        </p>
+            <!-- Resend Code Link -->
+            <div class="text-center">
+                <a href="#" class="resend-code-link" onclick="handleResendOTP(event)">Resend Code</a>
+            </div>
+
+            <!-- Verify Button -->
+            <button type="submit" class="btn-otp-verify" id="btnVerify">Verify</button>
+        </form>
 
     </div>
 
+</main>
+
+<!-- FOOTER -->
+<footer class="zal-footer-center">
+    <div class="container">
+        <!-- Center Logo -->
+        <a href="{{ route('home') }}">
+            <img src="{{ asset('assets/logo.png') }}" alt="Zaldoris" class="footer-logo-img">
+        </a>
+        <p class="footer-tagline-text">
+            Experience the future of shopping with realtime interaction, live demonstrations, and exclusive community deals.
+        </p>
+        <div class="footer-copyright-line">
+            © 2024 LiveStreamShop. All rights reserved.
+        </div>
+    </div>
+</footer>
+
+<!-- FLOATING WIDGET BUTTON -->
+<button class="floating-action-widget" title="Live Chat">
+    <i class="bi bi-chat-dots-fill"></i>
+</button>
+
+<!-- PAYMENT SUCCESS OVERLAY POPUP MODAL -->
+<div class="modal-overlay-backdrop show" id="paymentSuccessModal">
+    <div class="payment-success-modal-card">
+        <div class="modal-badge-icon-wrap">
+            <svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Ribbon Tails -->
+                <path d="M27 44L20 60L32 54L36 56L40 54L52 60L45 44" fill="url(#award_ribbon_grad)"/>
+                <!-- Outer Glow Ring -->
+                <circle cx="36" cy="28" r="22" fill="rgba(0, 240, 200, 0.1)" stroke="url(#award_ring_grad)" stroke-width="2"/>
+                <!-- Center Badge Circle -->
+                <circle cx="36" cy="28" r="18" fill="url(#award_grad)"/>
+                <!-- Checkmark -->
+                <path d="M28 28.5L33.5 34L44 23.5" stroke="#090D10" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <defs>
+                    <linearGradient id="award_grad" x1="18" y1="10" x2="54" y2="46" gradientUnits="userSpaceOnUse">
+                        <stop stop-color="#00F0C8"/>
+                        <stop offset="1" stop-color="#3B82F6"/>
+                    </linearGradient>
+                    <linearGradient id="award_ribbon_grad" x1="20" y1="44" x2="52" y2="60" gradientUnits="userSpaceOnUse">
+                        <stop stop-color="#00F0C8"/>
+                        <stop offset="1" stop-color="#7033FF"/>
+                    </linearGradient>
+                    <linearGradient id="award_ring_grad" x1="14" y1="6" x2="58" y2="50" gradientUnits="userSpaceOnUse">
+                        <stop stop-color="#00F0C8"/>
+                        <stop offset="1" stop-color="#7033FF"/>
+                    </linearGradient>
+                </defs>
+            </svg>
+        </div>
+        <h2 class="modal-success-title">Payment successful</h2>
+        <p class="modal-success-sub">
+            Your purchase was successful. We've received your order and will notify you once it has been shipped.
+        </p>
+        <a href="{{ route('home') }}" class="btn-go-home-cyan">Go To Home</a>
+    </div>
 </div>
-@endsection
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ asset('js/main.js') }}"></script>
+<script>
+    // Auto-focus & auto-advance between OTP input boxes
+    const otpBoxes = document.querySelectorAll('.otp-digit-box');
+    otpBoxes.forEach((box, idx) => {
+        box.addEventListener('input', (e) => {
+            if (box.value.length === 1 && idx < otpBoxes.length - 1) {
+                otpBoxes[idx + 1].focus();
+                otpBoxes[idx + 1].classList.add('active');
+            }
+        });
+
+        box.addEventListener('keydown', (e) => {
+            if (e.key === 'Backspace' && box.value.length === 0 && idx > 0) {
+                otpBoxes[idx - 1].focus();
+            }
+        });
+    });
+
+    // Countdown Timer logic
+    let secondsLeft = 53;
+    const timerElem = document.getElementById('otpTimer');
+    const timerInterval = setInterval(() => {
+        if (secondsLeft > 0) {
+            secondsLeft--;
+            const secs = secondsLeft < 10 ? '0' + secondsLeft : secondsLeft;
+            if (timerElem) timerElem.textContent = `00:${secs}`;
+        } else {
+            clearInterval(timerInterval);
+        }
+    }, 1000);
+
+    // Resend OTP Handler
+    function handleResendOTP(event) {
+        event.preventDefault();
+        alert('A new 6-digit OTP code has been sent to your registered phone number.');
+        secondsLeft = 60;
+    }
+
+    // Verify OTP Handler - Shows Payment Success Popup Modal directly on page
+    function handleVerifyOTP(event) {
+        event.preventDefault();
+        const modal = document.getElementById('paymentSuccessModal');
+        if (modal) {
+            modal.classList.add('show');
+        }
+    }
+</script>
+</body>
+</html>

@@ -1,98 +1,545 @@
-@extends('layouts.app')
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Zaldoris - Coins Checkout. Complete your coin recharge to send gifts and support live creators.">
+    <title>Coins Checkout - Zaldoris Live Commerce Platform</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ asset('assets/favicon.png') }}">
+    <link rel="shortcut icon" href="{{ asset('assets/favicon.png') }}">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="{{ asset('css/style.css') }}" rel="stylesheet">
+    
+    <style>
+    /* EMBEDDED STYLES FOR COINS CHECKOUT PAGE (Pixel-Perfect Figma Match) */
+    .coins-checkout-wrapper {
+      max-width: 480px !important;
+      margin: 2.5rem auto 4rem !important;
+      background: #0B0F14 !important;
+      border: 1px solid #16202C !important;
+      border-radius: 20px !important;
+      padding: 1.75rem !important;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(0, 240, 200, 0.08) !important;
+      position: relative !important;
+      box-sizing: border-box !important;
+    }
 
-@section('title', 'Coins & Gifts Wallet - Zaldoris')
+    .coins-checkout-header {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      margin-bottom: 1.5rem !important;
+    }
 
-@section('content')
-<div style="max-width: 1000px; margin: 0 auto;">
+    .coins-checkout-title {
+      font-family: 'Outfit', sans-serif !important;
+      font-size: 1.35rem !important;
+      font-weight: 700 !important;
+      color: #FFFFFF !important;
+      margin: 0 !important;
+    }
 
-    <div class="zal-card" style="background: linear-gradient(135deg, #1f1f2d, #14141d); border-radius: 20px; padding: 30px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;">
-        <div>
-            <div style="font-size: 13px; color: #aaa; text-transform: uppercase; font-weight: 700;">Your Wallet Balance</div>
-            <div style="font-size: 40px; font-weight: 900; color: #FFB800; margin: 4px 0; display: flex; align-items: center; gap: 8px;">
-                <i class="bi bi-coin"></i> {{ auth()->check() ? number_format(auth()->user()->coin_balance) : '100' }}
+    .btn-checkout-close {
+      width: 38px !important;
+      height: 38px !important;
+      border-radius: 50% !important;
+      background: rgba(255, 255, 255, 0.06) !important;
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+      color: #FFFFFF !important;
+      font-size: 1.1rem !important;
+      cursor: pointer !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      transition: all 0.25s ease !important;
+      text-decoration: none !important;
+    }
+
+    .btn-checkout-close:hover {
+      background: rgba(255, 255, 255, 0.15) !important;
+      color: #00F0C8 !important;
+    }
+
+    /* Streamer Creator Card */
+    .checkout-creator-card {
+      background: #0E141C !important;
+      border: 1px solid #1A2432 !important;
+      border-radius: 14px !important;
+      padding: 0.9rem 1rem !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 12px !important;
+      margin-bottom: 1rem !important;
+    }
+
+    .creator-avatar-wrap {
+      width: 44px !important;
+      height: 44px !important;
+      border-radius: 50% !important;
+      border: 2px solid #00F0C8 !important;
+      position: relative !important;
+      flex-shrink: 0 !important;
+    }
+
+    .creator-avatar-wrap img {
+      width: 100% !important;
+      height: 100% !important;
+      border-radius: 50% !important;
+      object-fit: cover !important;
+      display: block !important;
+    }
+
+    .creator-live-dot {
+      width: 10px !important;
+      height: 10px !important;
+      border-radius: 50% !important;
+      background: #FF2A6D !important;
+      border: 2px solid #0E141C !important;
+      position: absolute !important;
+      bottom: 0 !important;
+      right: 0 !important;
+    }
+
+    .creator-info-text {
+      flex: 1 !important;
+    }
+
+    .creator-username-row {
+      display: flex !important;
+      align-items: center !important;
+      gap: 5px !important;
+      font-size: 0.95rem !important;
+      font-weight: 700 !important;
+      color: #FFFFFF !important;
+      margin-bottom: 2px !important;
+    }
+
+    .creator-badge-check {
+      color: #00F0C8 !important;
+      font-size: 0.85rem !important;
+    }
+
+    .creator-live-status {
+      font-size: 0.78rem !important;
+      color: #94A3B8 !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 5px !important;
+    }
+
+    .pink-dot {
+      color: #FF2A6D !important;
+      font-size: 0.65rem !important;
+    }
+
+    /* Selected Coins Pack Box */
+    .checkout-package-card {
+      background: #0E141C !important;
+      border: 1px solid #1A2432 !important;
+      border-radius: 14px !important;
+      padding: 1rem 1.15rem !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      margin-bottom: 1.5rem !important;
+    }
+
+    .package-left-details {
+      display: flex !important;
+      align-items: center !important;
+      gap: 12px !important;
+    }
+
+    .package-z-circle {
+      width: 40px !important;
+      height: 40px !important;
+      border-radius: 50% !important;
+      background: #151D28 !important;
+      border: 1px solid #233144 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      color: #00F0C8 !important;
+      font-weight: 900 !important;
+      font-family: 'Outfit', sans-serif !important;
+      font-size: 1.1rem !important;
+    }
+
+    .package-title-val {
+      font-size: 1rem !important;
+      font-weight: 700 !important;
+      color: #FFFFFF !important;
+      margin-bottom: 2px !important;
+    }
+
+    .package-sub-tier {
+      font-size: 0.8rem !important;
+      color: #94A3B8 !important;
+      margin: 0 !important;
+    }
+
+    .package-price-cyan {
+      font-family: 'Outfit', sans-serif !important;
+      font-size: 1.2rem !important;
+      font-weight: 700 !important;
+      color: #00F0C8 !important;
+    }
+
+    /* Payment Method Section */
+    .payment-method-section {
+      margin-bottom: 1.75rem !important;
+    }
+
+    .payment-sec-header {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      margin-bottom: 0.75rem !important;
+    }
+
+    .payment-sec-title {
+      font-size: 1rem !important;
+      font-weight: 700 !important;
+      color: #FFFFFF !important;
+      margin: 0 !important;
+    }
+
+    .best-value-badge {
+      color: #00F0C8 !important;
+      font-size: 0.78rem !important;
+      font-weight: 600 !important;
+    }
+
+    .payment-methods-box {
+      background: #0E141C !important;
+      border: 1px solid #1A2432 !important;
+      border-radius: 14px !important;
+      overflow: hidden !important;
+    }
+
+    .payment-option-row {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      padding: 0.95rem 1.15rem !important;
+      border-bottom: 1px solid #16202C !important;
+      cursor: pointer !important;
+      transition: background 0.2s ease !important;
+    }
+
+    .payment-option-row:last-child {
+      border-bottom: none !important;
+    }
+
+    .payment-option-row:hover {
+      background: rgba(255, 255, 255, 0.02) !important;
+    }
+
+    .payment-option-left {
+      display: flex !important;
+      align-items: center !important;
+      gap: 12px !important;
+      color: #FFFFFF !important;
+      font-size: 0.9rem !important;
+      font-weight: 600 !important;
+    }
+
+    .payment-option-left i {
+      font-size: 1.15rem !important;
+      color: #94A3B8 !important;
+    }
+
+    .custom-radio-circle {
+      width: 20px !important;
+      height: 20px !important;
+      border-radius: 50% !important;
+      border: 2px solid #334155 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      transition: all 0.2s ease !important;
+    }
+
+    .payment-option-row.selected .custom-radio-circle {
+      border-color: #00F0C8 !important;
+      background: rgba(0, 240, 200, 0.15) !important;
+    }
+
+    .payment-option-row.selected .custom-radio-circle::after {
+      content: '' !important;
+      width: 10px !important;
+      height: 10px !important;
+      border-radius: 50% !important;
+      background: #00F0C8 !important;
+    }
+
+    .add-payment-btn-row {
+      padding: 0.9rem 1.15rem !important;
+      text-align: center !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 8px !important;
+      color: #FFFFFF !important;
+      font-size: 0.88rem !important;
+      font-weight: 600 !important;
+      cursor: pointer !important;
+      transition: color 0.2s ease !important;
+    }
+
+    .add-payment-btn-row:hover {
+      color: #00F0C8 !important;
+    }
+
+    /* Coin Purchase Summary */
+    .summary-section-title {
+      font-size: 1.1rem !important;
+      font-weight: 700 !important;
+      color: #FFFFFF !important;
+      margin-bottom: 1rem !important;
+    }
+
+    .summary-row-item {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      font-size: 0.88rem !important;
+      color: #E2E8F0 !important;
+      margin-bottom: 0.65rem !important;
+    }
+
+    .summary-divider {
+      border-top: 1px solid #1A2432 !important;
+      margin: 0.9rem 0 !important;
+    }
+
+    .subtotal-row {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      font-size: 1rem !important;
+      font-weight: 700 !important;
+      color: #FFFFFF !important;
+    }
+
+    .subtotal-val-cyan {
+      font-family: 'Outfit', sans-serif !important;
+      font-size: 1.25rem !important;
+      font-weight: 800 !important;
+      color: #00F0C8 !important;
+    }
+
+    /* Confirm Purchase CTA */
+    .btn-confirm-purchase {
+      width: 100% !important;
+      height: 52px !important;
+      background: #00F0C8 !important;
+      color: #090D10 !important;
+      font-family: 'Inter', sans-serif !important;
+      font-size: 1.05rem !important;
+      font-weight: 800 !important;
+      border-radius: 12px !important;
+      border: none !important;
+      cursor: pointer !important;
+      margin-top: 1.5rem !important;
+      transition: all 0.3s ease !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+
+    .btn-confirm-purchase:hover {
+      background: #33F3D3 !important;
+      box-shadow: 0 4px 25px rgba(0, 240, 200, 0.4) !important;
+    }
+    </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<header class="zal-navbar">
+    <div class="zal-navbar-inner">
+        <a class="zal-brand" href="{{ route('home') }}">
+            <img src="{{ asset('assets/logo.png') }}" alt="Zaldoris" class="zal-brand-logo">
+        </a>
+        <ul class="zal-nav-menu">
+            <li><a href="{{ route('home') }}" class="zal-nav-link active">Home</a></li>
+            <li><a href="{{ route('shop.index') }}" class="zal-nav-link">Live Shopping</a></li>
+            <li><a href="{{ route('auctions.index') }}" class="zal-nav-link">Live Auction</a></li>
+            <li><a href="#" class="zal-nav-link">Live Academy</a></li>
+            <li><a href="{{ route('streams.index') }}" class="zal-nav-link">Live Streaming</a></li>
+            <li><a href="{{ route('streams.pk_battle', 1) }}" class="zal-nav-link">PK Battle</a></li>
+        </ul>
+                <!-- Right Action Icons -->
+        <div class="zal-nav-actions">
+            <a href="{{ route('search') }}" class="nav-icon-btn" title="Search"><i class="bi bi-search"></i></a>
+            @auth
+                <button class="nav-icon-btn" id="navTicketBtn" title="Wallet"><i class="bi bi-wallet2"></i></button>
+                <a href="{{ route('notifications') }}" class="nav-icon-btn" title="Notifications">
+                    <i class="bi bi-bell"></i>
+                    <span class="icon-badge-dot"></span>
+                </a>
+                <a href="{{ route('shop.cart') }}" class="nav-icon-btn" title="Cart">
+                    <i class="bi bi-cart3"></i>
+                    <span class="icon-badge-num" id="globalCartBadge">2</span>
+                </a>
+                <a href="{{ route('dashboard.creator') }}" class="nav-avatar-btn" title="Profile">
+                    <img src="{{ auth()->user()->avatar_url ?? 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100&auto=format&fit=crop&q=80' }}" alt="{{ auth()->user()->name }}">
+                </a>
+            @else
+                <a href="{{ route('login') }}" class="btn-login-nav" style="background: linear-gradient(135deg, var(--cyan-accent, #00F0C8), #1ed6d0); color: #090D10; text-decoration: none; padding: 7px 18px; border-radius: 20px; font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; margin-left: 8px;">
+                    <i class="bi bi-box-arrow-in-right"></i> Log In
+                </a>
+            @endauth
+        </div>
+    </div>
+</header>
+
+<!-- MAIN CONTENT WRAPPER -->
+<main class="page-container" style="min-height: 80vh; padding: 1rem 0;">
+    <div class="coins-checkout-wrapper">
+        <!-- Header Row -->
+        <div class="coins-checkout-header">
+            <h1 class="coins-checkout-title">Coins Checkout</h1>
+            <a href="{{ route('streams.pk_battle', 1) }}" class="btn-checkout-close" title="Close">
+                <i class="bi bi-x-lg"></i>
+            </a>
+        </div>
+
+        <!-- Section 1: Creator Live Info Card -->
+        <div class="checkout-creator-card">
+            <div class="creator-avatar-wrap">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="Astra_Vance">
+                <span class="creator-live-dot"></span>
             </div>
-            <div style="font-size: 12px; color: #25F4EE;">
-                Use coins to send gifts to live stream creators and boost PK battles.
+            <div class="creator-info-text">
+                <div class="creator-username-row">
+                    Astra_Vance
+                    <i class="bi bi-patch-check-fill creator-badge-check"></i>
+                </div>
+                <div class="creator-live-status">
+                    <span class="pink-dot">●</span> LIVE: CYBERPUNK MEGA-SALE
+                </div>
             </div>
         </div>
 
-        @if(auth()->check() && auth()->user()->vip_badge_tier)
-            <div style="background: rgba(255,184,0,0.15); border: 1px solid #FFB800; padding: 10px 20px; border-radius: 12px; text-align: center;">
-                <div style="font-size: 11px; color: #FFB800; font-weight: 800;">VIP SUPPORTER</div>
-                <div style="font-size: 16px; font-weight: 900; color: #fff;">{{ auth()->user()->vip_badge_tier }} Tier</div>
-            </div>
-        @endif
-    </div>
-
-    <!-- COIN PACKAGES (SRS Page 4 & 5 with 13% HST) -->
-    <h2 style="font-size: 20px; font-weight: 800; margin-bottom: 16px;">Top Up Coins (13% HST Canadian Tax Included)</h2>
-
-    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-bottom: 40px;">
-        @foreach($packages as $pkg)
-            <div class="zal-card" style="background: #16161f; border-radius: 16px; padding: 20px; border: {{ $pkg->is_popular ? '2px solid #FE2C55' : '1px solid #222' }}; position: relative; display: flex; flex-direction: column;">
-                @if($pkg->is_popular)
-                    <div style="position: absolute; top: -12px; right: 16px; background: #FE2C55; color: #fff; font-size: 10px; font-weight: 800; padding: 2px 10px; border-radius: 10px;">
-                        MOST POPULAR
-                    </div>
-                @endif
-
-                <div style="font-weight: 800; font-size: 16px; margin-bottom: 4px;">{{ $pkg->name }}</div>
-                
-                <div style="font-size: 30px; font-weight: 900; color: #FFB800; margin: 10px 0;">
-                    <i class="bi bi-coin"></i> {{ number_format($pkg->total_coins) }}
-                </div>
-
-                @if($pkg->bonus_coins > 0)
-                    <div style="font-size: 12px; color: #25F4EE; font-weight: 700; margin-bottom: 12px;">
-                        + {{ $pkg->bonus_coins }} Bonus Coins Free!
-                    </div>
-                @else
-                    <div style="font-size: 12px; color: #666; margin-bottom: 12px;">Standard Pack</div>
-                @endif
-
-                <div style="background: #1f1f2a; padding: 10px; border-radius: 8px; font-size: 12px; color: #aaa; margin-bottom: 16px;">
-                    <div style="display: flex; justify-content: space-between;">
-                        <span>Price:</span>
-                        <strong style="color: #fff;">${{ number_format($pkg->price_usd, 2) }}</strong>
-                    </div>
-                    <div style="display: flex; justify-content: space-between;">
-                        <span>13% HST Tax:</span>
-                        <strong style="color: #fff;">${{ number_format($pkg->hst_tax, 2) }}</strong>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; border-top: 1px solid #333; padding-top: 4px; margin-top: 4px; font-weight: 800; color: #fff;">
-                        <span>Total:</span>
-                        <span style="color: #25F4EE;">${{ number_format($pkg->total_price_with_tax, 2) }}</span>
-                    </div>
-                </div>
-
-                <form action="{{ route('wallet.coins.buy') }}" method="POST" style="margin-top: auto;">
-                    @csrf
-                    <input type="hidden" name="package_id" value="{{ $pkg->id }}">
-                    <button type="submit" class="zal-btn-primary" style="width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: 800; font-size: 13px; background: linear-gradient(135deg, #FFB800, #FF8A00); color: #000; cursor: pointer;">
-                        Buy with 1-Tap (${{ number_format($pkg->total_price_with_tax, 2) }})
-                    </button>
-                </form>
-            </div>
-        @endforeach
-    </div>
-
-    <!-- RECENT TRANSACTIONS -->
-    <h2 style="font-size: 18px; font-weight: 800; margin-bottom: 14px;">Recent Wallet Transactions</h2>
-    <div class="zal-card" style="background: #16161f; border-radius: 16px; padding: 16px;">
-        @forelse($transactions as $tx)
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #222; font-size: 13px;">
+        <!-- Section 2: Selected Package Card -->
+        <div class="checkout-package-card">
+            <div class="package-left-details">
+                <div class="package-z-circle">Z</div>
                 <div>
-                    <div style="font-weight: 700; color: #fff;">{{ $tx->description }}</div>
-                    <div style="font-size: 11px; color: #777;">{{ $tx->created_at->format('M d, Y H:i') }}</div>
-                </div>
-                <div style="font-weight: 800; font-size: 15px; color: {{ $tx->amount_coins > 0 ? '#25F4EE' : '#FE2C55' }};">
-                    {{ $tx->amount_coins > 0 ? '+' : '' }}{{ $tx->amount_coins }} Coins
+                    <div class="package-title-val">500 Coins</div>
+                    <p class="package-sub-tier">Power User</p>
                 </div>
             </div>
-        @empty
-            <div style="text-align: center; color: #777; padding: 20px;">No transactions recorded.</div>
-        @endforelse
-    </div>
+            <div class="package-price-cyan">C$4.99</div>
+        </div>
 
-</div>
-@endsection
+        <!-- Section 3: Payment Method Selector -->
+        <div class="payment-method-section">
+            <div class="payment-sec-header">
+                <h3 class="payment-sec-title">Payment Method</h3>
+                <span class="best-value-badge">Best Value</span>
+            </div>
+            <div class="payment-methods-box">
+                <!-- Option 1: Credit Card (Selected) -->
+                <div class="payment-option-row selected" onclick="selectPaymentRow(this)">
+                    <div class="payment-option-left">
+                        <i class="bi bi-credit-card-2-front"></i>
+                        <span>Credit Card (**** 4242)</span>
+                    </div>
+                    <div class="custom-radio-circle"></div>
+                </div>
+
+                <!-- Option 2: PayPal -->
+                <div class="payment-option-row" onclick="selectPaymentRow(this)">
+                    <div class="payment-option-left">
+                        <i class="bi bi-paypal"></i>
+                        <span>PayPal</span>
+                    </div>
+                    <div class="custom-radio-circle"></div>
+                </div>
+
+                <!-- Add Payment Method Link -->
+                <div class="add-payment-btn-row" onclick="alert('Add Payment Method Modal')">
+                    <i class="bi bi-plus-circle"></i>
+                    <span>Add Payment Method</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 4: Coin Purchase Summary -->
+        <div class="purchase-summary-section">
+            <h3 class="summary-section-title">Coin Purchase Summary</h3>
+            
+            <div class="summary-row-item">
+                <span>1,000 coins</span>
+                <span>C$49.99</span>
+            </div>
+            <div class="summary-row-item">
+                <span>Platform Fee</span>
+                <span>C$3</span>
+            </div>
+            <div class="summary-row-item">
+                <span>Processing Fee</span>
+                <span>C$2</span>
+            </div>
+            <div class="summary-row-item">
+                <span>GST / HST / PST</span>
+                <span>C$5</span>
+            </div>
+
+            <div class="summary-divider"></div>
+
+            <div class="subtotal-row">
+                <span>Subtotal</span>
+                <span class="subtotal-val-cyan">C$54.99</span>
+            </div>
+        </div>
+
+        <!-- Section 5: Confirm Purchase CTA -->
+        <button class="btn-confirm-purchase" onclick="handleConfirmPurchase()">
+            Confirm Purchase
+        </button>
+    </div>
+</main>
+
+<!-- FOOTER -->
+<footer class="zal-footer-center">
+    <div class="container">
+        <a href="{{ route('home') }}">
+            <img src="{{ asset('assets/logo.png') }}" alt="Zaldoris" class="footer-logo-img">
+        </a>
+        <p class="footer-tagline-text">
+            Experience the future of shopping with realtime interaction, live demonstrations, and exclusive community deals.
+        </p>
+        <div class="footer-copyright-line">
+            © 2024 LiveStreamShop. All rights reserved.
+        </div>
+    </div>
+</footer>
+
+<!-- FLOATING WIDGET BUTTON -->
+<button class="floating-action-widget" title="Live Chat">
+    <i class="bi bi-chat-dots-fill"></i>
+</button>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ asset('js/main.js') }}"></script>
+<script>
+    function selectPaymentRow(row) {
+        document.querySelectorAll('.payment-option-row').forEach(el => el.classList.remove('selected'));
+        row.classList.add('selected');
+    }
+
+    function handleConfirmPurchase() {
+        window.location.href = '/payment-success/1';
+    }
+</script>
+</body>
+</html>

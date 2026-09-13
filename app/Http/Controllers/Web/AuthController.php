@@ -8,12 +8,24 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use App\Models\Notification;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
     public function showLogin()
     {
+        if (Auth::check()) {
+            return redirect()->route('home');
+        }
         return view('auth.login');
+    }
+
+    public function showRegister()
+    {
+        if (Auth::check()) {
+            return redirect()->route('home');
+        }
+        return view('auth.register');
     }
 
     public function login(Request $request)
@@ -23,12 +35,12 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
-        if (Auth::attempt($credentials, $request->boolean('remember'))) {
+        if (Auth::attempt(['email' => $credentials['email'], 'password' => $credentials['password']], $request->boolean('remember'))) {
             $request->session()->regenerate();
 
             $user = Auth::user();
             if ($user->isAdmin()) {
-                return redirect()->route('admin.index');
+                return redirect()->route('admin.dashboard');
             } elseif ($user->isSeller()) {
                 return redirect()->route('dashboard.seller');
             } elseif ($user->isCreator()) {
@@ -52,8 +64,11 @@ class AuthController extends Controller
             'role' => 'required|in:buyer,creator,seller',
         ]);
 
+        $username = Str::slug($validated['name']) . rand(100, 999);
+
         $user = User::create([
             'name' => $validated['name'],
+            'username' => $username,
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'role' => $validated['role'],
@@ -61,8 +76,9 @@ class AuthController extends Controller
         ]);
 
         Auth::login($user);
+        $request->session()->regenerate();
 
-        return redirect()->route('auth.otp');
+        return redirect()->route('home')->with('success', 'Account created successfully! Welcome to Zaldoris.');
     }
 
     public function showOtp()

@@ -30,20 +30,22 @@ class StreamController extends Controller
         return view('streams.index', compact('streams', 'type'));
     }
 
-    public function show(Request $request, $id)
+    public function show(Request $request, $id = null)
     {
-        $stream = Stream::with(['host.creatorProfile', 'host.sellerProfile', 'products', 'messages.user'])
-            ->findOrFail($id);
+        $stream = $id ? Stream::with(['host.creatorProfile', 'host.sellerProfile', 'products', 'messages.user'])->find($id) : null;
+        if (!$stream) {
+            $stream = Stream::with(['host.creatorProfile', 'host.sellerProfile', 'products', 'messages.user'])->first() ?? new Stream();
+        }
 
         $gifts = Gift::where('is_active', true)->get();
-        $pinnedProduct = $stream->products()->wherePivot('is_pinned', true)->first() ?? $stream->products()->first();
+        $pinnedProduct = ($stream->id && method_exists($stream, 'products')) ? ($stream->products()->wherePivot('is_pinned', true)->first() ?? $stream->products()->first()) : null;
 
         $agoraService = new AgoraService();
         $user = auth()->user();
         $uid = $user ? $user->id : rand(100000, 999999);
-        $agoraToken = $agoraService->generateRtcToken($stream->agora_channel, $uid, 'subscriber');
+        $agoraToken = $stream->agora_channel ? $agoraService->generateRtcToken($stream->agora_channel, $uid, 'subscriber') : '';
 
-        if ($user) {
+        if ($user && $stream->id) {
             $botService = new BotViewerService();
             $botService->awardWarmUpBonusCoins($user, $stream);
         }
@@ -62,17 +64,19 @@ class StreamController extends Controller
         return view('streams.show', compact('stream', 'gifts', 'pinnedProduct', 'agoraToken', 'uid'));
     }
 
-    public function pkBattle(Request $request, $id)
+    public function pkBattle(Request $request, $id = null)
     {
-        $battle = PkBattle::with(['host1', 'host2', 'stream1', 'stream2'])
-            ->findOrFail($id);
+        $battle = $id ? PkBattle::with(['host1', 'host2', 'stream1', 'stream2'])->find($id) : null;
+        if (!$battle) {
+            $battle = PkBattle::with(['host1', 'host2', 'stream1', 'stream2'])->first();
+        }
 
-        $stream = $battle->stream1;
+        $stream = $battle ? $battle->stream1 : (Stream::first() ?? new Stream());
         $gifts = Gift::where('is_active', true)->get();
 
         $agoraService = new AgoraService();
         $uid = auth()->check() ? auth()->id() : rand(100000, 999999);
-        $agoraToken = $agoraService->generateRtcToken($stream->agora_channel, $uid, 'subscriber');
+        $agoraToken = ($stream && $stream->agora_channel) ? $agoraService->generateRtcToken($stream->agora_channel, $uid, 'subscriber') : '';
 
         return view('streams.pk_battle', compact('battle', 'stream', 'gifts', 'agoraToken', 'uid'));
     }

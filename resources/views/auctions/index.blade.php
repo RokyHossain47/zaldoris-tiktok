@@ -1,186 +1,452 @@
-@extends('layouts.app')
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Zaldoris - Live Auction List Page. Bid in real-time on luxury fashion, rare collectibles, vintage watches, and upcoming drops.">
+    <title>Live Auction List - Zaldoris Live Commerce Platform</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ asset('assets/favicon.png') }}">
+    <link rel="shortcut icon" href="{{ asset('assets/favicon.png') }}">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="{{ asset('css/style.css') }}" rel="stylesheet">
+</head>
+<body>
 
-@section('title', 'Live Auctions (Whatnot-Style) - Zaldoris')
+<!-- NAVBAR / HEADER -->
+<header class="zal-navbar">
+    <div class="zal-navbar-inner">
+        <!-- Logo -->
+        <a class="zal-brand" href="{{ route('home') }}">
+            <img src="{{ asset('assets/logo.png') }}" alt="Zaldoris" class="zal-brand-logo">
+        </a>
 
-@section('content')
-<div style="max-width: 1300px; margin: 0 auto;">
+        <!-- Center Nav Links -->
+        <ul class="zal-nav-menu">
+            <li><a href="{{ route('home') }}" class="zal-nav-link">Home</a></li>
+            <li><a href="{{ route('shop.index') }}" class="zal-nav-link">Live Shopping</a></li>
+            <li><a href="{{ route('auctions.index') }}" class="zal-nav-link active">Live Auction</a></li>
+            <li><a href="#" class="zal-nav-link">Live Academy</a></li>
+            <li><a href="{{ route('streams.index') }}" class="zal-nav-link">Live Streaming</a></li>
+            <li><a href="{{ route('streams.pk_battle', 1) }}" class="zal-nav-link">PK Battle</a></li>
+        </ul>
 
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <div>
-            <h1 style="font-size: 24px; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 8px;">
-                <i class="bi bi-hammer" style="color: #FFB800;"></i> Live Whatnot-Style Auction Room
-            </h1>
-            <p style="color: #888; font-size: 13px; margin-top: 4px;">Fast-paced real-time live bidding with anti-sniping & escrow protection.</p>
-        </div>
-        <div style="display: flex; gap: 10px;">
-            <span style="background: rgba(37,244,238,0.15); color: #25F4EE; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700;">
-                <i class="bi bi-shield-check"></i> Escrow Guarantee
-            </span>
+                <!-- Right Action Icons -->
+        <div class="zal-nav-actions">
+            <a href="{{ route('search') }}" class="nav-icon-btn" title="Search"><i class="bi bi-search"></i></a>
+            @auth
+                <button class="nav-icon-btn" id="navTicketBtn" title="Wallet"><i class="bi bi-wallet2"></i></button>
+                <a href="{{ route('notifications') }}" class="nav-icon-btn" title="Notifications">
+                    <i class="bi bi-bell"></i>
+                    <span class="icon-badge-dot"></span>
+                </a>
+                <a href="{{ route('shop.cart') }}" class="nav-icon-btn" title="Cart">
+                    <i class="bi bi-cart3"></i>
+                    <span class="icon-badge-num" id="globalCartBadge">2</span>
+                </a>
+                <a href="{{ route('dashboard.creator') }}" class="nav-avatar-btn" title="Profile">
+                    <img src="{{ auth()->user()->avatar_url ?? 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100&auto=format&fit=crop&q=80' }}" alt="{{ auth()->user()->name }}">
+                </a>
+            @else
+                <a href="{{ route('login') }}" class="btn-login-nav" style="background: linear-gradient(135deg, var(--cyan-accent, #00F0C8), #1ed6d0); color: #090D10; text-decoration: none; padding: 7px 18px; border-radius: 20px; font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; margin-left: 8px;">
+                    <i class="bi bi-box-arrow-in-right"></i> Log In
+                </a>
+            @endauth
         </div>
     </div>
+</header>
 
-    @if($activeAuction)
-        <!-- MAIN AUCTION STAGE -->
-        <div style="display: grid; grid-template-columns: 1fr 400px; gap: 24px; margin-bottom: 40px;">
-            
-            <!-- LEFT: AUCTION ITEM SHOWCASE & TIMER -->
-            <div class="zal-card" style="padding: 0; overflow: hidden; background: #16161f; border-radius: 16px; position: relative;">
-                <div style="height: 480px; position: relative; background: #0a0a0f;">
-                    <img src="{{ $activeAuction->image_url ?? ($activeAuction->product->primary_image ?? 'https://images.unsplash.com/photo-1613771404784-3a5686aa2be3?w=800') }}" alt="{{ $activeAuction->title }}" style="width: 100%; height: 100%; object-fit: contain;">
-                    
-                    <div style="position: absolute; top: 16px; left: 16px; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); padding: 6px 14px; border-radius: 20px; color: #fff; font-size: 12px; font-weight: 700;">
-                        Seller: {{ $activeAuction->seller->name }}
-                    </div>
+<!-- MAIN CONTAINER -->
+<main class="page-container">
 
-                    <!-- COUNTDOWN TIMER BADGE -->
-                    <div style="position: absolute; top: 16px; right: 16px; background: rgba(254,44,85,0.9); color: #fff; padding: 8px 16px; border-radius: 20px; font-weight: 900; font-size: 16px; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 16px rgba(254,44,85,0.5);">
-                        <i class="bi bi-stopwatch-fill"></i> <span id="auctionTimer">00:45</span>
-                    </div>
-
-                    <!-- BOTTOM BAR WITH HIGH BID INFO -->
-                    <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.95)); padding: 24px 20px 16px;">
-                        <h2 style="font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 6px;">{{ $activeAuction->title }}</h2>
-                        <div style="display: flex; gap: 20px; color: #aaa; font-size: 13px;">
-                            <span>Starting Bid: <strong style="color: #fff;">${{ number_format($activeAuction->starting_bid, 2) }}</strong></span>
-                            <span>Min Increment: <strong style="color: #25F4EE;">+${{ number_format($activeAuction->min_bid_step, 2) }}</strong></span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- RIGHT: REAL-TIME BIDDING CONSOLE & BID LOG -->
-            <div class="zal-card" style="background: #16161f; border-radius: 16px; display: flex; flex-direction: column; overflow: hidden;">
-                
-                <div style="padding: 16px; border-bottom: 1px solid #222;">
-                    <div style="font-size: 12px; color: #aaa; text-transform: uppercase; font-weight: 700;">CURRENT HIGHEST BID</div>
-                    <div style="font-size: 32px; font-weight: 900; color: #25F4EE; margin: 4px 0;">
-                        $<span id="currentBidVal">{{ number_format($activeAuction->current_bid, 2) }}</span>
-                    </div>
-                    <div style="font-size: 12px; color: #888;">
-                        Winning Bidder: <strong id="highestBidderName" style="color: #fff;">{{ $activeAuction->highestBidder->name ?? 'None yet' }}</strong>
-                    </div>
-                </div>
-
-                <!-- LIVE BID HISTORY -->
-                <div id="bidsStreamContainer" style="flex: 1; padding: 16px; overflow-y: auto; max-height: 240px; display: flex; flex-direction: column; gap: 8px;">
-                    @foreach($activeAuction->bids as $bid)
-                        <div style="display: flex; justify-content: space-between; align-items: center; background: #1f1f2a; padding: 8px 12px; border-radius: 8px; font-size: 13px;">
-                            <span style="color: #ddd;">{{ $bid->user->name ?? 'Anonymous' }}</span>
-                            <span style="color: #25F4EE; font-weight: 800;">${{ number_format($bid->amount, 2) }}</span>
-                        </div>
-                    @endforeach
-                </div>
-
-                <!-- BID ACTION BUTTONS & CUSTOM BID INPUT -->
-                <div style="padding: 16px; border-top: 1px solid #222; background: #121218;">
-                    
-                    @php $nextMin = $activeAuction->current_bid + $activeAuction->min_bid_step; @endphp
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
-                        <button onclick="placeQuickBid({{ $nextMin }})" style="padding: 10px; border-radius: 10px; border: none; background: #25F4EE; color: #000; font-weight: 800; font-size: 13px; cursor: pointer;">
-                            Bid ${{ number_format($nextMin, 2) }}
-                        </button>
-                        <button onclick="placeQuickBid({{ $nextMin + 20 }})" style="padding: 10px; border-radius: 10px; border: none; background: #FE2C55; color: #fff; font-weight: 800; font-size: 13px; cursor: pointer;">
-                            Bid ${{ number_format($nextMin + 20, 2) }}
-                        </button>
-                    </div>
-
-                    <form onsubmit="placeCustomBid(event)" style="display: flex; gap: 8px;">
-                        <input type="number" id="customBidInput" min="{{ $nextMin }}" step="1" placeholder="Custom Bid ($)" required style="flex: 1; background: #1f1f2a; border: 1px solid #333; color: #fff; padding: 10px 12px; border-radius: 8px; font-size: 14px; font-weight: 700; outline: none;">
-                        <button type="submit" style="background: linear-gradient(135deg, #FFB800, #FF8A00); color: #000; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 800; font-size: 13px; cursor: pointer;">
-                            Place Bid
-                        </button>
-                    </form>
-
-                    <p style="font-size: 11px; color: #777; margin-top: 8px; text-align: center;">
-                        🛡️ Anti-Sniping active: Bids in last 15s extend timer.
-                    </p>
-                </div>
-
-            </div>
-
+    <!-- SECTION 1: ENDING SOON -->
+    <section class="section-spacing">
+        <div class="section-header-row">
+            <h2 class="section-title">Ending Soon</h2>
+            <a href="#" class="view-all-link">View All <i class="bi bi-arrow-right"></i></a>
         </div>
-    @endif
 
-    <!-- OTHER LIVE AUCTIONS LIST -->
-    <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 16px;">More Active Auctions</h3>
-    <div class="grid-4-col" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px;">
-        @foreach($auctions as $auc)
-            <div class="zal-card" style="padding: 12px;">
-                <div style="height: 180px; border-radius: 8px; overflow: hidden; margin-bottom: 10px;">
-                    <img src="{{ $auc->image_url ?? ($auc->product->primary_image ?? 'https://images.unsplash.com/photo-1613771404784-3a5686aa2be3?w=600') }}" alt="{{ $auc->title }}" style="width: 100%; height: 100%; object-fit: cover;">
+        <div class="grid-4-col">
+            <!-- Card 1 -->
+            <div class="auction-card">
+                <div class="auction-card-thumb">
+                    <img src="https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=600&auto=format&fit=crop&q=80" alt="Luxury Dress For..">
+                    <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
+                    <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.2k</div>
                 </div>
-                <div style="font-weight: 700; font-size: 13px; height: 38px; overflow: hidden;">{{ $auc->title }}</div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
-                    <span style="color: #25F4EE; font-weight: 800; font-size: 16px;">${{ number_format($auc->current_bid, 2) }}</span>
-                    <a href="{{ route('auctions.show', $auc->id) }}" class="zal-btn-primary" style="padding: 4px 10px; font-size: 11px; border-radius: 6px; text-decoration: none; background: #FE2C55; color: #fff; font-weight: 700;">
-                        View Item
-                    </a>
+                <div class="auction-card-body">
+                    <h3 class="auction-card-title">Luxury Dress For..</h3>
+                    <div class="auction-info-row">
+                        <div class="auction-bid-label">
+                            <span>Current Bid</span>
+                            <span class="auction-bid-val">C$2,850</span>
+                        </div>
+                        <div class="auction-time-label">
+                            <span>Time Left</span>
+                            <span class="auction-time-val">02:14:55</span>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-place-bid-cyan" onclick="window.location='/live/1'">Place Bid</button>
                 </div>
             </div>
-        @endforeach
+
+            <!-- Card 2 (With FIRST EDITION Tag & RARE Badge) -->
+            <div class="auction-card">
+                <div class="auction-card-thumb">
+                    <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80" alt="First Edition Rare">
+                    <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
+                    <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.2k</div>
+                    <div class="auction-badge-tag">First Edition</div>
+                    <div class="auction-badge-rare">Rare</div>
+                </div>
+                <div class="auction-card-body">
+                    <h3 class="auction-card-title">First Edition Rare...</h3>
+                    <div class="auction-info-row">
+                        <div class="auction-bid-label">
+                            <span>Current Bid</span>
+                            <span class="auction-bid-val">C$2,850</span>
+                        </div>
+                        <div class="auction-time-label">
+                            <span>Time Left</span>
+                            <span class="auction-time-val">02:14:55</span>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-place-bid-cyan" onclick="window.location='/live/1'">Place Bid</button>
+                </div>
+            </div>
+
+            <!-- Card 3 -->
+            <div class="auction-card">
+                <div class="auction-card-thumb">
+                    <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80" alt="Vintage Rolex Su">
+                    <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
+                    <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.2k</div>
+                </div>
+                <div class="auction-card-body">
+                    <h3 class="auction-card-title">Vintage Rolex Su...</h3>
+                    <div class="auction-info-row">
+                        <div class="auction-bid-label">
+                            <span>Current Bid</span>
+                            <span class="auction-bid-val">C$2,850</span>
+                        </div>
+                        <div class="auction-time-label">
+                            <span>Time Left</span>
+                            <span class="auction-time-val">02:14:55</span>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-place-bid-cyan" onclick="window.location='/live/1'">Place Bid</button>
+                </div>
+            </div>
+
+            <!-- Card 4 -->
+            <div class="auction-card">
+                <div class="auction-card-thumb">
+                    <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80" alt="Vintage Rolex Su">
+                    <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
+                    <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.2k</div>
+                </div>
+                <div class="auction-card-body">
+                    <h3 class="auction-card-title">Vintage Rolex Su...</h3>
+                    <div class="auction-info-row">
+                        <div class="auction-bid-label">
+                            <span>Current Bid</span>
+                            <span class="auction-bid-val">C$2,850</span>
+                        </div>
+                        <div class="auction-time-label">
+                            <span>Time Left</span>
+                            <span class="auction-time-val">02:14:55</span>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-place-bid-cyan" onclick="window.location='/live/1'">Place Bid</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 2: TRENDING LIVE AUCTIONS -->
+    <section class="section-spacing">
+        <div class="section-header-row">
+            <h2 class="section-title">Trending Live Auctions</h2>
+            <a href="#" class="view-all-link">View All <i class="bi bi-arrow-right"></i></a>
+        </div>
+
+        <!-- 2 Rows of 4 Cards Grid (8 Cards Total) -->
+        <div class="grid-4-col">
+            <!-- Row 1 Card 1 -->
+            <div class="auction-card">
+                <div class="auction-card-thumb">
+                    <img src="https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=600&auto=format&fit=crop&q=80" alt="Luxury Dress For..">
+                    <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
+                    <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.2k</div>
+                </div>
+                <div class="auction-card-body">
+                    <h3 class="auction-card-title">Luxury Dress For..</h3>
+                    <div class="auction-info-row">
+                        <div class="auction-bid-label">
+                            <span>Current Bid</span>
+                            <span class="auction-bid-val">C$2,850</span>
+                        </div>
+                        <div class="auction-time-label">
+                            <span>Time Left</span>
+                            <span class="auction-time-val">02:14:55</span>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-place-bid-cyan" onclick="window.location='/live/1'">Place Bid</button>
+                </div>
+            </div>
+
+            <!-- Row 1 Card 2 -->
+            <div class="auction-card">
+                <div class="auction-card-thumb">
+                    <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80" alt="First Edition Rare">
+                    <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
+                    <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.2k</div>
+                    <div class="auction-badge-tag">First Edition</div>
+                    <div class="auction-badge-rare">Rare</div>
+                </div>
+                <div class="auction-card-body">
+                    <h3 class="auction-card-title">First Edition Rare...</h3>
+                    <div class="auction-info-row">
+                        <div class="auction-bid-label">
+                            <span>Current Bid</span>
+                            <span class="auction-bid-val">C$2,850</span>
+                        </div>
+                        <div class="auction-time-label">
+                            <span>Time Left</span>
+                            <span class="auction-time-val">02:14:55</span>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-place-bid-cyan" onclick="window.location='/live/1'">Place Bid</button>
+                </div>
+            </div>
+
+            <!-- Row 1 Card 3 -->
+            <div class="auction-card">
+                <div class="auction-card-thumb">
+                    <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80" alt="Vintage Rolex Su">
+                    <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
+                    <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.2k</div>
+                </div>
+                <div class="auction-card-body">
+                    <h3 class="auction-card-title">Vintage Rolex Su...</h3>
+                    <div class="auction-info-row">
+                        <div class="auction-bid-label">
+                            <span>Current Bid</span>
+                            <span class="auction-bid-val">C$2,850</span>
+                        </div>
+                        <div class="auction-time-label">
+                            <span>Time Left</span>
+                            <span class="auction-time-val">02:14:55</span>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-place-bid-cyan" onclick="window.location='/live/1'">Place Bid</button>
+                </div>
+            </div>
+
+            <!-- Row 1 Card 4 -->
+            <div class="auction-card">
+                <div class="auction-card-thumb">
+                    <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80" alt="Vintage Rolex Su">
+                    <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
+                    <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.2k</div>
+                </div>
+                <div class="auction-card-body">
+                    <h3 class="auction-card-title">Vintage Rolex Su...</h3>
+                    <div class="auction-info-row">
+                        <div class="auction-bid-label">
+                            <span>Current Bid</span>
+                            <span class="auction-bid-val">C$2,850</span>
+                        </div>
+                        <div class="auction-time-label">
+                            <span>Time Left</span>
+                            <span class="auction-time-val">02:14:55</span>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-place-bid-cyan" onclick="window.location='/live/1'">Place Bid</button>
+                </div>
+            </div>
+
+            <!-- Row 2 Card 5 -->
+            <div class="auction-card">
+                <div class="auction-card-thumb">
+                    <img src="https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=600&auto=format&fit=crop&q=80" alt="Luxury Dress For..">
+                    <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
+                    <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.2k</div>
+                </div>
+                <div class="auction-card-body">
+                    <h3 class="auction-card-title">Luxury Dress For..</h3>
+                    <div class="auction-info-row">
+                        <div class="auction-bid-label">
+                            <span>Current Bid</span>
+                            <span class="auction-bid-val">C$2,850</span>
+                        </div>
+                        <div class="auction-time-label">
+                            <span>Time Left</span>
+                            <span class="auction-time-val">02:14:55</span>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-place-bid-cyan" onclick="window.location='/live/1'">Place Bid</button>
+                </div>
+            </div>
+
+            <!-- Row 2 Card 6 -->
+            <div class="auction-card">
+                <div class="auction-card-thumb">
+                    <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80" alt="First Edition Rare">
+                    <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
+                    <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.2k</div>
+                    <div class="auction-badge-tag">First Edition</div>
+                    <div class="auction-badge-rare">Rare</div>
+                </div>
+                <div class="auction-card-body">
+                    <h3 class="auction-card-title">First Edition Rare...</h3>
+                    <div class="auction-info-row">
+                        <div class="auction-bid-label">
+                            <span>Current Bid</span>
+                            <span class="auction-bid-val">C$2,850</span>
+                        </div>
+                        <div class="auction-time-label">
+                            <span>Time Left</span>
+                            <span class="auction-time-val">02:14:55</span>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-place-bid-cyan" onclick="window.location='/live/1'">Place Bid</button>
+                </div>
+            </div>
+
+            <!-- Row 2 Card 7 -->
+            <div class="auction-card">
+                <div class="auction-card-thumb">
+                    <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80" alt="Vintage Rolex Su">
+                    <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
+                    <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.2k</div>
+                </div>
+                <div class="auction-card-body">
+                    <h3 class="auction-card-title">Vintage Rolex Su...</h3>
+                    <div class="auction-info-row">
+                        <div class="auction-bid-label">
+                            <span>Current Bid</span>
+                            <span class="auction-bid-val">C$2,850</span>
+                        </div>
+                        <div class="auction-time-label">
+                            <span>Time Left</span>
+                            <span class="auction-time-val">02:14:55</span>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-place-bid-cyan" onclick="window.location='/live/1'">Place Bid</button>
+                </div>
+            </div>
+
+            <!-- Row 2 Card 8 -->
+            <div class="auction-card">
+                <div class="auction-card-thumb">
+                    <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80" alt="Vintage Rolex Su">
+                    <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
+                    <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.2k</div>
+                </div>
+                <div class="auction-card-body">
+                    <h3 class="auction-card-title">Vintage Rolex Su...</h3>
+                    <div class="auction-info-row">
+                        <div class="auction-bid-label">
+                            <span>Current Bid</span>
+                            <span class="auction-bid-val">C$2,850</span>
+                        </div>
+                        <div class="auction-time-label">
+                            <span>Time Left</span>
+                            <span class="auction-time-val">02:14:55</span>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-place-bid-cyan" onclick="window.location='/live/1'">Place Bid</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 3: UPCOMING DROPS -->
+    <section class="section-spacing">
+        <div class="section-header-row">
+            <h2 class="section-title">Upcoming Drops</h2>
+            <a href="#" class="view-all-link">View All <i class="bi bi-arrow-right"></i></a>
+        </div>
+
+        <!-- Upcoming Drops Cards Stack -->
+        <div class="upcoming-drop-card">
+            <div class="drop-card-left">
+                <img src="https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=300&auto=format&fit=crop&q=80" alt="Modern Art Estate" class="drop-thumb-img">
+                <div class="drop-card-info">
+                    <span class="drop-tag-line">STARTS TOMORROW • 10:00 AM EST</span>
+                    <h3 class="drop-title-text">The Modern Art Estate Collection</h3>
+                    <p class="drop-desc-text">Over 500 lots of contemporary sculpture and canvas work.</p>
+                </div>
+            </div>
+            <button type="button" class="btn-notify-me" onclick="handleNotifyMe(this)">
+                <i class="bi bi-bell-fill"></i>
+                <span>Notify Me</span>
+            </button>
+        </div>
+
+        <div class="upcoming-drop-card">
+            <div class="drop-card-left">
+                <img src="https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=300&auto=format&fit=crop&q=80" alt="Comic Book Blowout" class="drop-thumb-img">
+                <div class="drop-card-info">
+                    <span class="drop-tag-line">STARTS OCT 12 • 2:00 PM EST</span>
+                    <h3 class="drop-title-text">Golden Age Comic Book Blowout</h3>
+                    <p class="drop-desc-text">Rare first appearances and CGC graded gems from the 40s.</p>
+                </div>
+            </div>
+            <button type="button" class="btn-notify-me" onclick="handleNotifyMe(this)">
+                <i class="bi bi-bell-fill"></i>
+                <span>Notify Me</span>
+            </button>
+        </div>
+    </section>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="zal-footer-center">
+    <div class="container">
+        <!-- Center Logo -->
+        <a href="{{ route('home') }}">
+            <img src="{{ asset('assets/logo.png') }}" alt="Zaldoris" class="footer-logo-img">
+        </a>
+        <p class="footer-tagline-text">
+            Experience the future of shopping with realtime interaction, live demonstrations, and exclusive community deals.
+        </p>
+        <div class="footer-copyright-line">
+            © 2024 LiveStreamShop. All rights reserved.
+        </div>
     </div>
+</footer>
 
-</div>
+<!-- FLOATING WIDGET BUTTON -->
+<button class="floating-action-widget" title="Live Chat">
+    <i class="bi bi-chat-dots-fill"></i>
+</button>
 
-@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ asset('js/main.js') }}"></script>
 <script>
-    const auctionId = {{ $activeAuction->id ?? 0 }};
-    let currentBid = {{ $activeAuction->current_bid ?? 0 }};
-
-    async function placeQuickBid(amount) {
-        await submitBid(amount);
-    }
-
-    async function placeCustomBid(e) {
-        e.preventDefault();
-        const input = document.getElementById('customBidInput');
-        const amount = parseFloat(input.value);
-        if (isNaN(amount)) return;
-        await submitBid(amount);
-        input.value = '';
-    }
-
-    async function submitBid(amount) {
-        if (!auctionId) return;
-
-        try {
-            const res = await fetch(`/api/v1/auctions/${auctionId}/bid`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({ amount: amount })
-            });
-
-            const data = await res.json();
-            if (data.success) {
-                currentBid = data.current_bid;
-                document.getElementById('currentBidVal').innerText = Number(data.current_bid).toFixed(2);
-                document.getElementById('highestBidderName').innerText = data.highest_bidder;
-                
-                const container = document.getElementById('bidsStreamContainer');
-                const div = document.createElement('div');
-                div.style.display = 'flex';
-                div.style.justifyContent = 'space-between';
-                div.style.alignItems = 'center';
-                div.style.background = 'rgba(37,244,238,0.15)';
-                div.style.padding = '8px 12px';
-                div.style.borderRadius = '8px';
-                div.style.fontSize = '13px';
-                div.innerHTML = `<span style="color: #fff; font-weight: 700;">${data.highest_bidder}</span> <span style="color: #25F4EE; font-weight: 800;">$${Number(data.current_bid).toFixed(2)}</span>`;
-                container.insertBefore(div, container.firstChild);
-
-                alert(`🎉 Bid of $${amount} accepted! You are currently the highest bidder.`);
-            } else {
-                alert(data.message || 'Could not place bid.');
-            }
-        } catch (e) {
-            alert('Failed to place bid. Please login to bid.');
+    // Notify Me Button Toggle Handler
+    function handleNotifyMe(btn) {
+        const textSpan = btn.querySelector('span');
+        if (btn.classList.contains('subscribed')) {
+            btn.classList.remove('subscribed');
+            btn.style.background = '#00F0C8';
+            btn.style.color = '#090D10';
+            if (textSpan) textSpan.textContent = 'Notify Me';
+        } else {
+            btn.classList.add('subscribed');
+            btn.style.background = '#12181E';
+            btn.style.color = '#00F0C8';
+            btn.style.border = '1px solid #00F0C8';
+            if (textSpan) textSpan.textContent = 'Subscribed ✓';
         }
     }
 </script>
-@endpush
-@endsection
+</body>
+</html>

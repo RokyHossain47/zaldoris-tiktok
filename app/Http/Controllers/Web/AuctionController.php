@@ -23,18 +23,22 @@ class AuctionController extends Controller
         return view('auctions.index', compact('auctions', 'activeAuction'));
     }
 
-    public function show($id)
+    public function show($id = null)
     {
-        $auction = Auction::with(['seller.sellerProfile', 'product', 'highestBidder', 'bids.user'])
-            ->findOrFail($id);
+        $auction = $id ? Auction::with(['seller.sellerProfile', 'product', 'highestBidder', 'bids.user'])->find($id) : null;
+        if (!$auction) {
+            $auction = Auction::with(['seller.sellerProfile', 'product', 'highestBidder', 'bids.user'])->first() ?? new Auction();
+        }
 
         return view('auctions.show', compact('auction'));
     }
 
-    public function result($id)
+    public function result($id = null)
     {
-        $auction = Auction::with(['seller', 'highestBidder', 'product'])
-            ->findOrFail($id);
+        $auction = $id ? Auction::with(['seller', 'highestBidder', 'product'])->find($id) : null;
+        if (!$auction) {
+            $auction = Auction::with(['seller', 'highestBidder', 'product'])->first() ?? new Auction();
+        }
 
         return view('auctions.result', compact('auction'));
     }

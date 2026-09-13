@@ -11,32 +11,79 @@ use App\Services\TaxService;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 
+use App\Models\Category;
+
 class ShopController extends Controller
 {
     public function index(Request $request)
     {
-        $category = $request->query('category', 'all');
+        $categorySlug = $request->query('category', 'all');
+        $filter = $request->query('filter');
 
-        $products = Product::with('seller')
-            ->where('status', 'active')
-            ->when($category !== 'all', function ($q) use ($category) {
-                $q->where('category', $category);
-            })
-            ->orderBy('id', 'desc')
-            ->paginate(12);
+        $categories = Category::where('is_active', true)->orderBy('sort_order', 'asc')->get();
 
-        return view('shop.index', compact('products', 'category'));
+        $query = Product::with(['seller', 'category'])->where('status', 'active');
+
+        if ($categorySlug !== 'all') {
+            $cat = Category::where('slug', $categorySlug)->first();
+            if ($cat) {
+                $query->where('category_id', $cat->id);
+            } else {
+                $query->where('category', 'like', "%{$categorySlug}%");
+            }
+        }
+
+        if ($filter === 'featured') {
+            $query->where('is_featured', true);
+        } elseif ($filter === 'trending') {
+            $query->where('is_trending', true);
+        }
+
+        $products = $query->orderBy('id', 'desc')->paginate(12);
+
+        return view('shop.index', compact('products', 'categories', 'categorySlug', 'filter'));
     }
 
-    public function product($id)
+    public function product($id = null)
     {
-        $product = Product::with('seller.sellerProfile')->findOrFail($id);
-        $relatedProducts = Product::where('id', '!=', $id)
-            ->where('category', $product->category)
+        $product = $id ? Product::with(['seller.sellerProfile', 'category'])->find($id) : null;
+        if (!$product) {
+            $product = Product::with(['seller.sellerProfile', 'category'])->first() ?? new Product();
+        }
+
+        // Store recently viewed product in browser session (up to 10 latest unique items)
+        if ($product->id) {
+            $recent = session()->get('recently_viewed_products', []);
+            $recent = array_values(array_diff($recent, [$product->id]));
+            array_unshift($recent, $product->id);
+            $recent = array_slice($recent, 0, 10);
+            session()->put('recently_viewed_products', $recent);
+        }
+
+        $relatedProducts = Product::where('id', '!=', $product->id ?? 0)
+            ->where('status', 'active')
             ->take(4)
             ->get();
 
-        return view('shop.product', compact('product', 'relatedProducts'));
+        $stream = ($product->id ? $product->streams()->where('is_live', true)->first() : null)
+            ?? \App\Models\Stream::with('host')->where('is_live', true)->first() 
+            ?? \App\Models\Stream::with('host')->first();
+
+        $reactions = \App\Models\Reaction::where('is_active', true)
+            ->where('type', 'emoji')
+            ->orderBy('sort_order', 'asc')
+            ->get();
+
+        $gifs = \App\Models\Reaction::where('is_active', true)
+            ->where('type', 'gif')
+            ->orderBy('sort_order', 'asc')
+            ->get();
+
+        $gifts = \App\Models\Gift::where('is_active', true)
+            ->orderBy('coin_cost', 'asc')
+            ->get();
+
+        return view('shop.product', compact('product', 'relatedProducts', 'stream', 'reactions', 'gifs', 'gifts'));
     }
 
     public function cart()
@@ -138,9 +185,12 @@ class ShopController extends Controller
         });
     }
 
-    public function success($orderId)
+    public function success($orderId = null)
     {
-        $order = Order::with(['items.product', 'seller.sellerProfile'])->findOrFail($orderId);
+        $order = $orderId ? Order::with(['items.product', 'seller.sellerProfile'])->find($orderId) : null;
+        if (!$order) {
+            $order = Order::with(['items.product', 'seller.sellerProfile'])->latest()->first() ?? new Order();
+        }
 
         return view('shop.success', compact('order'));
     }

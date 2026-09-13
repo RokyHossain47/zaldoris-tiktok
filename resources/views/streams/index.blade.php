@@ -1,67 +1,563 @@
-@extends('layouts.app')
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Zaldoris - Live Stream Directory. Explore active live streams across shopping, academy, auctions, and entertainment.">
+    <title>Live Streams - Zaldoris Live Commerce Platform</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ asset('assets/favicon.png') }}">
+    <link rel="shortcut icon" href="{{ asset('assets/favicon.png') }}">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="{{ asset('css/style.css') }}" rel="stylesheet">
 
-@section('title', 'Live Streams & PK Battles - Zaldoris')
+    <!-- EMBEDDED STYLES FOR LIVE STREAM LIST PAGE -->
+    <style>
+    /* ============================================================
+       LIVE STREAM LIST PAGE STYLES (Pixel-Perfect Figma Match)
+       ============================================================ */
 
-@section('content')
-<div style="margin-bottom: 30px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px;">
-        <h1 style="font-size: 24px; font-weight: 800; margin: 0;">Live Streams & Broadcasts</h1>
-        
-        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-            <a href="{{ route('streams.index') }}" class="zal-btn-filter {{ $type === 'all' ? 'active' : '' }}" style="padding: 6px 14px; border-radius: 20px; text-decoration: none; font-size: 13px; font-weight: 600; {{ $type === 'all' ? 'background: #FE2C55; color: #fff;' : 'background: #1a1a24; color: #aaa;' }}">
-                All Streams
-            </a>
-            <a href="{{ route('streams.index', ['type' => 'live_shopping']) }}" class="zal-btn-filter {{ $type === 'live_shopping' ? 'active' : '' }}" style="padding: 6px 14px; border-radius: 20px; text-decoration: none; font-size: 13px; font-weight: 600; {{ $type === 'live_shopping' ? 'background: #FE2C55; color: #fff;' : 'background: #1a1a24; color: #aaa;' }}">
-                <i class="bi bi-bag-fill"></i> Live Shopping
-            </a>
-            <a href="{{ route('streams.index', ['type' => 'live_auction']) }}" class="zal-btn-filter {{ $type === 'live_auction' ? 'active' : '' }}" style="padding: 6px 14px; border-radius: 20px; text-decoration: none; font-size: 13px; font-weight: 600; {{ $type === 'live_auction' ? 'background: #FE2C55; color: #fff;' : 'background: #1a1a24; color: #aaa;' }}">
-                <i class="bi bi-hammer"></i> Live Auction
-            </a>
-            <a href="{{ route('streams.index', ['type' => 'pk_battle']) }}" class="zal-btn-filter {{ $type === 'pk_battle' ? 'active' : '' }}" style="padding: 6px 14px; border-radius: 20px; text-decoration: none; font-size: 13px; font-weight: 600; {{ $type === 'pk_battle' ? 'background: #FE2C55; color: #fff;' : 'background: #1a1a24; color: #aaa;' }}">
-                <i class="bi bi-fire"></i> PK Battles
-            </a>
+    .live-stream-list-grid {
+      display: grid !important;
+      grid-template-columns: repeat(6, 1fr) !important;
+      gap: 1rem !important;
+      max-width: 1400px !important;
+      margin: 0 auto !important;
+      padding: 2rem 1rem 4rem !important;
+    }
+
+    .stream-list-card {
+      background: #0B0F14 !important;
+      border: 1px solid #16202C !important;
+      border-radius: 14px !important;
+      padding: 0.5rem !important;
+      text-decoration: none !important;
+      display: flex !important;
+      flex-direction: column !important;
+      transition: all 0.3s ease !important;
+      cursor: pointer !important;
+    }
+
+    .stream-list-card:hover {
+      transform: translateY(-4px) !important;
+      border-color: #00F0C8 !important;
+      box-shadow: 0 10px 25px rgba(0, 240, 200, 0.15) !important;
+    }
+
+    .stream-thumb-wrap {
+      position: relative !important;
+      width: 100% !important;
+      height: 180px !important;
+      border-radius: 10px !important;
+      overflow: hidden !important;
+      background: #000 !important;
+    }
+
+    .stream-thumb-wrap img {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover !important;
+      display: block !important;
+      transition: transform 0.4s ease !important;
+    }
+
+    .stream-list-card:hover .stream-thumb-wrap img {
+      transform: scale(1.05) !important;
+    }
+
+    .badge-live-tag {
+      position: absolute !important;
+      top: 8px !important;
+      left: 8px !important;
+      background: #FF2A6D !important;
+      color: #FFFFFF !important;
+      font-size: 0.68rem !important;
+      font-weight: 700 !important;
+      padding: 2px 8px !important;
+      border-radius: 12px !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 4px !important;
+      box-shadow: 0 2px 8px rgba(255, 42, 109, 0.5) !important;
+    }
+
+    .badge-viewers-tag {
+      position: absolute !important;
+      top: 8px !important;
+      right: 8px !important;
+      background: rgba(9, 13, 16, 0.75) !important;
+      backdrop-filter: blur(4px) !important;
+      color: #FFFFFF !important;
+      font-size: 0.68rem !important;
+      font-weight: 600 !important;
+      padding: 2px 8px !important;
+      border-radius: 12px !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 4px !important;
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }
+
+    .stream-card-info-box {
+      padding: 0.65rem 0.25rem 0.25rem !important;
+    }
+
+    .streamer-user-row {
+      display: flex !important;
+      align-items: center !important;
+      gap: 6px !important;
+      margin-bottom: 3px !important;
+    }
+
+    .streamer-small-avatar {
+      width: 22px !important;
+      height: 22px !important;
+      border-radius: 50% !important;
+      object-fit: cover !important;
+      flex-shrink: 0 !important;
+    }
+
+    .streamer-name-text {
+      font-size: 0.78rem !important;
+      font-weight: 600 !important;
+      color: #94A3B8 !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+    }
+
+    .stream-card-title {
+      font-family: 'Outfit', sans-serif !important;
+      font-size: 0.92rem !important;
+      font-weight: 700 !important;
+      color: #FFFFFF !important;
+      margin: 0 0 2px 0 !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+    }
+
+    .stream-card-category {
+      font-size: 0.74rem !important;
+      color: #64748B !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+    }
+
+    @media (max-width: 1399px) {
+      .live-stream-list-grid {
+        grid-template-columns: repeat(4, 1fr) !important;
+      }
+    }
+
+    @media (max-width: 991px) {
+      .live-stream-list-grid {
+        grid-template-columns: repeat(3, 1fr) !important;
+      }
+    }
+
+    @media (max-width: 767px) {
+      .live-stream-list-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .live-stream-list-grid {
+        grid-template-columns: 1fr !important;
+      }
+    }
+    </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<header class="zal-navbar">
+    <div class="zal-navbar-inner">
+        <!-- Logo -->
+        <a class="zal-brand" href="{{ route('home') }}">
+            <img src="{{ asset('assets/logo.png') }}" alt="Zaldoris" class="zal-brand-logo">
+        </a>
+
+        <!-- Center Nav Links -->
+        <ul class="zal-nav-menu">
+            <li><a href="{{ route('home') }}" class="zal-nav-link active">Home</a></li>
+            <li><a href="{{ route('shop.index') }}" class="zal-nav-link">Live Shopping</a></li>
+            <li><a href="{{ route('auctions.index') }}" class="zal-nav-link">Live Auction</a></li>
+            <li><a href="#" class="zal-nav-link">Live Academy</a></li>
+            <li><a href="{{ route('streams.index') }}" class="zal-nav-link">Live Streaming</a></li>
+            <li><a href="{{ route('streams.pk_battle', 1) }}" class="zal-nav-link">PK Battle</a></li>
+        </ul>
+
+                <!-- Right Action Icons -->
+        <div class="zal-nav-actions">
+            <a href="{{ route('search') }}" class="nav-icon-btn" title="Search"><i class="bi bi-search"></i></a>
+            @auth
+                <button class="nav-icon-btn" id="navTicketBtn" title="Wallet"><i class="bi bi-wallet2"></i></button>
+                <a href="{{ route('notifications') }}" class="nav-icon-btn" title="Notifications">
+                    <i class="bi bi-bell"></i>
+                    <span class="icon-badge-dot"></span>
+                </a>
+                <a href="{{ route('shop.cart') }}" class="nav-icon-btn" title="Cart">
+                    <i class="bi bi-cart3"></i>
+                    <span class="icon-badge-num" id="globalCartBadge">2</span>
+                </a>
+                <a href="{{ route('dashboard.creator') }}" class="nav-avatar-btn" title="Profile">
+                    <img src="{{ auth()->user()->avatar_url ?? 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100&auto=format&fit=crop&q=80' }}" alt="{{ auth()->user()->name }}">
+                </a>
+            @else
+                <a href="{{ route('login') }}" class="btn-login-nav" style="background: linear-gradient(135deg, var(--cyan-accent, #00F0C8), #1ed6d0); color: #090D10; text-decoration: none; padding: 7px 18px; border-radius: 20px; font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; margin-left: 8px;">
+                    <i class="bi bi-box-arrow-in-right"></i> Log In
+                </a>
+            @endauth
         </div>
     </div>
+</header>
 
-    <div class="grid-4-col" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
-        @forelse($streams as $stream)
-            <a href="{{ route('streams.show', $stream->id) }}" class="zal-card" style="text-decoration: none; color: inherit;">
-                <div class="live-card-thumb" style="height: 360px; position: relative;">
-                    <img src="{{ $stream->thumbnail_url }}" alt="{{ $stream->title }}" style="width: 100%; height: 100%; object-fit: cover;">
-                    <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
-                    <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> {{ number_format($stream->viewer_count) }}</div>
-                    
-                    @if($stream->stream_type === 'pk_battle')
-                        <div style="position: absolute; top: 12px; right: 12px; background: linear-gradient(135deg, #FE2C55, #FF0055); color: #fff; font-size: 11px; font-weight: 800; padding: 4px 8px; border-radius: 6px;">
-                            ⚔️ PK BATTLE
-                        </div>
-                    @elseif($stream->stream_type === 'live_shopping')
-                        <div style="position: absolute; top: 12px; right: 12px; background: rgba(37,244,238,0.9); color: #000; font-size: 11px; font-weight: 800; padding: 4px 8px; border-radius: 6px;">
-                            🛍️ SHOP
-                        </div>
-                    @endif
+<!-- MAIN CONTENT -->
+<main class="page-container" style="min-height: 80vh;">
 
-                    <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.9)); padding: 20px 14px 14px;">
-                        <div style="font-weight: 700; font-size: 15px; color: #fff; line-height: 1.3; margin-bottom: 8px;">
-                            {{ Str::limit($stream->title, 50) }}
-                        </div>
-                        <div class="host-row" style="display: flex; align-items: center; gap: 8px;">
-                            <img src="{{ $stream->host->avatar_url }}" alt="{{ $stream->host->name }}" class="host-avatar" style="width: 28px; height: 28px; border-radius: 50%;">
-                            <span class="host-name" style="color: #eee; font-size: 13px; font-weight: 600;">{{ $stream->host->name }}</span>
-                        </div>
-                    </div>
-                </div>
-            </a>
-        @empty
-            <div style="grid-column: 1/-1; text-align: center; padding: 60px 20px; color: #888;">
-                <i class="bi bi-broadcast" style="font-size: 48px; display: block; margin-bottom: 12px;"></i>
-                <p>No streams available in this category.</p>
+    <!-- 6-COLUMN LIVE STREAM CARDS GRID (18 Items) -->
+    <div class="live-stream-list-grid">
+
+        <!-- CARD 1 -->
+        <a href="{{ route('streams.index') }}" class="stream-list-card">
+            <div class="stream-thumb-wrap">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80" alt="Daily Q&A Session">
+                <span class="badge-live-tag">● Live</span>
+                <span class="badge-viewers-tag"><i class="bi bi-eye"></i> 1.2k</span>
             </div>
-        @endforelse
+            <div class="stream-card-info-box">
+                <div class="streamer-user-row">
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" class="streamer-small-avatar" alt="John Smith">
+                    <span class="streamer-name-text">John Smith</span>
+                </div>
+                <h3 class="stream-card-title">Daily Q&A Session</h3>
+                <div class="stream-card-category">Just Chatting • Entertainment</div>
+            </div>
+        </a>
+
+        <!-- CARD 2 -->
+        <a href="{{ route('streams.index') }}" class="stream-list-card">
+            <div class="stream-thumb-wrap">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80" alt="Daily Q&A Session">
+                <span class="badge-live-tag">● Live</span>
+                <span class="badge-viewers-tag"><i class="bi bi-eye"></i> 1.2k</span>
+            </div>
+            <div class="stream-card-info-box">
+                <div class="streamer-user-row">
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" class="streamer-small-avatar" alt="John Smith">
+                    <span class="streamer-name-text">John Smith</span>
+                </div>
+                <h3 class="stream-card-title">Daily Q&A Session</h3>
+                <div class="stream-card-category">Just Chatting • Entertainment</div>
+            </div>
+        </a>
+
+        <!-- CARD 3 -->
+        <a href="{{ route('streams.index') }}" class="stream-list-card">
+            <div class="stream-thumb-wrap">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80" alt="Daily Q&A Session">
+                <span class="badge-live-tag">● Live</span>
+                <span class="badge-viewers-tag"><i class="bi bi-eye"></i> 1.2k</span>
+            </div>
+            <div class="stream-card-info-box">
+                <div class="streamer-user-row">
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" class="streamer-small-avatar" alt="John Smith">
+                    <span class="streamer-name-text">John Smith</span>
+                </div>
+                <h3 class="stream-card-title">Daily Q&A Session</h3>
+                <div class="stream-card-category">Just Chatting • Entertainment</div>
+            </div>
+        </a>
+
+        <!-- CARD 4 -->
+        <a href="{{ route('streams.index') }}" class="stream-list-card">
+            <div class="stream-thumb-wrap">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80" alt="Daily Q&A Session">
+                <span class="badge-live-tag">● Live</span>
+                <span class="badge-viewers-tag"><i class="bi bi-eye"></i> 1.2k</span>
+            </div>
+            <div class="stream-card-info-box">
+                <div class="streamer-user-row">
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" class="streamer-small-avatar" alt="John Smith">
+                    <span class="streamer-name-text">John Smith</span>
+                </div>
+                <h3 class="stream-card-title">Daily Q&A Session</h3>
+                <div class="stream-card-category">Just Chatting • Entertainment</div>
+            </div>
+        </a>
+
+        <!-- CARD 5 -->
+        <a href="{{ route('streams.index') }}" class="stream-list-card">
+            <div class="stream-thumb-wrap">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80" alt="Daily Q&A Session">
+                <span class="badge-live-tag">● Live</span>
+                <span class="badge-viewers-tag"><i class="bi bi-eye"></i> 1.2k</span>
+            </div>
+            <div class="stream-card-info-box">
+                <div class="streamer-user-row">
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" class="streamer-small-avatar" alt="John Smith">
+                    <span class="streamer-name-text">John Smith</span>
+                </div>
+                <h3 class="stream-card-title">Daily Q&A Session</h3>
+                <div class="stream-card-category">Just Chatting • Entertainment</div>
+            </div>
+        </a>
+
+        <!-- CARD 6 -->
+        <a href="{{ route('streams.index') }}" class="stream-list-card">
+            <div class="stream-thumb-wrap">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80" alt="Daily Q&A Session">
+                <span class="badge-live-tag">● Live</span>
+                <span class="badge-viewers-tag"><i class="bi bi-eye"></i> 1.2k</span>
+            </div>
+            <div class="stream-card-info-box">
+                <div class="streamer-user-row">
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" class="streamer-small-avatar" alt="John Smith">
+                    <span class="streamer-name-text">John Smith</span>
+                </div>
+                <h3 class="stream-card-title">Daily Q&A Session</h3>
+                <div class="stream-card-category">Just Chatting • Entertainment</div>
+            </div>
+        </a>
+
+        <!-- ROW 2: CARDS 7-12 -->
+        <!-- CARD 7 -->
+        <a href="{{ route('streams.index') }}" class="stream-list-card">
+            <div class="stream-thumb-wrap">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80" alt="Daily Q&A Session">
+                <span class="badge-live-tag">● Live</span>
+                <span class="badge-viewers-tag"><i class="bi bi-eye"></i> 1.2k</span>
+            </div>
+            <div class="stream-card-info-box">
+                <div class="streamer-user-row">
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" class="streamer-small-avatar" alt="John Smith">
+                    <span class="streamer-name-text">John Smith</span>
+                </div>
+                <h3 class="stream-card-title">Daily Q&A Session</h3>
+                <div class="stream-card-category">Just Chatting • Entertainment</div>
+            </div>
+        </a>
+
+        <!-- CARD 8 -->
+        <a href="{{ route('streams.index') }}" class="stream-list-card">
+            <div class="stream-thumb-wrap">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80" alt="Daily Q&A Session">
+                <span class="badge-live-tag">● Live</span>
+                <span class="badge-viewers-tag"><i class="bi bi-eye"></i> 1.2k</span>
+            </div>
+            <div class="stream-card-info-box">
+                <div class="streamer-user-row">
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" class="streamer-small-avatar" alt="John Smith">
+                    <span class="streamer-name-text">John Smith</span>
+                </div>
+                <h3 class="stream-card-title">Daily Q&A Session</h3>
+                <div class="stream-card-category">Just Chatting • Entertainment</div>
+            </div>
+        </a>
+
+        <!-- CARD 9 -->
+        <a href="{{ route('streams.index') }}" class="stream-list-card">
+            <div class="stream-thumb-wrap">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80" alt="Daily Q&A Session">
+                <span class="badge-live-tag">● Live</span>
+                <span class="badge-viewers-tag"><i class="bi bi-eye"></i> 1.2k</span>
+            </div>
+            <div class="stream-card-info-box">
+                <div class="streamer-user-row">
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" class="streamer-small-avatar" alt="John Smith">
+                    <span class="streamer-name-text">John Smith</span>
+                </div>
+                <h3 class="stream-card-title">Daily Q&A Session</h3>
+                <div class="stream-card-category">Just Chatting • Entertainment</div>
+            </div>
+        </a>
+
+        <!-- CARD 10 -->
+        <a href="{{ route('streams.index') }}" class="stream-list-card">
+            <div class="stream-thumb-wrap">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80" alt="Daily Q&A Session">
+                <span class="badge-live-tag">● Live</span>
+                <span class="badge-viewers-tag"><i class="bi bi-eye"></i> 1.2k</span>
+            </div>
+            <div class="stream-card-info-box">
+                <div class="streamer-user-row">
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" class="streamer-small-avatar" alt="John Smith">
+                    <span class="streamer-name-text">John Smith</span>
+                </div>
+                <h3 class="stream-card-title">Daily Q&A Session</h3>
+                <div class="stream-card-category">Just Chatting • Entertainment</div>
+            </div>
+        </a>
+
+        <!-- CARD 11 -->
+        <a href="{{ route('streams.index') }}" class="stream-list-card">
+            <div class="stream-thumb-wrap">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80" alt="Daily Q&A Session">
+                <span class="badge-live-tag">● Live</span>
+                <span class="badge-viewers-tag"><i class="bi bi-eye"></i> 1.2k</span>
+            </div>
+            <div class="stream-card-info-box">
+                <div class="streamer-user-row">
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" class="streamer-small-avatar" alt="John Smith">
+                    <span class="streamer-name-text">John Smith</span>
+                </div>
+                <h3 class="stream-card-title">Daily Q&A Session</h3>
+                <div class="stream-card-category">Just Chatting • Entertainment</div>
+            </div>
+        </a>
+
+        <!-- CARD 12 -->
+        <a href="{{ route('streams.index') }}" class="stream-list-card">
+            <div class="stream-thumb-wrap">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80" alt="Daily Q&A Session">
+                <span class="badge-live-tag">● Live</span>
+                <span class="badge-viewers-tag"><i class="bi bi-eye"></i> 1.2k</span>
+            </div>
+            <div class="stream-card-info-box">
+                <div class="streamer-user-row">
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" class="streamer-small-avatar" alt="John Smith">
+                    <span class="streamer-name-text">John Smith</span>
+                </div>
+                <h3 class="stream-card-title">Daily Q&A Session</h3>
+                <div class="stream-card-category">Just Chatting • Entertainment</div>
+            </div>
+        </a>
+
+        <!-- ROW 3: CARDS 13-18 -->
+        <!-- CARD 13 -->
+        <a href="{{ route('streams.index') }}" class="stream-list-card">
+            <div class="stream-thumb-wrap">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80" alt="Daily Q&A Session">
+                <span class="badge-live-tag">● Live</span>
+                <span class="badge-viewers-tag"><i class="bi bi-eye"></i> 1.2k</span>
+            </div>
+            <div class="stream-card-info-box">
+                <div class="streamer-user-row">
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" class="streamer-small-avatar" alt="John Smith">
+                    <span class="streamer-name-text">John Smith</span>
+                </div>
+                <h3 class="stream-card-title">Daily Q&A Session</h3>
+                <div class="stream-card-category">Just Chatting • Entertainment</div>
+            </div>
+        </a>
+
+        <!-- CARD 14 -->
+        <a href="{{ route('streams.index') }}" class="stream-list-card">
+            <div class="stream-thumb-wrap">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80" alt="Daily Q&A Session">
+                <span class="badge-live-tag">● Live</span>
+                <span class="badge-viewers-tag"><i class="bi bi-eye"></i> 1.2k</span>
+            </div>
+            <div class="stream-card-info-box">
+                <div class="streamer-user-row">
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" class="streamer-small-avatar" alt="John Smith">
+                    <span class="streamer-name-text">John Smith</span>
+                </div>
+                <h3 class="stream-card-title">Daily Q&A Session</h3>
+                <div class="stream-card-category">Just Chatting • Entertainment</div>
+            </div>
+        </a>
+
+        <!-- CARD 15 -->
+        <a href="{{ route('streams.index') }}" class="stream-list-card">
+            <div class="stream-thumb-wrap">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80" alt="Daily Q&A Session">
+                <span class="badge-live-tag">● Live</span>
+                <span class="badge-viewers-tag"><i class="bi bi-eye"></i> 1.2k</span>
+            </div>
+            <div class="stream-card-info-box">
+                <div class="streamer-user-row">
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" class="streamer-small-avatar" alt="John Smith">
+                    <span class="streamer-name-text">John Smith</span>
+                </div>
+                <h3 class="stream-card-title">Daily Q&A Session</h3>
+                <div class="stream-card-category">Just Chatting • Entertainment</div>
+            </div>
+        </a>
+
+        <!-- CARD 16 -->
+        <a href="{{ route('streams.index') }}" class="stream-list-card">
+            <div class="stream-thumb-wrap">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80" alt="Daily Q&A Session">
+                <span class="badge-live-tag">● Live</span>
+                <span class="badge-viewers-tag"><i class="bi bi-eye"></i> 1.2k</span>
+            </div>
+            <div class="stream-card-info-box">
+                <div class="streamer-user-row">
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" class="streamer-small-avatar" alt="John Smith">
+                    <span class="streamer-name-text">John Smith</span>
+                </div>
+                <h3 class="stream-card-title">Daily Q&A Session</h3>
+                <div class="stream-card-category">Just Chatting • Entertainment</div>
+            </div>
+        </a>
+
+        <!-- CARD 17 -->
+        <a href="{{ route('streams.index') }}" class="stream-list-card">
+            <div class="stream-thumb-wrap">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80" alt="Daily Q&A Session">
+                <span class="badge-live-tag">● Live</span>
+                <span class="badge-viewers-tag"><i class="bi bi-eye"></i> 1.2k</span>
+            </div>
+            <div class="stream-card-info-box">
+                <div class="streamer-user-row">
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" class="streamer-small-avatar" alt="John Smith">
+                    <span class="streamer-name-text">John Smith</span>
+                </div>
+                <h3 class="stream-card-title">Daily Q&A Session</h3>
+                <div class="stream-card-category">Just Chatting • Entertainment</div>
+            </div>
+        </a>
+
+        <!-- CARD 18 -->
+        <a href="{{ route('streams.index') }}" class="stream-list-card">
+            <div class="stream-thumb-wrap">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80" alt="Daily Q&A Session">
+                <span class="badge-live-tag">● Live</span>
+                <span class="badge-viewers-tag"><i class="bi bi-eye"></i> 1.2k</span>
+            </div>
+            <div class="stream-card-info-box">
+                <div class="streamer-user-row">
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" class="streamer-small-avatar" alt="John Smith">
+                    <span class="streamer-name-text">John Smith</span>
+                </div>
+                <h3 class="stream-card-title">Daily Q&A Session</h3>
+                <div class="stream-card-category">Just Chatting • Entertainment</div>
+            </div>
+        </a>
+
     </div>
 
-    <div style="margin-top: 30px;">
-        {{ $streams->links() }}
+</main>
+
+<!-- FOOTER -->
+<footer class="zal-footer-center">
+    <div class="container">
+        <a href="{{ route('home') }}">
+            <img src="{{ asset('assets/logo.png') }}" alt="Zaldoris" class="footer-logo-img">
+        </a>
+        <p class="footer-tagline-text">
+            Experience the future of shopping with realtime interaction, live demonstrations, and exclusive community deals.
+        </p>
+        <div class="footer-copyright-line">
+            © 2024 LiveStreamShop. All rights reserved.
+        </div>
     </div>
-</div>
-@endsection
+</footer>
+
+<!-- FLOATING WIDGET BUTTON -->
+<button class="floating-action-widget" title="Live Chat">
+    <i class="bi bi-chat-dots-fill"></i>
+</button>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ asset('js/main.js') }}"></script>
+</body>
+</html>

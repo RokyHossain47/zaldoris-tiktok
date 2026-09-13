@@ -1,22 +1,121 @@
-@extends('layouts.app')
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="{{ setting('meta_description', 'Zaldoris - TikTok-Style Live Commerce & Auction Platform. Experience real-time live shopping and auctions.') }}">
+    <meta name="keywords" content="{{ setting('meta_keywords', 'live commerce, live shopping, tiktok shop, live auction, pk battle') }}">
+    <title>{{ setting('meta_title', 'Zaldoris - TikTok-Style Live Commerce & Auction Platform') }}</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ asset(setting('site_favicon', 'assets/favicon.png')) }}">
+    <link rel="shortcut icon" href="{{ asset(setting('site_favicon', 'assets/favicon.png')) }}">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="{{ asset('css/style.css') }}" rel="stylesheet">
+    {!! setting('custom_header_scripts') !!}
+</head>
+<body>
 
-@section('title', 'Zaldoris - TikTok-Style Live Commerce & Auction Platform')
-
-@section('content')
-    <!-- AD BANNER -->
-    @if($banners->isNotEmpty())
-        @php $banner = $banners->first(); @endphp
-        <a href="{{ $banner->link_url ?? route('shop.index') }}" style="text-decoration: none; display: block;">
-            <div class="ad-banner-card" style="background: linear-gradient(135deg, rgba(254,44,85,0.2), rgba(37,244,238,0.2)), #16161f;">
-                <div class="ad-banner-text" style="display: flex; align-items: center; justify-content: center; gap: 10px;">
-                    <span style="background: #FE2C55; color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 800;">AD</span>
-                    <span>{{ $banner->title }}</span>
-                </div>
-            </div>
+<!-- NAVBAR / HEADER -->
+<header class="zal-navbar">
+    <div class="zal-navbar-inner">
+        <!-- Logo -->
+        <a class="zal-brand" href="{{ route('home') }}">
+            <img src="{{ asset(setting('site_logo', 'assets/logo.png')) }}" alt="{{ setting('site_name', 'Zaldoris') }}" class="zal-brand-logo">
         </a>
+
+        <!-- Center Nav Links -->
+        <ul class="zal-nav-menu">
+            <li><a href="{{ route('home') }}" class="zal-nav-link active">Home</a></li>
+            <li><a href="{{ route('shop.index') }}" class="zal-nav-link">Live Shopping</a></li>
+            <li><a href="{{ route('auctions.index') }}" class="zal-nav-link">Live Auction</a></li>
+            <li><a href="#" class="zal-nav-link">Live Academy</a></li>
+            <li><a href="{{ route('streams.index') }}" class="zal-nav-link">Live Streaming</a></li>
+            <li><a href="{{ route('streams.pk_battle', 1) }}" class="zal-nav-link">PK Battle</a></li>
+        </ul>
+
+                <!-- Right Action Icons -->
+        <div class="zal-nav-actions">
+            <a href="{{ route('search') }}" class="nav-icon-btn" title="Search"><i class="bi bi-search"></i></a>
+            @auth
+                <button class="nav-icon-btn" id="navTicketBtn" title="Wallet"><i class="bi bi-wallet2"></i></button>
+                <a href="{{ route('notifications') }}" class="nav-icon-btn" title="Notifications">
+                    <i class="bi bi-bell"></i>
+                    <span class="icon-badge-dot"></span>
+                </a>
+                <a href="{{ route('shop.cart') }}" class="nav-icon-btn" title="Cart">
+                    <i class="bi bi-cart3"></i>
+                    <span class="icon-badge-num" id="globalCartBadge">2</span>
+                </a>
+                <a href="{{ route('dashboard.creator') }}" class="nav-avatar-btn" title="Profile">
+                    <img src="{{ auth()->user()->avatar_url ?? 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100&auto=format&fit=crop&q=80' }}" alt="{{ auth()->user()->name }}">
+                </a>
+            @else
+                <a href="{{ route('login') }}" class="btn-login-nav" style="background: linear-gradient(135deg, var(--cyan-accent, #00F0C8), #1ed6d0); color: #090D10; text-decoration: none; padding: 7px 18px; border-radius: 20px; font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; margin-left: 8px;">
+                    <i class="bi bi-box-arrow-in-right"></i> Log In
+                </a>
+            @endauth
+        </div>
+    </div>
+</header>
+
+<!-- MAIN CONTAINER -->
+<main class="page-container">
+
+    <!-- AD BANNER SLIDER FOR HOMEPAGE (DYNAMIC FROM SUPER ADMIN) -->
+    @php
+        $sliderBanners = isset($mainBanners) && $mainBanners->count() ? $mainBanners : (isset($mainBanner) && $mainBanner ? collect([$mainBanner]) : collect());
+    @endphp
+
+    @if($sliderBanners->count() > 0)
+        <div class="hero-slider-wrapper" id="heroBannerSlider">
+            <div class="hero-slider-track" id="heroSliderTrack">
+                @foreach($sliderBanners as $b)
+                    <a href="{{ $b->link_url ?: route('shop.index') }}" class="hero-slider-slide">
+                        <div class="zal-hero-banner" style="background-image: url('{{ $b->media_url }}');">
+                            <div class="zal-hero-banner-overlay"></div>
+                            <div class="zal-hero-banner-content">
+                                <span class="zal-hero-badge">
+                                    <i class="bi bi-stars"></i> Special Featured Promo
+                                </span>
+                                @if($b->title)
+                                    <h1 class="zal-hero-title">{{ $b->title }}</h1>
+                                @endif
+                                @if($b->subtitle)
+                                    <p class="zal-hero-subtitle">{{ $b->subtitle }}</p>
+                                @endif
+                                <div class="zal-hero-btn">
+                                    {{ $b->button_text ?: 'Shop Live Now' }} <i class="bi bi-arrow-right"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                @endforeach
+            </div>
+
+            @if($sliderBanners->count() > 1)
+                <!-- Navigation Arrows -->
+                <button type="button" class="hero-slider-arrow prev" id="heroSliderPrev" aria-label="Previous Slide">
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+                <button type="button" class="hero-slider-arrow next" id="heroSliderNext" aria-label="Next Slide">
+                    <i class="bi bi-chevron-right"></i>
+                </button>
+
+                <!-- Indicator Dots -->
+                <div class="hero-slider-dots" id="heroSliderDots">
+                    @foreach($sliderBanners as $idx => $b)
+                        <button type="button" class="hero-slider-dot {{ $idx === 0 ? 'active' : '' }}" data-slide="{{ $idx }}" aria-label="Slide {{ $idx + 1 }}"></button>
+                    @endforeach
+                </div>
+            @endif
+        </div>
     @else
         <div class="ad-banner-card">
-            <div class="ad-banner-text">🔥 Experience Live Social Commerce & $1 Start Whatnot-Style Auctions</div>
+            <div class="ad-banner-text">Banner for Add</div>
         </div>
     @endif
 
@@ -29,168 +128,534 @@
             <!-- SECTION 1: FEATURED LIVE SHOPPING -->
             <section class="section-spacing">
                 <div class="section-header-row">
-                    <h2 class="section-title"><i class="bi bi-bag-heart-fill" style="color: #FE2C55;"></i> Featured Live Shopping</h2>
-                    <a href="{{ route('streams.index', ['type' => 'live_shopping']) }}" class="view-all-link">View All <i class="bi bi-arrow-right"></i></a>
+                    <h2 class="section-title">Featured Live Shopping</h2>
+                    <a href="{{ route('shop.index') }}" class="view-all-link">View All <i class="bi bi-arrow-right"></i></a>
                 </div>
 
                 <div class="grid-3-col">
-                    @forelse($liveShoppingStreams as $stream)
-                        <a href="{{ route('streams.show', $stream->id) }}" class="zal-card" style="text-decoration: none; color: inherit;">
-                            <div class="live-card-thumb">
-                                <img src="{{ $stream->thumbnail_url }}" alt="{{ $stream->title }}">
-                                <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
-                                <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> {{ number_format($stream->viewer_count) }}</div>
-                                @if($stream->is_boosted)
-                                    <div style="position: absolute; bottom: 8px; left: 8px; background: rgba(37,244,238,0.85); color: #000; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px;">
-                                        ✨ NEW SELLER
-                                    </div>
-                                @endif
+                    <!-- Card 1 -->
+                    <div class="zal-card">
+                        <div class="live-card-thumb">
+                            <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80" alt="Limited Sneaker">
+                            <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
+                            <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.2k</div>
+                        </div>
+                        <div class="live-card-body">
+                            <div class="live-card-title">Limited Sneaker ...</div>
+                            <div class="host-row">
+                                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80" alt="Sarah Fashion" class="host-avatar">
+                                <span class="host-name">Sarah Fashion Studio</span>
                             </div>
-                            <div class="live-card-body">
-                                <div class="live-card-title">{{ Str::limit($stream->title, 40) }}</div>
-                                <div class="host-row">
-                                    <img src="{{ $stream->host->avatar_url }}" alt="{{ $stream->host->name }}" class="host-avatar">
-                                    <span class="host-name">{{ $stream->host->name }}</span>
-                                    @if($stream->host->fast_shipper_badge)
-                                        <span title="Fast Shipper: 95%+ 48h dispatch" style="color: #25F4EE; font-size: 12px;"><i class="bi bi-lightning-charge-fill"></i></span>
-                                    @endif
-                                </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 2 -->
+                    <div class="zal-card">
+                        <div class="live-card-thumb">
+                            <img src="https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=600&auto=format&fit=crop&q=80" alt="Glass Skin Secret">
+                            <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
+                            <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.2k</div>
+                        </div>
+                        <div class="live-card-body">
+                            <div class="live-card-title">Glass Skin Secret...</div>
+                            <div class="host-row">
+                                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" alt="Gadget Hub" class="host-avatar">
+                                <span class="host-name">Gadget Hub Pro</span>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 3 -->
+                    <div class="zal-card">
+                        <div class="live-card-thumb">
+                            <img src="https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&auto=format&fit=crop&q=80" alt="Luxury Handbags">
+                            <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
+                            <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.2k</div>
+                        </div>
+                        <div class="live-card-body">
+                            <div class="live-card-title">Luxury Handbags...</div>
+                            <div class="host-row">
+                                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="Beauty Glow" class="host-avatar">
+                                <span class="host-name">Beauty Glow Official</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- SECTION 2: BROWSE CATEGORIES -->
+            <section class="section-spacing">
+                <div class="section-header-row">
+                    <h2 class="section-title">Browse Categories</h2>
+                    <div class="nav-arrow-btns">
+                        <button class="circle-arrow-btn" id="catPrevBtn"><i class="bi bi-arrow-left"></i></button>
+                        <button class="circle-arrow-btn" id="catNextBtn"><i class="bi bi-arrow-right"></i></button>
+                    </div>
+                </div>
+
+                <div class="categories-scroll-row" id="categoriesScrollRow">
+                    @forelse($categories as $cat)
+                        @php
+                            $iconClass = $cat->icon ?? 'bi-tag-fill';
+                            if (!str_starts_with($iconClass, 'bi-') && !str_starts_with($iconClass, 'bi ')) {
+                                $iconClass = 'bi-' . $iconClass;
+                            }
+                            if (!str_starts_with($iconClass, 'bi ')) {
+                                $iconClass = 'bi ' . $iconClass;
+                            }
+                        @endphp
+                        <a href="{{ route('shop.index', ['category' => $cat->slug]) }}" class="category-circle-item" style="text-decoration:none; color:inherit;">
+                            <div class="category-circle-icon"><i class="{{ $iconClass }}"></i></div>
+                            <span class="category-circle-label">{{ $cat->name }}</span>
                         </a>
                     @empty
-                        <div style="grid-column: span 3; text-align: center; padding: 40px; color: #888;">
-                            No live shopping streams currently active.
-                        </div>
+                        <a href="{{ route('shop.index', ['category' => 'fashion']) }}" class="category-circle-item" style="text-decoration:none; color:inherit;">
+                            <div class="category-circle-icon"><i class="bi bi-universal-access"></i></div>
+                            <span class="category-circle-label">Fashion</span>
+                        </a>
+                        <a href="{{ route('shop.index', ['category' => 'electronics']) }}" class="category-circle-item" style="text-decoration:none; color:inherit;">
+                            <div class="category-circle-icon"><i class="bi bi-plug"></i></div>
+                            <span class="category-circle-label">Electronics</span>
+                        </a>
+                        <a href="{{ route('shop.index', ['category' => 'beauty']) }}" class="category-circle-item" style="text-decoration:none; color:inherit;">
+                            <div class="category-circle-icon"><i class="bi bi-magic"></i></div>
+                            <span class="category-circle-label">Beauty</span>
+                        </a>
+                        <a href="{{ route('shop.index', ['category' => 'home']) }}" class="category-circle-item" style="text-decoration:none; color:inherit;">
+                            <div class="category-circle-icon"><i class="bi bi-house-door"></i></div>
+                            <span class="category-circle-label">Home</span>
+                        </a>
+                        <a href="{{ route('shop.index', ['category' => 'gaming']) }}" class="category-circle-item" style="text-decoration:none; color:inherit;">
+                            <div class="category-circle-icon"><i class="bi bi-controller"></i></div>
+                            <span class="category-circle-label">Gaming</span>
+                        </a>
+                        <a href="{{ route('shop.index', ['category' => 'sports']) }}" class="category-circle-item" style="text-decoration:none; color:inherit;">
+                            <div class="category-circle-icon"><i class="bi bi-dribbble"></i></div>
+                            <span class="category-circle-label">Sports</span>
+                        </a>
+                        <a href="{{ route('shop.index', ['category' => 'toys']) }}" class="category-circle-item" style="text-decoration:none; color:inherit;">
+                            <div class="category-circle-icon"><i class="bi bi-box-seam"></i></div>
+                            <span class="category-circle-label">Toys</span>
+                        </a>
+                        <a href="{{ route('shop.index', ['category' => 'accessories']) }}" class="category-circle-item" style="text-decoration:none; color:inherit;">
+                            <div class="category-circle-icon"><i class="bi bi-watch"></i></div>
+                            <span class="category-circle-label">Accessories</span>
+                        </a>
                     @endforelse
                 </div>
             </section>
 
-            <!-- SECTION 2: WHATNOT-STYLE LIVE AUCTIONS -->
+
+            <!-- SECTION 3: FEATURED & TRENDING PRODUCTS -->
             <section class="section-spacing">
                 <div class="section-header-row">
-                    <h2 class="section-title"><i class="bi bi-hammer" style="color: #FFB800;"></i> Live Auctions (Whatnot-Style)</h2>
+                    <h2 class="section-title">Featured Products</h2>
+                    <a href="{{ route('shop.index', ['filter' => 'featured']) }}" class="view-all-link">View All <i class="bi bi-arrow-right"></i></a>
+                </div>
+
+                <div class="grid-3-col">
+                    @forelse($featuredProducts as $fp)
+                        <div class="zal-card">
+                            <a href="{{ route('shop.product', $fp->id) }}" style="text-decoration: none; color: inherit;">
+                                <div class="live-card-thumb">
+                                    <img src="{{ $fp->primary_image }}" alt="{{ $fp->title }}">
+                                    @if($fp->is_trending)
+                                        <div class="badge-live-top" style="background: linear-gradient(135deg, #FF6B00, #FF0055);"><span class="live-pulse-dot"></span> HOT</div>
+                                    @else
+                                        <div class="badge-live-top" style="background: var(--pink-accent);"><span class="live-pulse-dot"></span> FEATURED</div>
+                                    @endif
+                                    <div class="badge-viewers-top"><i class="bi bi-box-seam"></i> {{ $fp->stock }} in stock</div>
+                                </div>
+                            </a>
+                            <div class="product-card-body">
+                                <a href="{{ route('shop.product', $fp->id) }}" style="text-decoration: none; color: inherit;">
+                                    <div class="product-card-title">{{ Str::limit($fp->title, 26) }}</div>
+                                </a>
+                                <div class="rating-row">
+                                    <i class="bi bi-star-fill star-icon"></i>
+                                    <span>4.9 ({{ $fp->seller ? $fp->seller->name : 'Authentic' }})</span>
+                                </div>
+                                <div class="product-price-cart-row">
+                                    <div class="product-price-val">{{ setting('currency_symbol', '$') }}{{ number_format($fp->price, 2) }}</div>
+                                    <button class="btn-add-cart-circle" onclick="window.location='{{ route('shop.product', $fp->id) }}'"><i class="bi bi-bag-plus-fill"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    @empty
+                        <div style="color: var(--text-muted); grid-column: 1 / -1; padding: 20px;">No featured products available.</div>
+                    @endforelse
+                </div>
+
+                <!-- SECTION 4: EARN REWARDS BANNER -->
+                <div class="rewards-banner-card mt-3">
+                    <div>
+                        <div class="rewards-title">Earn More Rewards while you watch!</div>
+                        <p class="rewards-desc">Complete daily tasks to unlock exclusive coin packages and vouchers.</p>
+                    </div>
+                    <div class="rewards-action-side">
+                        <div class="rewards-balance-text">
+                            <span class="rewards-balance-label">Balance</span> 🪙 1,450</div>
+                        <button class="btn-claim-now" id="btnClaimRewards">Claim Now</button>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- SECTION 5: TRENDING AUCTIONS -->
+            <section class="section-spacing">
+                <div class="section-header-row">
+                    <div class="section-title-wrap">
+                        <h2 class="section-title">Trending Auctions</h2>
+                        <span class="badge-ends-soon">Ends Soon</span>
+                    </div>
                     <a href="{{ route('auctions.index') }}" class="view-all-link">View All <i class="bi bi-arrow-right"></i></a>
                 </div>
 
                 <div class="grid-3-col">
-                    @forelse($activeAuctions as $auction)
-                        <a href="{{ route('auctions.show', $auction->id) }}" class="zal-card" style="text-decoration: none; color: inherit;">
-                            <div class="live-card-thumb">
-                                <img src="{{ $auction->image_url ?? $auction->product->primary_image ?? 'https://images.unsplash.com/photo-1613771404784-3a5686aa2be3?w=600' }}" alt="{{ $auction->title }}">
-                                <div class="badge-live-top" style="background: #FFB800; color: #000;"><i class="bi bi-stopwatch"></i> ACTIVE BID</div>
-                                <div class="badge-viewers-top" style="background: rgba(0,0,0,0.7);">${{ number_format($auction->current_bid, 2) }}</div>
-                            </div>
-                            <div class="live-card-body">
-                                <div class="live-card-title">{{ Str::limit($auction->title, 40) }}</div>
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 12px; color: #aaa;">
-                                    <span>High Bid: <strong style="color: #25F4EE;">${{ number_format($auction->current_bid, 2) }}</strong></span>
-                                    <span>Min Step: +${{ number_format($auction->min_bid_step, 2) }}</span>
+                    <!-- Auction 1 -->
+                    <div class="zal-card">
+                        <div class="live-card-thumb">
+                            <img src="https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=600&auto=format&fit=crop&q=80" alt="Luxury Dress">
+                            <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
+                            <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.2k</div>
+                        </div>
+                        <div class="live-card-body">
+                            <div class="live-card-title">Luxury Dress for...</div>
+                            <div class="auction-info-table">
+                                <div class="auction-info-line">
+                                    <span class="auction-info-key">Current Bid</span>
+                                    <span class="auction-bid-val">C$2,850</span>
+                                </div>
+                                <div class="auction-info-line">
+                                    <span class="auction-info-key">Time Left</span>
+                                    <span class="auction-time-val countdown" data-time="02:14:55">02:14:55</span>
                                 </div>
                             </div>
-                        </a>
-                    @empty
-                        <div style="grid-column: span 3; text-align: center; padding: 40px; color: #888;">
-                            No live auctions active.
+                            <button class="btn-place-bid-cyan" onclick="handlePlaceBid(this, 'Luxury Dress')">Place Bid</button>
                         </div>
-                    @endforelse
+                    </div>
+
+                    <!-- Auction 2 -->
+                    <div class="zal-card">
+                        <div class="live-card-thumb">
+                            <img src="https://images.unsplash.com/photo-1613771404784-3a5686aa2be3?w=600&auto=format&fit=crop&q=80" alt="Trading Card">
+                            <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
+                            <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.2k</div>
+                        </div>
+                        <div class="live-card-body">
+                            <div class="live-card-title">First Edition Rare...</div>
+                            <div class="auction-info-table">
+                                <div class="auction-info-line">
+                                    <span class="auction-info-key">Current Bid</span>
+                                    <span class="auction-bid-val">C$2,850</span>
+                                </div>
+                                <div class="auction-info-line">
+                                    <span class="auction-info-key">Time Left</span>
+                                    <span class="auction-time-val countdown" data-time="02:14:55">02:14:55</span>
+                                </div>
+                            </div>
+                            <button class="btn-place-bid-cyan" onclick="handlePlaceBid(this, 'First Edition Card')">Place Bid</button>
+                        </div>
+                    </div>
+
+                    <!-- Auction 3 -->
+                    <div class="zal-card">
+                        <div class="live-card-thumb">
+                            <img src="https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=600&auto=format&fit=crop&q=80" alt="Vintage Rolex">
+                            <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
+                            <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.2k</div>
+                        </div>
+                        <div class="live-card-body">
+                            <div class="live-card-title">Vintage Rolex Su...</div>
+                            <div class="auction-info-table">
+                                <div class="auction-info-line">
+                                    <span class="auction-info-key">Current Bid</span>
+                                    <span class="auction-bid-val">C$2,850</span>
+                                </div>
+                                <div class="auction-info-line">
+                                    <span class="auction-info-key">Time Left</span>
+                                    <span class="auction-time-val countdown" data-time="02:14:55">02:14:55</span>
+                                </div>
+                            </div>
+                            <button class="btn-place-bid-cyan" onclick="handlePlaceBid(this, 'Vintage Rolex')">Place Bid</button>
+                        </div>
+                    </div>
                 </div>
             </section>
 
-            <!-- SECTION 3: FEATURED SHOP PRODUCTS -->
+
+            <!-- SECTION 6: RECENTLY VIEWED (STORED IN BROWSER SESSION) -->
             <section class="section-spacing">
                 <div class="section-header-row">
-                    <h2 class="section-title"><i class="bi bi-tag-fill" style="color: #25F4EE;"></i> Trending Products & Live Drops</h2>
-                    <a href="{{ route('shop.index') }}" class="view-all-link">Explore Shop <i class="bi bi-arrow-right"></i></a>
+                    <h2 class="section-title">Recently Viewed</h2>
+                    <a href="{{ route('shop.index') }}" class="view-all-link">View All <i class="bi bi-arrow-right"></i></a>
                 </div>
 
-                <div class="grid-4-col" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px;">
-                    @foreach($featuredProducts as $product)
-                        <div class="zal-card" style="padding: 12px;">
-                            <a href="{{ route('shop.product', $product->id) }}" style="text-decoration: none; color: inherit;">
-                                <div style="border-radius: 8px; overflow: hidden; height: 160px; margin-bottom: 10px;">
-                                    <img src="{{ $product->primary_image }}" alt="{{ $product->title }}" style="width: 100%; height: 100%; object-fit: cover;">
-                                </div>
-                                <div style="font-weight: 700; font-size: 13px; line-height: 1.4; height: 38px; overflow: hidden;">{{ $product->title }}</div>
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-                                    <span style="color: #FE2C55; font-weight: 800; font-size: 15px;">${{ number_format($product->price, 2) }}</span>
-                                    <span style="font-size: 11px; color: #888;">Stock: {{ $product->available_stock }}</span>
+                <div class="grid-5-col">
+                    @forelse($recentlyViewedProducts as $rv)
+                        <div class="zal-card">
+                            <a href="{{ route('shop.product', $rv->id) }}" style="text-decoration: none; color: inherit;">
+                                <div class="rv-card-thumb">
+                                    <img src="{{ $rv->primary_image }}" alt="{{ $rv->title }}">
                                 </div>
                             </a>
+                            <div class="rv-card-body">
+                                <a href="{{ route('shop.product', $rv->id) }}" style="text-decoration: none; color: inherit;">
+                                    <div class="rv-card-title">{{ Str::limit($rv->title, 20) }}</div>
+                                </a>
+                                <div class="rv-card-price">{{ setting('currency_symbol', '$') }}{{ number_format($rv->price, 2) }}</div>
+                            </div>
                         </div>
-                    @endforeach
+                    @empty
+                        <div style="color: var(--text-muted); grid-column: 1 / -1; padding: 20px;">No recently viewed items yet. Browse the shop to see your history here!</div>
+                    @endforelse
                 </div>
             </section>
 
         </div>
 
+
         <!-- RIGHT SIDEBAR COLUMN -->
         <aside class="right-sidebar-column">
 
-            <!-- WIDGET: TOP CREATORS & PK BATTLERS -->
-            <div class="zal-card sidebar-widget">
-                <div class="widget-header">
-                    <h3 class="widget-title"><i class="bi bi-trophy-fill" style="color: #FFB800;"></i> Top Creators</h3>
-                    <a href="{{ route('streams.index', ['type' => 'pk_battle']) }}" class="view-all-link">Battles</a>
+            <!-- WIDGET 1: MY ORDERS -->
+            <div class="sidebar-widget">
+                <div class="widget-title-row">
+                    <h3 class="widget-title">My Orders</h3>
+                </div>
+                <div class="my-orders-grid">
+                    <div class="order-stat-box">
+                        <div class="order-stat-num">2</div>
+                        <div class="order-stat-label">Pending</div>
+                    </div>
+                    <div class="order-stat-box">
+                        <div class="order-stat-num">5</div>
+                        <div class="order-stat-label">In transit</div>
+                    </div>
+                    <div class="order-stat-box">
+                        <div class="order-stat-num">12</div>
+                        <div class="order-stat-label">Delivered</div>
+                    </div>
+                </div>
+                <a href="{{ route('dashboard.creator') }}" class="track-orders-link">Track All Orders</a>
+            </div>
+
+            <!-- WIDGET 2: TRENDING CREATORS -->
+            <div class="sidebar-widget">
+                <div class="widget-title-row">
+                    <h3 class="widget-title">Trending Creators</h3>
+                    <a href="javascript:void(0)" class="view-all-link" style="font-size:0.78rem" id="btnRefreshCreators">Refresh</a>
                 </div>
                 <div class="creator-list">
-                    @foreach($topCreators as $creator)
-                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #222;">
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <img src="{{ $creator->avatar_url }}" alt="{{ $creator->name }}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #FE2C55;">
-                                <div>
-                                    <div style="font-weight: 700; font-size: 13px;">{{ $creator->name }}</div>
-                                    <div style="font-size: 11px; color: #888;">{{ number_format($creator->creatorProfile->follower_count ?? 1200) }} Followers</div>
-                                </div>
+                    <!-- Creator 1 -->
+                    <div class="creator-item-row">
+                        <div class="creator-left-info">
+                            <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80" alt="Alex Tech" class="creator-avatar-img">
+                            <div>
+                                <div class="creator-name">Alex Tech</div>
+                                <div class="creator-sub">Gadgets & Gear</div>
                             </div>
-                            <a href="{{ route('wallet.subscribe', $creator->id) }}" style="background: rgba(254,44,85,0.15); color: #FE2C55; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; text-decoration: none;">
-                                Sub $7.99
-                            </a>
                         </div>
-                    @endforeach
+                        <button class="btn-follow-outline" onclick="toggleCreatorFollow(this)">Follow</button>
+                    </div>
+
+                    <!-- Creator 2 -->
+                    <div class="creator-item-row">
+                        <div class="creator-left-info">
+                            <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&auto=format&fit=crop&q=80" alt="Mila Mode" class="creator-avatar-img">
+                            <div>
+                                <div class="creator-name">Mila Mode</div>
+                                <div class="creator-sub">Luxury Lifestyle</div>
+                            </div>
+                        </div>
+                        <button class="btn-follow-outline" onclick="toggleCreatorFollow(this)">Follow</button>
+                    </div>
+
+                    <!-- Creator 3 -->
+                    <div class="creator-item-row">
+                        <div class="creator-left-info">
+                            <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&auto=format&fit=crop&q=80" alt="Zen Wellness" class="creator-avatar-img">
+                            <div>
+                                <div class="creator-name">Zen Wellness</div>
+                                <div class="creator-sub">Home & Decor</div>
+                            </div>
+                        </div>
+                        <button class="btn-follow-outline" onclick="toggleCreatorFollow(this)">Follow</button>
+                    </div>
                 </div>
             </div>
 
-            <!-- WIDGET: COIN ECONOMY & 8 CORE GIFTS -->
-            <div class="zal-card sidebar-widget" style="margin-top: 20px;">
-                <div class="widget-header">
-                    <h3 class="widget-title"><i class="bi bi-coin" style="color: #FFB800;"></i> Coins & Gift Economy</h3>
-                    <a href="{{ route('wallet.coins') }}" class="view-all-link">Top Up</a>
+            <!-- WIDGET 3: UPCOMING EVENTS -->
+            <div class="sidebar-widget">
+                <div class="widget-title-row">
+                    <h3 class="widget-title">Upcoming Events</h3>
                 </div>
-                <p style="font-size: 12px; color: #888; margin-bottom: 14px; line-height: 1.5;">
-                    Support creators during live streams and PK battles! Creators receive <strong>60% revenue share</strong>.
-                </p>
-                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; text-align: center;">
-                    <div style="background: #1a1a24; padding: 8px 4px; border-radius: 8px;">
-                        <span style="font-size: 20px;">💖</span>
-                        <div style="font-size: 10px; color: #aaa; margin-top: 4px;">10 Coins</div>
+                <div class="event-list">
+                    <!-- Event 1 -->
+                    <div class="event-item-card">
+                        <div class="event-top-row">
+                            <span class="event-date-badge">AUG 15, 8:00 PM</span>
+                            <i class="bi bi-bell event-bell-icon" onclick="toggleEventBell(this)" title="Set Reminder"></i>
+                        </div>
+                        <div class="event-title">Mega PK Battle: Tech vs Beauty</div>
+                        <div class="event-interested-sub"><i class="bi bi-people"></i> 4.5k Interested</div>
                     </div>
-                    <div style="background: #1a1a24; padding: 8px 4px; border-radius: 8px;">
-                        <span style="font-size: 20px;">⭐</span>
-                        <div style="font-size: 10px; color: #aaa; margin-top: 4px;">50 Coins</div>
-                    </div>
-                    <div style="background: #1a1a24; padding: 8px 4px; border-radius: 8px;">
-                        <span style="font-size: 20px;">⚡</span>
-                        <div style="font-size: 10px; color: #aaa; margin-top: 4px;">100 Coins</div>
-                    </div>
-                    <div style="background: #1a1a24; padding: 8px 4px; border-radius: 8px;">
-                        <span style="font-size: 20px;">👑</span>
-                        <div style="font-size: 10px; color: #aaa; margin-top: 4px;">1000 Coins</div>
+
+                    <!-- Event 2 -->
+                    <div class="event-item-card">
+                        <div class="event-top-row">
+                            <span class="event-date-badge">AUG 16, 10:00 AM</span>
+                            <i class="bi bi-bell event-bell-icon" onclick="toggleEventBell(this)" title="Set Reminder"></i>
+                        </div>
+                        <div class="event-title">Summer Collection Launch</div>
+                        <div class="event-interested-sub"><i class="bi bi-people"></i> 1.2k Interested</div>
                     </div>
                 </div>
-                <a href="{{ route('wallet.coins') }}" class="zal-btn-primary" style="display: block; text-align: center; margin-top: 14px; text-decoration: none; padding: 8px; border-radius: 8px; font-size: 12px; font-weight: 700; background: linear-gradient(135deg, #FFB800, #FF8A00); color: #000;">
-                    Get Coin Packages (13% HST)
-                </a>
             </div>
 
-            <!-- WIDGET: SELLER 48H DISPATCH GUARANTEE -->
-            <div class="zal-card sidebar-widget" style="margin-top: 20px; border-left: 3px solid #25F4EE;">
-                <h4 style="font-size: 13px; color: #25F4EE; margin-bottom: 6px;"><i class="bi bi-shield-check"></i> Escrow Protected</h4>
-                <p style="font-size: 12px; color: #aaa; line-height: 1.5; margin: 0;">
-                    All live commerce purchases are held in escrow until EasyPost delivery confirmation. 48-hour mandatory seller dispatch.
-                </p>
-            </div>
+            <!-- WIDGET 4: FLASH DEALS PROMO CARD / DYNAMIC SIDEBAR BANNER -->
+            @if(isset($sidebarBanner) && $sidebarBanner)
+                <div class="flash-deals-promo-widget" style="background: linear-gradient(180deg, rgba(23,24,38,0.7), #171826), url('{{ $sidebarBanner->media_url }}'); background-size: cover; background-position: center;">
+                    <span class="flash-promo-badge">PROMO DEAL</span>
+                    <div class="flash-promo-title">{{ $sidebarBanner->title }}</div>
+                    @if($sidebarBanner->subtitle)
+                        <div class="flash-promo-sub">{{ $sidebarBanner->subtitle }}</div>
+                    @endif
+                    <button class="btn-shop-now-cyan" onclick="window.location='{{ $sidebarBanner->link_url ?: '/live-shopping' }}'">{{ $sidebarBanner->button_text ?: 'Shop Now' }}</button>
+                </div>
+            @else
+                <div class="flash-deals-promo-widget">
+                    <span class="flash-promo-badge">LIMITED TIME DEAL</span>
+                    <div class="flash-promo-title">Up to 70% Off Drops</div>
+                    <div class="flash-promo-sub">Stock remaining: 14 units</div>
+                    <img src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600&auto=format&fit=crop&q=80" alt="Flash Deal" class="flash-promo-bg-img">
+                    <button class="btn-shop-now-cyan" onclick="window.location='/live-shopping'">Shop Now</button>
+                </div>
+            @endif
 
         </aside>
 
     </div>
-@endsection
+
+</main>
+
+
+<!-- FOOTER -->
+<footer class="zal-footer-center">
+    <div class="container">
+        <!-- Center Logo -->
+        <a href="{{ route('home') }}">
+            <img src="{{ asset(setting('site_logo', 'assets/logo.png')) }}" alt="{{ setting('site_name', 'Zaldoris') }}" class="footer-logo-img">
+        </a>
+        <p class="footer-tagline-text">
+            {{ setting('site_tagline', 'Experience the future of shopping with real-time interaction, live demonstrations, and exclusive community deals.') }}
+        </p>
+        <div class="footer-copyright-line">
+            {{ setting('copyright_text', '© 2026 Zaldoris Live Commerce Ltd. All rights reserved.') }}
+        </div>
+    </div>
+</footer>
+
+<!-- FLOATING WIDGET BUTTON -->
+<button class="floating-action-widget" onclick="window.location='/live-shopping'" title="Shop Live">
+    <i class="bi bi-bag-fill"></i>
+</button>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ asset('js/main.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Category Carousel Controls
+        const catRow = document.getElementById('categoriesScrollRow');
+        const prevBtn = document.getElementById('catPrevBtn');
+        const nextBtn = document.getElementById('catNextBtn');
+
+        if (catRow && prevBtn && nextBtn) {
+            prevBtn.addEventListener('click', function() {
+                catRow.scrollBy({ left: -240, behavior: 'smooth' });
+            });
+            nextBtn.addEventListener('click', function() {
+                catRow.scrollBy({ left: 240, behavior: 'smooth' });
+            });
+        }
+
+        // Hero Banner Slider Controls & Autoplay
+        const sliderWrapper = document.getElementById('heroBannerSlider');
+        const sliderTrack = document.getElementById('heroSliderTrack');
+        const prevSlideBtn = document.getElementById('heroSliderPrev');
+        const nextSlideBtn = document.getElementById('heroSliderNext');
+        const dotsContainer = document.getElementById('heroSliderDots');
+
+        if (sliderTrack) {
+            const slides = sliderTrack.querySelectorAll('.hero-slider-slide');
+            const totalSlides = slides.length;
+
+            if (totalSlides > 1) {
+                let currentSlide = 0;
+                let autoplayTimer = null;
+                const dots = dotsContainer ? dotsContainer.querySelectorAll('.hero-slider-dot') : [];
+
+                function goToSlide(index) {
+                    if (index < 0) {
+                        currentSlide = totalSlides - 1;
+                    } else if (index >= totalSlides) {
+                        currentSlide = 0;
+                    } else {
+                        currentSlide = index;
+                    }
+                    sliderTrack.style.transform = `translateX(-${currentSlide * 100}%)`;
+                    dots.forEach((dot, i) => {
+                        dot.classList.toggle('active', i === currentSlide);
+                    });
+                }
+
+                function startAutoplay() {
+                    stopAutoplay();
+                    autoplayTimer = setInterval(() => {
+                        goToSlide(currentSlide + 1);
+                    }, 5000);
+                }
+
+                function stopAutoplay() {
+                    if (autoplayTimer) clearInterval(autoplayTimer);
+                }
+
+                if (prevSlideBtn) {
+                    prevSlideBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        goToSlide(currentSlide - 1);
+                        startAutoplay();
+                    });
+                }
+
+                if (nextSlideBtn) {
+                    nextSlideBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        goToSlide(currentSlide + 1);
+                        startAutoplay();
+                    });
+                }
+
+                dots.forEach(function(dot) {
+                    dot.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const targetIdx = parseInt(dot.getAttribute('data-slide'), 10);
+                        goToSlide(targetIdx);
+                        startAutoplay();
+                    });
+                });
+
+                if (sliderWrapper) {
+                    sliderWrapper.addEventListener('mouseenter', stopAutoplay);
+                    sliderWrapper.addEventListener('mouseleave', startAutoplay);
+                }
+
+                startAutoplay();
+            }
+        }
+    });
+</script>
+</body>
+</html>

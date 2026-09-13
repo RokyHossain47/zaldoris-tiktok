@@ -367,6 +367,119 @@
 
         .status-active { background: rgba(37, 244, 238, 0.15); color: #25F4EE; }
         .status-blocked { background: rgba(254, 44, 85, 0.15); color: #FE2C55; }
+        .sidebar-submenu {
+            list-style: none;
+            padding: 4px 0 6px 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .sidebar-sublink {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .sidebar-sublink:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .sidebar-sublink.active {
+            color: var(--cyan-accent);
+            background: rgba(37, 244, 238, 0.1);
+            font-weight: 700;
+        }
+
+        /* PAGINATION STYLES */
+        .pagination {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            flex-wrap: wrap;
+        }
+
+        .page-item .page-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 36px;
+            height: 36px;
+            padding: 6px 12px;
+            background: #0c0d14;
+            border: 1px solid var(--border-color);
+            color: #fff;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .page-item.active .page-link {
+            background: var(--cyan-accent);
+            color: #090D10;
+            border-color: var(--cyan-accent);
+            font-weight: 800;
+            box-shadow: 0 2px 10px rgba(37, 244, 238, 0.3);
+        }
+
+        .page-item.disabled .page-link {
+            background: rgba(255, 255, 255, 0.03);
+            color: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.05);
+            cursor: not-allowed;
+        }
+
+        .page-item:not(.active):not(.disabled) .page-link:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+            color: var(--cyan-accent);
+        }
+
+        /* Prevent oversized SVGs in Laravel pagination */
+        nav[role="navigation"] svg,
+        .pagination svg,
+        .admin-table-container svg {
+            width: 14px !important;
+            height: 14px !important;
+            max-width: 14px !important;
+            max-height: 14px !important;
+            display: inline-block !important;
+            vertical-align: middle !important;
+        }
+
+        nav[role="navigation"] {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            width: 100%;
+        }
+
+        nav[role="navigation"] > div {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        nav[role="navigation"] p {
+            margin: 0;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
     </style>
     @stack('admin_styles')
 </head>
@@ -375,54 +488,134 @@
     <!-- LEFT SIDEBAR NAVIGATION -->
     <aside class="admin-sidebar">
         <a href="{{ route('admin.dashboard') }}" class="admin-brand">
-            <span style="font-weight: 900; font-size: 22px;">GenZ <span class="brand-live">Live</span></span>
+            <span style="font-weight: 900; font-size: 20px;">{{ setting('site_name', 'Zaldoris') }} <span class="brand-live">Admin</span></span>
         </a>
 
         <ul class="sidebar-menu">
             <li>
                 <a href="{{ route('admin.dashboard') }}" class="sidebar-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                     <div class="sidebar-link-inner">
-                        <i class="bi bi-activity nav-icon"></i>
+                        <i class="bi bi-speedometer2 nav-icon"></i>
                         <span>Dashboard</span>
                     </div>
                 </a>
             </li>
 
+            <!-- BANNERS CRUD -->
             <li>
-                <a href="{{ route('admin.dashboard') }}" class="sidebar-link">
+                <a href="{{ route('admin.banners.index') }}" class="sidebar-link {{ request()->routeIs('admin.banners.*') ? 'active' : '' }}">
                     <div class="sidebar-link-inner">
-                        <i class="bi bi-shield-lock nav-icon"></i>
-                        <span>Admin Panel</span>
+                        <i class="bi bi-images nav-icon"></i>
+                        <span>Banners</span>
                     </div>
                 </a>
             </li>
 
+            <!-- PRODUCTS MENU & SUB-MENUS -->
             <li>
-                <a href="{{ route('admin.ads') }}" class="sidebar-link {{ request()->routeIs('admin.ads') ? 'active' : '' }}">
+                <div class="sidebar-link {{ request()->routeIs('admin.products.*') || request()->routeIs('admin.categories.*') ? 'active' : '' }}" style="cursor: pointer;">
                     <div class="sidebar-link-inner">
-                        <i class="bi bi-image nav-icon"></i>
-                        <span>Banner</span>
+                        <i class="bi bi-box-seam nav-icon"></i>
+                        <span>Products</span>
                     </div>
-                </a>
+                    <i class="bi bi-chevron-down" style="font-size: 11px;"></i>
+                </div>
+                <ul class="sidebar-submenu">
+                    <li>
+                        <a href="{{ route('admin.categories.index') }}" class="sidebar-sublink {{ request()->routeIs('admin.categories.*') ? 'active' : '' }}">
+                            <i class="bi bi-tag" style="font-size: 12px;"></i>
+                            <span>Categories</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('admin.products.index') }}" class="sidebar-sublink {{ request()->routeIs('admin.products.index') ? 'active' : '' }}">
+                            <i class="bi bi-grid" style="font-size: 12px;"></i>
+                            <span>All Products</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('admin.products.create') }}" class="sidebar-sublink {{ request()->routeIs('admin.products.create') ? 'active' : '' }}">
+                            <i class="bi bi-plus-circle" style="font-size: 12px;"></i>
+                            <span>Add Product</span>
+                        </a>
+                    </li>
+                </ul>
             </li>
 
+            <!-- GIFTS & REACTIONS MENU -->
+            <li>
+                <div class="sidebar-link {{ request()->routeIs('admin.gifts.*') || request()->routeIs('admin.reactions.*') ? 'active' : '' }}" style="cursor: pointer;">
+                    <div class="sidebar-link-inner">
+                        <i class="bi bi-gift nav-icon"></i>
+                        <span>Gifts & Reactions</span>
+                    </div>
+                    <i class="bi bi-chevron-down" style="font-size: 11px;"></i>
+                </div>
+                <ul class="sidebar-submenu">
+                    <li>
+                        <a href="{{ route('admin.gifts.index') }}" class="sidebar-sublink {{ request()->routeIs('admin.gifts.*') ? 'active' : '' }}">
+                            <i class="bi bi-gift-fill" style="font-size: 12px;"></i>
+                            <span>Live Gifts</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('admin.reactions.index') }}" class="sidebar-sublink {{ request()->routeIs('admin.reactions.*') ? 'active' : '' }}">
+                            <i class="bi bi-emoji-smile" style="font-size: 12px;"></i>
+                            <span>Reactions & GIFs</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+            <!-- USERS -->
             <li>
                 <a href="{{ route('admin.users.index') }}" class="sidebar-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
                     <div class="sidebar-link-inner">
                         <i class="bi bi-people nav-icon"></i>
-                        <span>User</span>
+                        <span>Users</span>
                     </div>
-                    <i class="bi bi-chevron-right" style="font-size: 11px;"></i>
                 </a>
             </li>
+
+            <!-- DISPUTES -->
             <li>
                 <a href="{{ route('admin.disputes') }}" class="sidebar-link {{ request()->routeIs('admin.disputes') ? 'active' : '' }}">
                     <div class="sidebar-link-inner">
-                        <i class="bi bi-building nav-icon"></i>
-                        <span>Agency</span>
+                        <i class="bi bi-shield-check nav-icon"></i>
+                        <span>Disputes & Escrow</span>
                     </div>
-                    <i class="bi bi-chevron-right" style="font-size: 11px;"></i>
                 </a>
+            </li>
+
+            <!-- SETTINGS MENU & 3 SUB-MENUS -->
+            <li>
+                <div class="sidebar-link {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}" style="cursor: pointer;">
+                    <div class="sidebar-link-inner">
+                        <i class="bi bi-gear nav-icon"></i>
+                        <span>Settings</span>
+                    </div>
+                    <i class="bi bi-chevron-down" style="font-size: 11px;"></i>
+                </div>
+                <ul class="sidebar-submenu">
+                    <li>
+                        <a href="{{ route('admin.settings.general') }}" class="sidebar-sublink {{ request()->routeIs('admin.settings.general') ? 'active' : '' }}">
+                            <i class="bi bi-sliders" style="font-size: 12px;"></i>
+                            <span>General Settings</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('admin.settings.seo') }}" class="sidebar-sublink {{ request()->routeIs('admin.settings.seo') ? 'active' : '' }}">
+                            <i class="bi bi-search-heart" style="font-size: 12px;"></i>
+                            <span>SEO Settings</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('admin.settings.system') }}" class="sidebar-sublink {{ request()->routeIs('admin.settings.system') ? 'active' : '' }}">
+                            <i class="bi bi-cpu" style="font-size: 12px;"></i>
+                            <span>System Settings</span>
+                        </a>
+                    </li>
+                </ul>
             </li>
         </ul>
 
@@ -465,7 +658,7 @@
                 </div>
             @endif
 
-            @if($errors->any())
+            @if(isset($errors) && $errors->any())
                 <div style="background: rgba(254, 44, 85, 0.15); border: 1px solid var(--pink-accent); color: var(--pink-accent); padding: 12px 18px; border-radius: 10px; margin-bottom: 20px; font-size: 13px;">
                     <ul style="margin: 0; padding-left: 20px;">
                         @foreach($errors->all() as $err)

@@ -14,6 +14,7 @@ class Product extends Model
 
     protected $fillable = [
         'seller_id',
+        'category_id',
         'title',
         'description',
         'price',
@@ -27,6 +28,8 @@ class Product extends Model
         'dimensions',
         'is_natural_lighting_declared',
         'status',
+        'is_featured',
+        'is_trending',
     ];
 
     protected $casts = [
@@ -34,6 +37,8 @@ class Product extends Model
         'compare_price' => 'decimal:2',
         'images' => 'array',
         'is_natural_lighting_declared' => 'boolean',
+        'is_featured' => 'boolean',
+        'is_trending' => 'boolean',
         'stock' => 'integer',
         'locked_stock' => 'integer',
     ];
@@ -41,6 +46,29 @@ class Product extends Model
     public function seller(): BelongsTo
     {
         return $this->belongsTo(User::class, 'seller_id');
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class, 'category_id');
+    }
+
+    public function categoryRel(): BelongsTo
+    {
+        return $this->belongsTo(Category::class, 'category_id');
+    }
+
+    public function getCategoryNameAttribute(): string
+    {
+        if ($this->relationLoaded('category') && $this->getRelation('category') instanceof Category) {
+            return $this->getRelation('category')->name;
+        }
+        if ($this->category_id) {
+            $cat = Category::find($this->category_id);
+            if ($cat) return $cat->name;
+        }
+        $raw = $this->attributes['category'] ?? null;
+        return is_string($raw) && !empty($raw) ? ucfirst($raw) : 'General';
     }
 
     public function streams(): BelongsToMany

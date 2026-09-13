@@ -8,8 +8,8 @@
     <title>@yield('title', 'Zaldoris - TikTok-Style Live Commerce & Auction Platform')</title>
 
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="{{ asset('assets/favicon.png') }}">
-    <link rel="shortcut icon" href="{{ asset('assets/favicon.png') }}">
+    <link rel="icon" type="image/png" href="{{ asset(setting('site_favicon', 'assets/favicon.png')) }}">
+    <link rel="shortcut icon" href="{{ asset(setting('site_favicon', 'assets/favicon.png')) }}">
 
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -20,6 +20,7 @@
     <!-- Custom CSS -->
     <link href="{{ asset('css/style.css') }}" rel="stylesheet">
     <link href="{{ asset('css/auction.css') }}" rel="stylesheet">
+    {!! setting('custom_header_scripts') !!}
 
     <style>
         .nav-role-badge {
@@ -56,7 +57,7 @@
     <div class="zal-navbar-inner">
         <!-- Logo -->
         <a class="zal-brand" href="{{ route('home') }}">
-            <img src="{{ asset('assets/logo.png') }}" alt="Zaldoris" class="zal-brand-logo">
+            <img src="{{ asset(setting('site_logo', 'assets/logo.png')) }}" alt="{{ setting('site_name', 'Zaldoris') }}" class="zal-brand-logo">
         </a>
 
         <!-- Center Nav Links -->
@@ -67,53 +68,27 @@
             <li><a href="{{ route('streams.index') }}" class="zal-nav-link {{ request()->routeIs('streams.*') && !request()->fullUrlIs('*live_shopping*') && !request()->fullUrlIs('*pk_battle*') ? 'active' : '' }}">Live Streaming</a></li>
             <li><a href="{{ route('streams.index', ['type' => 'pk_battle']) }}" class="zal-nav-link {{ request()->fullUrlIs('*pk_battle*') ? 'active' : '' }}">PK Battle</a></li>
             <li><a href="{{ route('shop.index') }}" class="zal-nav-link {{ request()->routeIs('shop.*') ? 'active' : '' }}">Shop</a></li>
-            @auth
-                @if(auth()->user()->isSeller())
-                    <li><a href="{{ route('dashboard.seller') }}" class="zal-nav-link {{ request()->routeIs('dashboard.seller') ? 'active' : '' }}">Seller Hub</a></li>
-                @endif
-                @if(auth()->user()->isCreator())
-                    <li><a href="{{ route('dashboard.creator') }}" class="zal-nav-link {{ request()->routeIs('dashboard.creator') ? 'active' : '' }}">Creator Studio</a></li>
-                @endif
-                @if(auth()->user()->isAdmin())
-                    <li><a href="{{ route('admin.index') }}" class="zal-nav-link {{ request()->routeIs('admin.*') ? 'active' : '' }}">Admin Panel</a></li>
-                @endif
-            @endauth
         </ul>
 
         <!-- Right Action Icons -->
         <div class="zal-nav-actions">
             <a href="{{ route('search') }}" class="nav-icon-btn" title="Search"><i class="bi bi-search"></i></a>
-            
-            <a href="{{ route('wallet.coins') }}" class="user-coin-chip" title="Coins Wallet">
-                <i class="bi bi-coin"></i> 
-                <span>{{ auth()->check() ? number_format(auth()->user()->coin_balance) : '100' }}</span>
-            </a>
-
-            <a href="{{ route('notifications') }}" class="nav-icon-btn" title="Notifications">
-                <i class="bi bi-bell"></i>
-                <span class="icon-badge-dot"></span>
-            </a>
-
-            <a href="{{ route('shop.cart') }}" class="nav-icon-btn" title="Cart">
-                <i class="bi bi-cart3"></i>
-                <span class="icon-badge-num" id="globalCartBadge">1</span>
-            </a>
-
             @auth
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <a href="{{ auth()->user()->isSeller() ? route('dashboard.seller') : (auth()->user()->isCreator() ? route('dashboard.creator') : route('shop.orders')) }}" class="nav-avatar-btn" title="{{ auth()->user()->name }}">
-                        <img src="{{ auth()->user()->avatar_url }}" alt="{{ auth()->user()->name }}">
-                    </a>
-                    <form action="{{ route('logout') }}" method="POST" style="margin: 0;">
-                        @csrf
-                        <button type="submit" class="nav-icon-btn" title="Logout" style="background: none; border: none; cursor: pointer; color: #888;">
-                            <i class="bi bi-box-arrow-right"></i>
-                        </button>
-                    </form>
-                </div>
+                <button class="nav-icon-btn" id="navTicketBtn" title="Wallet"><i class="bi bi-wallet2"></i></button>
+                <a href="{{ route('notifications') }}" class="nav-icon-btn" title="Notifications">
+                    <i class="bi bi-bell"></i>
+                    <span class="icon-badge-dot"></span>
+                </a>
+                <a href="{{ route('shop.cart') }}" class="nav-icon-btn" title="Cart">
+                    <i class="bi bi-cart3"></i>
+                    <span class="icon-badge-num" id="globalCartBadge">2</span>
+                </a>
+                <a href="{{ route('dashboard.creator') }}" class="nav-avatar-btn" title="Profile">
+                    <img src="{{ auth()->user()->avatar_url ?? 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100&auto=format&fit=crop&q=80' }}" alt="{{ auth()->user()->name }}">
+                </a>
             @else
-                <a href="{{ route('login') }}" class="zal-btn-primary" style="padding: 6px 16px; font-size: 13px; text-decoration: none; border-radius: 20px; background: #FE2C55; color: #fff; font-weight: 700;">
-                    Log In
+                <a href="{{ route('login') }}" class="btn-login-nav" style="background: linear-gradient(135deg, var(--cyan-accent, #00F0C8), #1ed6d0); color: #090D10; text-decoration: none; padding: 7px 18px; border-radius: 20px; font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; margin-left: 8px;">
+                    <i class="bi bi-box-arrow-in-right"></i> Log In
                 </a>
             @endauth
         </div>

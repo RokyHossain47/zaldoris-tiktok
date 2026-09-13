@@ -1,107 +1,266 @@
-@extends('layouts.app')
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Zaldoris - Checkout Page. Review order details, select shipping methods, and complete your purchase securely.">
+    <title>Checkout - Zaldoris Live Commerce Platform</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ asset('assets/favicon.png') }}">
+    <link rel="shortcut icon" href="{{ asset('assets/favicon.png') }}">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="{{ asset('css/style.css') }}" rel="stylesheet">
+</head>
+<body>
 
-@section('title', 'Express Checkout - Zaldoris')
+<!-- NAVBAR / HEADER -->
+<header class="zal-navbar">
+    <div class="zal-navbar-inner">
+        <!-- Logo -->
+        <a class="zal-brand" href="{{ route('home') }}">
+            <img src="{{ asset('assets/logo.png') }}" alt="Zaldoris" class="zal-brand-logo">
+        </a>
 
-@section('content')
-<div style="max-width: 900px; margin: 0 auto;">
+        <!-- Center Nav Links -->
+        <ul class="zal-nav-menu">
+            <li><a href="{{ route('home') }}" class="zal-nav-link active">Home</a></li>
+            <li><a href="{{ route('shop.index') }}" class="zal-nav-link">Live Shopping</a></li>
+            <li><a href="{{ route('auctions.index') }}" class="zal-nav-link">Live Auction</a></li>
+            <li><a href="#" class="zal-nav-link">Live Academy</a></li>
+            <li><a href="{{ route('streams.index') }}" class="zal-nav-link">Live Streaming</a></li>
+            <li><a href="{{ route('streams.pk_battle', 1) }}" class="zal-nav-link">PK Battle</a></li>
+        </ul>
 
-    <h1 style="font-size: 24px; font-weight: 800; margin-bottom: 24px;">Express Checkout</h1>
+                <!-- Right Action Icons -->
+        <div class="zal-nav-actions">
+            <a href="{{ route('search') }}" class="nav-icon-btn" title="Search"><i class="bi bi-search"></i></a>
+            @auth
+                <button class="nav-icon-btn" id="navTicketBtn" title="Wallet"><i class="bi bi-wallet2"></i></button>
+                <a href="{{ route('notifications') }}" class="nav-icon-btn" title="Notifications">
+                    <i class="bi bi-bell"></i>
+                    <span class="icon-badge-dot"></span>
+                </a>
+                <a href="{{ route('shop.cart') }}" class="nav-icon-btn" title="Cart">
+                    <i class="bi bi-cart3"></i>
+                    <span class="icon-badge-num" id="globalCartBadge">2</span>
+                </a>
+                <a href="{{ route('dashboard.creator') }}" class="nav-avatar-btn" title="Profile">
+                    <img src="{{ auth()->user()->avatar_url ?? 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100&auto=format&fit=crop&q=80' }}" alt="{{ auth()->user()->name }}">
+                </a>
+            @else
+                <a href="{{ route('login') }}" class="btn-login-nav" style="background: linear-gradient(135deg, var(--cyan-accent, #00F0C8), #1ed6d0); color: #090D10; text-decoration: none; padding: 7px 18px; border-radius: 20px; font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; margin-left: 8px;">
+                    <i class="bi bi-box-arrow-in-right"></i> Log In
+                </a>
+            @endauth
+        </div>
+    </div>
+</header>
 
-    <form action="{{ route('shop.checkout.process') }}" method="POST">
-        @csrf
-        <input type="hidden" name="items[0][product_id]" value="1">
-        <input type="hidden" name="items[0][quantity]" value="1">
+<!-- MAIN CONTAINER -->
+<main class="page-container">
 
-        <div style="display: grid; grid-template-columns: 1fr 340px; gap: 30px;">
-            
-            <div style="display: flex; flex-direction: column; gap: 20px;">
-                
-                <!-- SHIPPING ADDRESS (SRS #5, #15) -->
-                <div class="zal-card" style="background: #16161f; border-radius: 16px; padding: 24px;">
-                    <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 16px;">1. Shipping Address</h3>
+    <!-- Header Row with Back Button -->
+    <div class="notif-header-row mb-4">
+        <a href="{{ route('shop.cart') }}" class="notif-back-btn" title="Back to Cart">
+            <i class="bi bi-chevron-left"></i>
+        </a>
+        <h1 class="notif-page-title">Checkout</h1>
+    </div>
 
-                    <div style="display: flex; flex-direction: column; gap: 12px;">
-                        <div>
-                            <label style="font-size: 12px; color: #888; display: block; margin-bottom: 4px;">Street Address</label>
-                            <input type="text" name="street" value="120 Bay Street, Suite 800" required style="width: 100%; background: #1f1f2a; border: 1px solid #333; color: #fff; padding: 10px 14px; border-radius: 8px; font-size: 13px;">
+    <!-- TWO-COLUMN CHECKOUT GRID -->
+    <div class="checkout-page-grid">
+
+        <!-- LEFT COLUMN: CHECKOUT ITEMS LIST -->
+        <div class="cart-items-column" id="checkoutItemsContainer">
+
+            <!-- Checkout Item -->
+            <div class="cart-item-card">
+                <div class="cart-item-top">
+                    <div class="cart-item-left">
+                        <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200&auto=format&fit=crop&q=80" alt="Titanium Smartwatch" class="cart-item-thumb">
+                        <div class="cart-item-info">
+                            <h2 class="cart-item-title">Titanium</h2>
+                            <h2 class="cart-item-title">Smartwatch</h2>
                         </div>
-
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                            <div>
-                                <label style="font-size: 12px; color: #888; display: block; margin-bottom: 4px;">City</label>
-                                <input type="text" name="city" value="Toronto" required style="width: 100%; background: #1f1f2a; border: 1px solid #333; color: #fff; padding: 10px 14px; border-radius: 8px; font-size: 13px;">
-                            </div>
-                            <div>
-                                <label style="font-size: 12px; color: #888; display: block; margin-bottom: 4px;">Province</label>
-                                <input type="text" name="province" value="ON" required style="width: 100%; background: #1f1f2a; border: 1px solid #333; color: #fff; padding: 10px 14px; border-radius: 8px; font-size: 13px;">
-                            </div>
-                        </div>
-
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                            <div>
-                                <label style="font-size: 12px; color: #888; display: block; margin-bottom: 4px;">Postal Code</label>
-                                <input type="text" name="postal_code" value="M5J 2R8" required style="width: 100%; background: #1f1f2a; border: 1px solid #333; color: #fff; padding: 10px 14px; border-radius: 8px; font-size: 13px;">
-                            </div>
-                            <div>
-                                <label style="font-size: 12px; color: #888; display: block; margin-bottom: 4px;">Country</label>
-                                <input type="text" name="country" value="Canada" required style="width: 100%; background: #1f1f2a; border: 1px solid #333; color: #fff; padding: 10px 14px; border-radius: 8px; font-size: 13px;">
-                            </div>
-                        </div>
+                    </div>
+                    <div class="cart-item-right">
+                        <button type="button" class="btn-delete-cart-item" title="Remove Item" onclick="removeCheckoutCard(this)">
+                            <i class="bi bi-trash-fill"></i>
+                        </button>
+                        <span class="cart-item-price">C$299.00</span>
                     </div>
                 </div>
 
-                <!-- PAYMENT METHOD (SRS #15) -->
-                <div class="zal-card" style="background: #16161f; border-radius: 16px; padding: 24px;">
-                    <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 16px;">2. Payment Method</h3>
-                    <div style="display: flex; gap: 12px;">
-                        <label style="flex: 1; background: #1f1f2a; border: 2px solid #FE2C55; padding: 12px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700;">
-                            <input type="radio" name="payment_method" value="stripe_card" checked style="accent-color: #FE2C55;">
-                            <span><i class="bi bi-credit-card-2-front"></i> Credit / Debit Card</span>
-                        </label>
-                        <label style="flex: 1; background: #1f1f2a; border: 2px solid transparent; padding: 12px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700;">
-                            <input type="radio" name="payment_method" value="apple_pay" style="accent-color: #FE2C55;">
-                            <span><i class="bi bi-apple"></i> Apple / Google Pay</span>
-                        </label>
+                <div class="cart-item-bottom">
+                    <span class="cart-qty-label">Quantity</span>
+                    <div class="quantity-stepper">
+                        <button type="button" class="btn-step" onclick="updateItemQty(this, -1)">—</button>
+                        <span class="step-num">1</span>
+                        <button type="button" class="btn-step" onclick="updateItemQty(this, 1)">+</button>
                     </div>
                 </div>
-
-            </div>
-
-            <!-- ORDER TOTAL & SUBMIT -->
-            <div class="zal-card" style="background: #16161f; border-radius: 16px; padding: 24px; height: fit-content;">
-                <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 16px;">Summary</h3>
-                
-                <div style="display: flex; flex-direction: column; gap: 10px; font-size: 13px; margin-bottom: 20px; border-bottom: 1px solid #222; padding-bottom: 16px;">
-                    <div style="display: flex; justify-content: space-between;">
-                        <span style="color: #888;">Subtotal</span>
-                        <strong style="color: #fff;">$380.00</strong>
-                    </div>
-                    <div style="display: flex; justify-content: space-between;">
-                        <span style="color: #888;">Shipping</span>
-                        <strong style="color: #fff;">$10.00</strong>
-                    </div>
-                    <div style="display: flex; justify-content: space-between;">
-                        <span style="color: #888;">Insurance (> $50)</span>
-                        <strong style="color: #25F4EE;">$1.90</strong>
-                    </div>
-                    <div style="display: flex; justify-content: space-between;">
-                        <span style="color: #888;">13% HST</span>
-                        <strong style="color: #fff;">$50.95</strong>
-                    </div>
-                </div>
-
-                <div style="display: flex; justify-content: space-between; font-size: 18px; font-weight: 900; margin-bottom: 20px;">
-                    <span>Total Due</span>
-                    <span style="color: #25F4EE;">$442.85</span>
-                </div>
-
-                <button type="submit" class="zal-btn-primary" style="width: 100%; padding: 14px; border-radius: 10px; border: none; font-weight: 800; font-size: 14px; background: linear-gradient(135deg, #FE2C55, #FF0055); color: #fff; cursor: pointer;">
-                    Complete Order
-                </button>
             </div>
 
         </div>
-    </form>
 
-</div>
-@endsection
+        <!-- RIGHT COLUMN: ORDER SUMMARY CARD -->
+        <div class="order-summary-card">
+            <h2 class="summary-title">Order Summary</h2>
+
+            <!-- Calculation Lines Table -->
+            <div class="summary-calc-table">
+                <div class="summary-calc-row">
+                    <span>Subtotal</span>
+                    <span>C$899.00</span>
+                </div>
+                <div class="summary-calc-row discount-row">
+                    <span>Discount (First Buy)</span>
+                    <span>-C$50.00</span>
+                </div>
+                <div class="summary-calc-row">
+                    <span>Platform Fee</span>
+                    <span>C$12.50</span>
+                </div>
+                <div class="summary-calc-row">
+                    <span>Processing Fee</span>
+                    <span>C$12.50</span>
+                </div>
+                <div class="summary-calc-row">
+                    <span>Shipping</span>
+                    <span>Free</span>
+                </div>
+                <div class="summary-calc-row">
+                    <span>GST / HST / PST</span>
+                    <span>C$111.93</span>
+                </div>
+                
+                <div class="summary-divider"></div>
+
+                <div class="summary-calc-row total-row">
+                    <span>Total</span>
+                    <span>C$973.43</span>
+                </div>
+            </div>
+
+            <!-- Promo Code Input Wrap -->
+            <div class="promo-code-wrap">
+                <div class="promo-input-group">
+                    <i class="bi bi-tag"></i>
+                    <input type="text" placeholder="Add promo code" class="promo-input" id="checkoutPromoInput">
+                </div>
+                <button type="button" class="btn-apply-promo" onclick="handleApplyPromoCode()">Apply</button>
+            </div>
+
+            <!-- Shipping Methods Section -->
+            <div class="shipping-methods-section">
+                <h3 class="shipping-section-title">Shipping Methods</h3>
+                
+                <label class="shipping-option-card active" onclick="selectShippingOption(this)">
+                    <div class="shipping-option-left">
+                        <input type="radio" name="shipMethod" checked>
+                        <span>Standard Delivery</span>
+                    </div>
+                    <span class="ship-price-val free-text">Free</span>
+                </label>
+
+                <label class="shipping-option-card" onclick="selectShippingOption(this)">
+                    <div class="shipping-option-left">
+                        <input type="radio" name="shipMethod">
+                        <span>Express Delivery</span>
+                    </div>
+                    <span class="ship-price-val">+C$25.00</span>
+                </label>
+            </div>
+
+            <!-- Total Payment Box -->
+            <div class="total-pay-box">
+                <span class="total-pay-label">Total Payment Amount</span>
+                <span class="total-pay-val">C$973.43</span>
+            </div>
+
+            <!-- Checkout Button -->
+            <button type="button" class="btn-checkout-cyan" onclick="handleFinalPayment()">
+                Go To Checkout
+            </button>
+        </div>
+
+    </div>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="zal-footer-center">
+    <div class="container">
+        <!-- Center Logo -->
+        <a href="{{ route('home') }}">
+            <img src="{{ asset('assets/logo.png') }}" alt="Zaldoris" class="footer-logo-img">
+        </a>
+        <p class="footer-tagline-text">
+            Experience the future of shopping with realtime interaction, live demonstrations, and exclusive community deals.
+        </p>
+        <div class="footer-copyright-line">
+            © 2024 LiveStreamShop. All rights reserved.
+        </div>
+    </div>
+</footer>
+
+<!-- FLOATING WIDGET BUTTON -->
+<button class="floating-action-widget" title="Live Chat">
+    <i class="bi bi-chat-dots-fill"></i>
+</button>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ asset('js/main.js') }}"></script>
+<script>
+    // Quantity Stepper Handler
+    function updateItemQty(btn, change) {
+        const stepper = btn.parentElement;
+        const numSpan = stepper.querySelector('.step-num');
+        if (numSpan) {
+            let current = parseInt(numSpan.textContent) || 1;
+            current += change;
+            if (current < 1) current = 1;
+            numSpan.textContent = current;
+        }
+    }
+
+    // Remove Item Handler
+    function removeCheckoutCard(btn) {
+        const card = btn.closest('.cart-item-card');
+        if (card) {
+            card.style.opacity = '0';
+            card.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                card.remove();
+            }, 200);
+        }
+    }
+
+    // Shipping Option Switch Handler
+    function selectShippingOption(selectedCard) {
+        document.querySelectorAll('.shipping-option-card').forEach(card => card.classList.remove('active'));
+        selectedCard.classList.add('active');
+        const radio = selectedCard.querySelector('input[type="radio"]');
+        if (radio) radio.checked = true;
+    }
+
+    // Promo Code Handler
+    function handleApplyPromoCode() {
+        const input = document.getElementById('checkoutPromoInput');
+        if (input && input.value.trim() !== '') {
+            alert(`Promo code '${input.value.trim()}' applied successfully!`);
+            input.value = '';
+        }
+    }
+
+    // Final Payment Handler
+    function handleFinalPayment() {
+        alert('🎉 Order Placed Successfully! Thank you for shopping on Zaldoris.');
+    }
+</script>
+</body>
+</html>
