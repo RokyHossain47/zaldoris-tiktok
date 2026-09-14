@@ -170,6 +170,16 @@ Route::prefix('admin')->middleware('admin')->group(function () {
     Route::get('/settings/system', [AdminController::class, 'systemSettings'])->name('admin.settings.system');
     Route::post('/settings/system', [AdminController::class, 'updateSystemSettings'])->name('admin.settings.system.update');
 
+    // Auctions Management (Full CRUD)
+    Route::get('/auctions', [AdminController::class, 'auctions'])->name('admin.auctions.index');
+    Route::get('/auctions/create', [AdminController::class, 'createAuction'])->name('admin.auctions.create');
+    Route::post('/auctions', [AdminController::class, 'storeAuction'])->name('admin.auctions.store');
+    Route::get('/auctions/{id}/edit', [AdminController::class, 'editAuction'])->name('admin.auctions.edit');
+    Route::put('/auctions/{id}', [AdminController::class, 'updateAuction'])->name('admin.auctions.update');
+    Route::delete('/auctions/{id}', [AdminController::class, 'deleteAuction'])->name('admin.auctions.delete');
+    Route::post('/auctions/{id}/toggle-status', [AdminController::class, 'toggleAuctionStatus'])->name('admin.auctions.toggle_status');
+    Route::post('/auctions/{id}/toggle-blur', [AdminController::class, 'toggleAuctionBlur'])->name('admin.auctions.toggle_blur');
+
     Route::get('/disputes', [AdminController::class, 'disputes'])->name('admin.disputes');
     Route::post('/disputes/{id}/resolve', [AdminController::class, 'resolveDispute'])->name('admin.disputes.resolve');
 });

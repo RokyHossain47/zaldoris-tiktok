@@ -542,6 +542,31 @@
                 </ul>
             </li>
 
+            <!-- AUCTIONS MENU & SUB-MENUS -->
+            <li>
+                <div class="sidebar-link {{ request()->routeIs('admin.auctions.*') ? 'active' : '' }}" style="cursor: pointer;">
+                    <div class="sidebar-link-inner">
+                        <i class="bi bi-hammer nav-icon"></i>
+                        <span>Auctions</span>
+                    </div>
+                    <i class="bi bi-chevron-down" style="font-size: 11px;"></i>
+                </div>
+                <ul class="sidebar-submenu">
+                    <li>
+                        <a href="{{ route('admin.auctions.index') }}" class="sidebar-sublink {{ request()->routeIs('admin.auctions.index') ? 'active' : '' }}">
+                            <i class="bi bi-list-check" style="font-size: 12px;"></i>
+                            <span>All Auctions</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('admin.auctions.create') }}" class="sidebar-sublink {{ request()->routeIs('admin.auctions.create') ? 'active' : '' }}">
+                            <i class="bi bi-plus-circle" style="font-size: 12px;"></i>
+                            <span>Create Auction</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
             <!-- GIFTS & REACTIONS MENU -->
             <li>
                 <div class="sidebar-link {{ request()->routeIs('admin.gifts.*') || request()->routeIs('admin.reactions.*') ? 'active' : '' }}" style="cursor: pointer;">

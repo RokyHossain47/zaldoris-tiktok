@@ -1097,4 +1097,218 @@ class AdminController extends Controller
 
         return back()->with('success', 'Dispute resolution recorded.');
     }
+
+    /**
+     * Auctions Management (Full CRUD)
+     */
+    public function auctions(Request $request)
+    {
+        $filter = $request->query('status', 'all');
+        $search = $request->query('search', '');
+
+        $query = Auction::with(['seller', 'product', 'highestBidder', 'bids']);
+
+        if ($filter !== 'all' && in_array($filter, ['active', 'upcoming', 'sold', 'failed', 'cancelled'])) {
+            $query->where('status', $filter);
+        }
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%")
+                  ->orWhereHas('seller', function ($sq) use ($search) {
+                      $sq->where('name', 'like', "%{$search}%")
+                         ->orWhere('username', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        $auctions = $query->orderBy('id', 'desc')->paginate(15)->withQueryString();
+
+        $totalAuctions = Auction::count();
+        $activeAuctions = Auction::where('status', 'active')->count();
+        $upcomingAuctions = Auction::where('status', 'upcoming')->count();
+        $soldAuctions = Auction::where('status', 'sold')->count();
+        $failedAuctions = Auction::where('status', 'failed')->count();
+
+        return view('admin.auctions.index', compact(
+            'auctions',
+            'filter',
+            'search',
+            'totalAuctions',
+            'activeAuctions',
+            'upcomingAuctions',
+            'soldAuctions',
+            'failedAuctions'
+        ));
+    }
+
+    public function createAuction()
+    {
+        $sellers = User::whereIn('role', ['seller', 'creator', 'admin'])->orderBy('name')->get();
+        $products = Product::where('status', 'active')->orderBy('title')->get();
+
+        return view('admin.auctions.create', compact('sellers', 'products'));
+    }
+
+    public function storeAuction(Request $request)
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'image_url' => 'nullable|string',
+            'image_file' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif|max:10240',
+            'starting_bid' => 'required|numeric|min:0.01',
+            'reserve_price' => 'nullable|numeric|min:0',
+            'min_bid_step' => 'required|numeric|min:0.01',
+            'seller_id' => 'nullable|exists:users,id',
+            'product_id' => 'nullable|exists:products,id',
+            'status' => 'required|in:active,upcoming,sold,failed,cancelled',
+            'starts_at' => 'nullable|date',
+            'ends_at' => 'nullable|date|after_or_equal:starts_at',
+        ]);
+
+        $imageUrl = $validated['image_url'] ?? null;
+        if ($request->hasFile('image_file')) {
+            $file = $request->file('image_file');
+            $uploadDir = public_path('uploads/auctions');
+            File::ensureDirectoryExists($uploadDir);
+            $filename = 'auction_' . time() . '_' . Str::random(8) . '.' . $file->getClientOriginalExtension();
+            $file->move($uploadDir, $filename);
+            $imageUrl = '/uploads/auctions/' . $filename;
+        }
+
+        // If product selected and no image provided, inherit product image
+        if (!$imageUrl && !empty($validated['product_id'])) {
+            $product = Product::find($validated['product_id']);
+            if ($product && !empty($product->primary_image)) {
+                $imageUrl = $product->primary_image;
+            }
+        }
+
+        // Default placeholder image if none provided
+        if (!$imageUrl) {
+            $imageUrl = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&auto=format&fit=crop&q=80';
+        }
+
+        $sellerId = $validated['seller_id'] ?: auth()->id();
+        $startsAt = $validated['starts_at'] ? \Carbon\Carbon::parse($validated['starts_at']) : now();
+        $endsAt = $validated['ends_at'] ? \Carbon\Carbon::parse($validated['ends_at']) : now()->addHours(24);
+
+        $auction = Auction::create([
+            'seller_id' => $sellerId,
+            'product_id' => $validated['product_id'] ?? null,
+            'title' => $validated['title'],
+            'description' => $validated['description'] ?? null,
+            'image_url' => $imageUrl,
+            'starting_bid' => $validated['starting_bid'],
+            'reserve_price' => $validated['reserve_price'] ?? null,
+            'current_bid' => $validated['starting_bid'],
+            'min_bid_step' => $validated['min_bid_step'] ?? 5.00,
+            'status' => $validated['status'],
+            'starts_at' => $startsAt,
+            'ends_at' => $endsAt,
+            'is_blurred' => false,
+        ]);
+
+        return redirect()->route('admin.auctions.index')->with('success', 'Auction "' . $auction->title . '" created successfully!');
+    }
+
+    public function editAuction($id)
+    {
+        $auction = Auction::with(['seller', 'product', 'bids'])->findOrFail($id);
+        $sellers = User::whereIn('role', ['seller', 'creator', 'admin'])->orderBy('name')->get();
+        $products = Product::where('status', 'active')->orderBy('title')->get();
+
+        return view('admin.auctions.edit', compact('auction', 'sellers', 'products'));
+    }
+
+    public function updateAuction(Request $request, $id)
+    {
+        $auction = Auction::findOrFail($id);
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'image_url' => 'nullable|string',
+            'image_file' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif|max:10240',
+            'starting_bid' => 'required|numeric|min:0.01',
+            'reserve_price' => 'nullable|numeric|min:0',
+            'current_bid' => 'nullable|numeric|min:0.01',
+            'min_bid_step' => 'required|numeric|min:0.01',
+            'seller_id' => 'nullable|exists:users,id',
+            'product_id' => 'nullable|exists:products,id',
+            'status' => 'required|in:active,upcoming,sold,failed,cancelled',
+            'starts_at' => 'nullable|date',
+            'ends_at' => 'nullable|date',
+            'is_blurred' => 'nullable',
+        ]);
+
+        $imageUrl = $auction->image_url;
+        if ($request->hasFile('image_file')) {
+            $file = $request->file('image_file');
+            $uploadDir = public_path('uploads/auctions');
+            File::ensureDirectoryExists($uploadDir);
+            $filename = 'auction_' . time() . '_' . Str::random(8) . '.' . $file->getClientOriginalExtension();
+            $file->move($uploadDir, $filename);
+            $imageUrl = '/uploads/auctions/' . $filename;
+        } elseif ($request->filled('image_url')) {
+            $imageUrl = $request->image_url;
+        }
+
+        $startsAt = $validated['starts_at'] ? \Carbon\Carbon::parse($validated['starts_at']) : $auction->starts_at;
+        $endsAt = $validated['ends_at'] ? \Carbon\Carbon::parse($validated['ends_at']) : $auction->ends_at;
+
+        $auction->update([
+            'seller_id' => $validated['seller_id'] ?: $auction->seller_id,
+            'product_id' => $validated['product_id'] ?? $auction->product_id,
+            'title' => $validated['title'],
+            'description' => $validated['description'] ?? null,
+            'image_url' => $imageUrl,
+            'starting_bid' => $validated['starting_bid'],
+            'reserve_price' => $validated['reserve_price'] ?? null,
+            'current_bid' => $validated['current_bid'] ?? $auction->current_bid,
+            'min_bid_step' => $validated['min_bid_step'] ?? 5.00,
+            'status' => $validated['status'],
+            'starts_at' => $startsAt,
+            'ends_at' => $endsAt,
+            'is_blurred' => $request->boolean('is_blurred'),
+        ]);
+
+        return redirect()->route('admin.auctions.index')->with('success', 'Auction updated successfully!');
+    }
+
+    public function deleteAuction($id)
+    {
+        $auction = Auction::findOrFail($id);
+        $title = $auction->title;
+        $auction->delete();
+
+        return redirect()->route('admin.auctions.index')->with('success', 'Auction "' . $title . '" deleted successfully.');
+    }
+
+    public function toggleAuctionStatus($id)
+    {
+        $auction = Auction::findOrFail($id);
+        if ($auction->status === 'active') {
+            $auction->status = 'cancelled';
+        } else {
+            $auction->status = 'active';
+            if ($auction->ends_at && $auction->ends_at->isPast()) {
+                $auction->ends_at = now()->addHours(24);
+            }
+        }
+        $auction->save();
+
+        return back()->with('success', 'Auction status changed to ' . ucfirst($auction->status) . '.');
+    }
+
+    public function toggleAuctionBlur($id)
+    {
+        $auction = Auction::findOrFail($id);
+        $auction->is_blurred = !$auction->is_blurred;
+        $auction->save();
+
+        return back()->with('success', 'Auction blur state updated.');
+    }
 }
