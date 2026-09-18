@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="{{ Str::limit($product->description ?? setting('meta_description'), 160) }}">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $product->title ?? 'Live Product Room' }} - {{ setting('site_name', 'Zaldoris Live Commerce Platform') }}</title>
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="{{ setting('site_favicon') ? asset(setting('site_favicon')) : asset('assets/favicon.png') }}">
@@ -272,7 +273,7 @@
                 </a>
                 <a href="{{ route('shop.cart') }}" class="nav-icon-btn" title="Cart">
                     <i class="bi bi-cart3"></i>
-                    <span class="icon-badge-num" id="globalCartBadge">2</span>
+                    <span class="icon-badge-num" id="globalCartBadge">{{ array_sum(array_column(session('cart', []), 'quantity')) ?: 0 }}</span>
                 </a>
                 <a href="{{ route('dashboard.creator') }}" class="nav-avatar-btn" title="Profile">
                     <img src="{{ auth()->user()->avatar_url ?? 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100&auto=format&fit=crop&q=80' }}" alt="{{ auth()->user()->name }}">
@@ -323,8 +324,15 @@
                     <i class="bi bi-star-fill"></i>
                     <span>4.9 (1.2k reviews)</span>
                 </div>
-                <div class="room-host-followers">245K Followers</div>
-                <button type="button" class="btn-follow-cyan" onclick="toggleCreatorFollow(this)">Follow</button>
+                @php
+                    $hostUserId = $host->id ?? 1;
+                    $isFollowingHost = auth()->check() && auth()->user()->following()->where('following_id', $hostUserId)->exists();
+                    $followerCount = $host ? ($host->followers()->count() ?: 245) : 245;
+                @endphp
+                <div class="room-host-followers">{{ number_format($followerCount) }} Followers</div>
+                <button type="button" class="btn-follow-cyan {{ $isFollowingHost ? 'following' : '' }}" data-user-id="{{ $hostUserId }}" onclick="toggleCreatorFollow(this, {{ $hostUserId }})">
+                    {{ $isFollowingHost ? 'Following' : 'Follow' }}
+                </button>
             </div>
 
             <!-- Divider Line -->
@@ -361,8 +369,8 @@
                 </div>
 
                 <div class="product-action-row">
-                    <a href="{{ route('shop.checkout') }}" class="btn-outline-cyan" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">Buy Now</a>
-                    <button type="button" class="btn-solid-cyan" onclick="addCartItem('{{ addslashes($product->title) }}')">Add To Cart</button>
+                    <button type="button" class="btn-outline-cyan" onclick="handleBuyNow({{ $product->id }}, this)">Buy Now</button>
+                    <button type="button" class="btn-solid-cyan" onclick="addCartItem({{ $product->id }}, '{{ addslashes($product->title) }}', this)">Add To Cart</button>
                 </div>
             </div>
         </aside>
@@ -825,20 +833,32 @@
         return div.innerHTML;
     }
 
-    function addCartItem(name) {
-        alert(name + ' has been added to your cart!');
-    }
 
-    function toggleCreatorFollow(btn) {
-        if (btn.innerText === 'Follow') {
-            btn.innerText = 'Following ✓';
-            btn.style.background = '#00F0C8';
-            btn.style.color = '#090D10';
-        } else {
-            btn.innerText = 'Follow';
-            btn.style.background = 'transparent';
-            btn.style.color = '#00F0C8';
+
+    function handleBuyNow(productId, btn) {
+        const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+        const csrfToken = csrfMeta ? csrfMeta.getAttribute('content') : '';
+
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="bi bi-hourglass-split"></i>';
         }
+
+        fetch('/cart/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ product_id: productId, quantity: 1 })
+        })
+        .then(() => {
+            window.location.href = '{{ route("shop.cart") }}';
+        })
+        .catch(() => {
+            window.location.href = '{{ route("shop.cart") }}';
+        });
     }
 
     let liked = false;

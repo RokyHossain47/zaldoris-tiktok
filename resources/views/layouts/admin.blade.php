@@ -7,7 +7,7 @@
     <title>@yield('title', 'Admin Console - GenZ Live / Zaldoris')</title>
 
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="{{ asset('assets/favicon.png') }}">
+    <link rel="icon" type="image/png" href="{{ asset(setting('site_favicon', 'assets/favicon.png')) }}">
 
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -58,15 +58,22 @@
         }
 
         .admin-brand {
-            padding: 24px 20px;
+            padding: 18px 20px;
             display: flex;
             align-items: center;
+            justify-content: flex-start;
             gap: 12px;
-            font-size: 20px;
-            font-weight: 800;
-            color: #fff;
             text-decoration: none;
             border-bottom: 1px solid var(--border-color);
+            min-height: 70px;
+        }
+
+        .admin-brand-logo {
+            max-height: 38px;
+            max-width: 180px;
+            width: auto;
+            object-fit: contain;
+            display: block;
         }
 
         .admin-brand span.brand-live {
@@ -131,6 +138,60 @@
 
         .sidebar-link.active i.nav-icon {
             color: var(--pink-accent);
+        }
+
+        /* SIDEBAR DROPDOWNS & SUBMENUS */
+        .sidebar-dropdown {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .dropdown-arrow {
+            transition: transform 0.25s ease;
+        }
+
+        .sidebar-dropdown.open .dropdown-arrow {
+            transform: rotate(180deg);
+        }
+
+        .sidebar-submenu {
+            list-style: none;
+            padding: 4px 0 6px 36px;
+            display: none;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .sidebar-dropdown.open .sidebar-submenu {
+            display: flex;
+        }
+
+        .sidebar-sublink {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-sublink:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .sidebar-sublink.active {
+            color: var(--cyan-accent);
+            background: rgba(37, 244, 238, 0.08);
+            font-weight: 700;
+        }
+
+        .sidebar-sublink.active i {
+            color: var(--cyan-accent);
         }
 
         /* MAIN CONTENT */
@@ -367,37 +428,7 @@
 
         .status-active { background: rgba(37, 244, 238, 0.15); color: #25F4EE; }
         .status-blocked { background: rgba(254, 44, 85, 0.15); color: #FE2C55; }
-        .sidebar-submenu {
-            list-style: none;
-            padding: 4px 0 6px 28px;
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
 
-        .sidebar-sublink {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 12px;
-            color: var(--text-muted);
-            text-decoration: none;
-            font-size: 13px;
-            font-weight: 500;
-            border-radius: 8px;
-            transition: all 0.2s;
-        }
-
-        .sidebar-sublink:hover {
-            color: #fff;
-            background: rgba(255, 255, 255, 0.04);
-        }
-
-        .sidebar-sublink.active {
-            color: var(--cyan-accent);
-            background: rgba(37, 244, 238, 0.1);
-            font-weight: 700;
-        }
 
         /* PAGINATION STYLES */
         .pagination {
@@ -488,7 +519,14 @@
     <!-- LEFT SIDEBAR NAVIGATION -->
     <aside class="admin-sidebar">
         <a href="{{ route('admin.dashboard') }}" class="admin-brand">
-            <span style="font-weight: 900; font-size: 20px;">{{ setting('site_name', 'Zaldoris') }} <span class="brand-live">Admin</span></span>
+            @php
+                $siteLogo = setting('site_logo', 'assets/logo.png');
+            @endphp
+            @if($siteLogo)
+                <img src="{{ asset($siteLogo) }}" alt="{{ setting('site_name', 'Zaldoris') }}" class="admin-brand-logo">
+            @else
+                <span style="font-weight: 900; font-size: 20px; color: #fff;">{{ setting('site_name', 'Zaldoris') }} <span class="brand-live">Admin</span></span>
+            @endif
         </a>
 
         <ul class="sidebar-menu">
@@ -512,13 +550,13 @@
             </li>
 
             <!-- PRODUCTS MENU & SUB-MENUS -->
-            <li>
-                <div class="sidebar-link {{ request()->routeIs('admin.products.*') || request()->routeIs('admin.categories.*') ? 'active' : '' }}" style="cursor: pointer;">
+            <li class="sidebar-dropdown {{ request()->routeIs('admin.products.*') || request()->routeIs('admin.categories.*') ? 'open' : '' }}">
+                <div class="sidebar-link sidebar-dropdown-toggle {{ request()->routeIs('admin.products.*') || request()->routeIs('admin.categories.*') ? 'active' : '' }}" style="cursor: pointer;">
                     <div class="sidebar-link-inner">
                         <i class="bi bi-box-seam nav-icon"></i>
                         <span>Products</span>
                     </div>
-                    <i class="bi bi-chevron-down" style="font-size: 11px;"></i>
+                    <i class="bi bi-chevron-down dropdown-arrow" style="font-size: 11px;"></i>
                 </div>
                 <ul class="sidebar-submenu">
                     <li>
@@ -543,13 +581,13 @@
             </li>
 
             <!-- AUCTIONS MENU & SUB-MENUS -->
-            <li>
-                <div class="sidebar-link {{ request()->routeIs('admin.auctions.*') ? 'active' : '' }}" style="cursor: pointer;">
+            <li class="sidebar-dropdown {{ request()->routeIs('admin.auctions.*') ? 'open' : '' }}">
+                <div class="sidebar-link sidebar-dropdown-toggle {{ request()->routeIs('admin.auctions.*') ? 'active' : '' }}" style="cursor: pointer;">
                     <div class="sidebar-link-inner">
                         <i class="bi bi-hammer nav-icon"></i>
                         <span>Auctions</span>
                     </div>
-                    <i class="bi bi-chevron-down" style="font-size: 11px;"></i>
+                    <i class="bi bi-chevron-down dropdown-arrow" style="font-size: 11px;"></i>
                 </div>
                 <ul class="sidebar-submenu">
                     <li>
@@ -568,13 +606,13 @@
             </li>
 
             <!-- GIFTS & REACTIONS MENU -->
-            <li>
-                <div class="sidebar-link {{ request()->routeIs('admin.gifts.*') || request()->routeIs('admin.reactions.*') ? 'active' : '' }}" style="cursor: pointer;">
+            <li class="sidebar-dropdown {{ request()->routeIs('admin.gifts.*') || request()->routeIs('admin.reactions.*') ? 'open' : '' }}">
+                <div class="sidebar-link sidebar-dropdown-toggle {{ request()->routeIs('admin.gifts.*') || request()->routeIs('admin.reactions.*') ? 'active' : '' }}" style="cursor: pointer;">
                     <div class="sidebar-link-inner">
                         <i class="bi bi-gift nav-icon"></i>
                         <span>Gifts & Reactions</span>
                     </div>
-                    <i class="bi bi-chevron-down" style="font-size: 11px;"></i>
+                    <i class="bi bi-chevron-down dropdown-arrow" style="font-size: 11px;"></i>
                 </div>
                 <ul class="sidebar-submenu">
                     <li>
@@ -613,13 +651,13 @@
             </li>
 
             <!-- SETTINGS MENU & 3 SUB-MENUS -->
-            <li>
-                <div class="sidebar-link {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}" style="cursor: pointer;">
+            <li class="sidebar-dropdown {{ request()->routeIs('admin.settings.*') ? 'open' : '' }}">
+                <div class="sidebar-link sidebar-dropdown-toggle {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}" style="cursor: pointer;">
                     <div class="sidebar-link-inner">
                         <i class="bi bi-gear nav-icon"></i>
                         <span>Settings</span>
                     </div>
-                    <i class="bi bi-chevron-down" style="font-size: 11px;"></i>
+                    <i class="bi bi-chevron-down dropdown-arrow" style="font-size: 11px;"></i>
                 </div>
                 <ul class="sidebar-submenu">
                     <li>
@@ -697,5 +735,34 @@
         </main>
     </div>
 
+    <!-- ACCORDION SIDEBAR DROPDOWN JAVASCRIPT -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const dropdownToggles = document.querySelectorAll('.sidebar-dropdown-toggle');
+
+            dropdownToggles.forEach(toggle => {
+                toggle.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const parent = this.closest('.sidebar-dropdown');
+                    const isOpen = parent.classList.contains('open');
+
+                    // Close all other dropdowns (accordion behavior)
+                    document.querySelectorAll('.sidebar-dropdown').forEach(dropdown => {
+                        if (dropdown !== parent) {
+                            dropdown.classList.remove('open');
+                        }
+                    });
+
+                    // Toggle clicked dropdown
+                    if (isOpen) {
+                        parent.classList.remove('open');
+                    } else {
+                        parent.classList.add('open');
+                    }
+                });
+            });
+        });
+    </script>
+    @stack('admin_scripts')
 </body>
 </html>

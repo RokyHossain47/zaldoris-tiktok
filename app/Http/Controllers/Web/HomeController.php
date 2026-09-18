@@ -29,6 +29,20 @@ class HomeController extends Controller
             ->take(4)
             ->get();
 
+        // Upcoming Live Stream Events
+        $upcomingEvents = Stream::with('host')
+            ->orderBy('is_live', 'desc')
+            ->orderBy('started_at', 'desc')
+            ->take(3)
+            ->get();
+
+        // Featured Live Shopping - Latest 3 Products
+        $featuredLiveProducts = Product::with(['seller', 'category'])
+            ->where('status', 'active')
+            ->latest()
+            ->take(3)
+            ->get();
+
         $activeAuctions = Auction::with(['seller', 'highestBidder'])
             ->where('status', 'active')
             ->where('is_blurred', false)
@@ -108,15 +122,38 @@ class HomeController extends Controller
 
         $banners = Advertisement::where('is_active', true)->get();
 
+        // My Orders stats for authenticated user
+        $myPendingOrdersCount = 0;
+        $myInTransitOrdersCount = 0;
+        $myDeliveredOrdersCount = 0;
+
+        if (auth()->check()) {
+            $userId = auth()->id();
+            $myPendingOrdersCount = Order::where('buyer_id', $userId)
+                ->whereIn('status', ['pending', 'packing', 'processing'])
+                ->count();
+            $myInTransitOrdersCount = Order::where('buyer_id', $userId)
+                ->whereIn('status', ['shipped', 'in_transit'])
+                ->count();
+            $myDeliveredOrdersCount = Order::where('buyer_id', $userId)
+                ->whereIn('status', ['delivered', 'completed'])
+                ->count();
+        }
+
         return view('home', compact(
             'categories',
             'liveStreams',
             'liveShoppingStreams',
+            'featuredLiveProducts',
+            'upcomingEvents',
             'activeAuctions',
             'featuredProducts',
             'trendingProducts',
             'recentlyViewedProducts',
             'topCreators',
+            'myPendingOrdersCount',
+            'myInTransitOrdersCount',
+            'myDeliveredOrdersCount',
             'mainBanner',
             'mainBanners',
             'sidebarBanner',

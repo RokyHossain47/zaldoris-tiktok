@@ -124,4 +124,71 @@ class AuthController extends Controller
 
         return view('auth.notifications', compact('notifications'));
     }
+
+    public function toggleFollow(Request $request, $id)
+    {
+        if (!Auth::check()) {
+            return response()->json([
+                'success' => false,
+                'redirect' => route('login'),
+                'message' => 'Please login to follow users.'
+            ], 401);
+        }
+
+        $currentUser = Auth::user();
+        if ($currentUser->id == $id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You cannot follow yourself.'
+            ], 422);
+        }
+
+        $targetUser = User::find($id);
+        if (!$targetUser) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not found.'
+            ], 404);
+        }
+
+        $follow = \App\Models\Follow::where('follower_id', $currentUser->id)
+            ->where('following_id', $targetUser->id)
+            ->first();
+
+        if ($follow) {
+            $follow->delete();
+            $isFollowing = false;
+            if ($targetUser->creatorProfile) {
+                $targetUser->creatorProfile->decrement('follower_count');
+            }
+        } else {
+            \App\Models\Follow::create([
+                'follower_id' => $currentUser->id,
+                'following_id' => $targetUser->id,
+            ]);
+            $isFollowing = true;
+            if ($targetUser->creatorProfile) {
+                $targetUser->creatorProfile->increment('follower_count');
+            }
+
+            // Create notification for target user
+            Notification::create([
+                'user_id' => $targetUser->id,
+                'title' => 'New Follower! 🎉',
+                'message' => $currentUser->name . ' started following you.',
+                'type' => 'general',
+                'is_read' => false,
+                'action_url' => route('home'),
+            ]);
+        }
+
+        $followerCount = $targetUser->followers()->count();
+
+        return response()->json([
+            'success' => true,
+            'is_following' => $isFollowing,
+            'follower_count' => $followerCount,
+            'message' => $isFollowing ? 'You are now following ' . $targetUser->name : 'Unfollowed ' . $targetUser->name
+        ]);
+    }
 }

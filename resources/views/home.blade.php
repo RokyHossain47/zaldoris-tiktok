@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="{{ setting('meta_description', 'Zaldoris - TikTok-Style Live Commerce & Auction Platform. Experience real-time live shopping and auctions.') }}">
     <meta name="keywords" content="{{ setting('meta_keywords', 'live commerce, live shopping, tiktok shop, live auction, pk battle') }}">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ setting('meta_title', 'Zaldoris - TikTok-Style Live Commerce & Auction Platform') }}</title>
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="{{ asset(setting('site_favicon', 'assets/favicon.png')) }}">
@@ -125,7 +126,7 @@
         <!-- LEFT MAIN COLUMN -->
         <div class="left-main-column">
 
-            <!-- SECTION 1: FEATURED LIVE SHOPPING -->
+            <!-- SECTION 1: FEATURED LIVE SHOPPING (LATEST 3 PRODUCTS) -->
             <section class="section-spacing">
                 <div class="section-header-row">
                     <h2 class="section-title">Featured Live Shopping</h2>
@@ -133,53 +134,42 @@
                 </div>
 
                 <div class="grid-3-col">
-                    <!-- Card 1 -->
-                    <div class="zal-card">
-                        <div class="live-card-thumb">
-                            <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80" alt="Limited Sneaker">
-                            <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
-                            <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.2k</div>
-                        </div>
-                        <div class="live-card-body">
-                            <div class="live-card-title">Limited Sneaker ...</div>
-                            <div class="host-row">
-                                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80" alt="Sarah Fashion" class="host-avatar">
-                                <span class="host-name">Sarah Fashion Studio</span>
+                    @forelse($featuredLiveProducts as $product)
+                        <div class="zal-card">
+                            <a href="{{ route('shop.product', $product->id) }}" style="text-decoration: none; color: inherit;">
+                                <div class="live-card-thumb">
+                                    <img src="{{ $product->primary_image }}" alt="{{ $product->title }}">
+                                    @if($product->is_trending)
+                                        <div class="badge-live-top" style="background: linear-gradient(135deg, #FF6B00, #FF0055);"><span class="live-pulse-dot"></span> HOT</div>
+                                    @elseif($product->is_featured)
+                                        <div class="badge-live-top" style="background: var(--pink-accent, #FE2C55);"><span class="live-pulse-dot"></span> FEATURED</div>
+                                    @else
+                                        <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
+                                    @endif
+                                    <div class="badge-viewers-top"><i class="bi bi-box-seam"></i> {{ $product->stock }} in stock</div>
+                                </div>
+                            </a>
+                            <div class="live-card-body">
+                                <a href="{{ route('shop.product', $product->id) }}" style="text-decoration: none; color: inherit;">
+                                    <div class="live-card-title">{{ Str::limit($product->title, 26) }}</div>
+                                </a>
+                                <div class="host-row" style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px;">
+                                    <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
+                                        <img src="{{ $product->seller && $product->seller->avatar_url ? $product->seller->avatar_url : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100' }}" alt="{{ $product->seller ? $product->seller->name : 'Seller' }}" class="host-avatar">
+                                        <span class="host-name" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 110px;">{{ $product->seller ? $product->seller->name : 'Verified Store' }}</span>
+                                    </div>
+                                    <div style="font-weight: 800; font-size: 15px; color: var(--pink-accent, #FE2C55); flex-shrink: 0;">
+                                        {{ setting('currency_symbol', '$') }}{{ number_format($product->price, 2) }}
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Card 2 -->
-                    <div class="zal-card">
-                        <div class="live-card-thumb">
-                            <img src="https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=600&auto=format&fit=crop&q=80" alt="Glass Skin Secret">
-                            <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
-                            <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.2k</div>
+                    @empty
+                        <div style="color: var(--text-muted); grid-column: 1 / -1; padding: 24px; text-align: center; background: var(--bg-card, #1c1d2e); border-radius: 12px; border: 1px solid var(--border-color, rgba(255,255,255,0.07));">
+                            <i class="bi bi-bag-x" style="font-size: 28px; display: block; margin-bottom: 8px; color: var(--pink-accent);"></i>
+                            No live shopping products available at the moment.
                         </div>
-                        <div class="live-card-body">
-                            <div class="live-card-title">Glass Skin Secret...</div>
-                            <div class="host-row">
-                                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" alt="Gadget Hub" class="host-avatar">
-                                <span class="host-name">Gadget Hub Pro</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Card 3 -->
-                    <div class="zal-card">
-                        <div class="live-card-thumb">
-                            <img src="https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&auto=format&fit=crop&q=80" alt="Luxury Handbags">
-                            <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
-                            <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> 1.2k</div>
-                        </div>
-                        <div class="live-card-body">
-                            <div class="live-card-title">Luxury Handbags...</div>
-                            <div class="host-row">
-                                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="Beauty Glow" class="host-avatar">
-                                <span class="host-name">Beauty Glow Official</span>
-                            </div>
-                        </div>
-                    </div>
+                    @endforelse
                 </div>
             </section>
 
@@ -393,98 +383,99 @@
         <!-- RIGHT SIDEBAR COLUMN -->
         <aside class="right-sidebar-column">
 
-            <!-- WIDGET 1: MY ORDERS -->
+            <!-- WIDGET 1: MY ORDERS (ONLY VISIBLE WHEN LOGGED IN) -->
+            @auth
             <div class="sidebar-widget">
                 <div class="widget-title-row">
                     <h3 class="widget-title">My Orders</h3>
                 </div>
                 <div class="my-orders-grid">
                     <div class="order-stat-box">
-                        <div class="order-stat-num">2</div>
+                        <div class="order-stat-num">{{ $myPendingOrdersCount ?? 0 }}</div>
                         <div class="order-stat-label">Pending</div>
                     </div>
                     <div class="order-stat-box">
-                        <div class="order-stat-num">5</div>
+                        <div class="order-stat-num">{{ $myInTransitOrdersCount ?? 0 }}</div>
                         <div class="order-stat-label">In transit</div>
                     </div>
                     <div class="order-stat-box">
-                        <div class="order-stat-num">12</div>
+                        <div class="order-stat-num">{{ $myDeliveredOrdersCount ?? 0 }}</div>
                         <div class="order-stat-label">Delivered</div>
                     </div>
                 </div>
-                <a href="{{ route('dashboard.creator') }}" class="track-orders-link">Track All Orders</a>
+                <a href="{{ auth()->user()->isSeller() ? route('dashboard.seller') : route('dashboard.creator') }}" class="track-orders-link">Track All Orders</a>
             </div>
+            @endauth
 
             <!-- WIDGET 2: TRENDING CREATORS -->
             <div class="sidebar-widget">
                 <div class="widget-title-row">
                     <h3 class="widget-title">Trending Creators</h3>
-                    <a href="javascript:void(0)" class="view-all-link" style="font-size:0.78rem" id="btnRefreshCreators">Refresh</a>
+                    <a href="javascript:void(0)" class="view-all-link" style="font-size:0.78rem" id="btnRefreshCreators" onclick="window.location.reload()">Refresh</a>
                 </div>
                 <div class="creator-list">
-                    <!-- Creator 1 -->
-                    <div class="creator-item-row">
-                        <div class="creator-left-info">
-                            <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80" alt="Alex Tech" class="creator-avatar-img">
-                            <div>
-                                <div class="creator-name">Alex Tech</div>
-                                <div class="creator-sub">Gadgets & Gear</div>
+                    @forelse($topCreators as $creator)
+                        @php
+                            $isFollowing = auth()->check() && auth()->user()->following()->where('following_id', $creator->id)->exists();
+                            $creatorBio = $creator->creatorProfile->bio ?? 'Verified Creator';
+                        @endphp
+                        <div class="creator-item-row">
+                            <div class="creator-left-info">
+                                <img src="{{ $creator->avatar_url }}" alt="{{ $creator->name }}" class="creator-avatar-img">
+                                <div>
+                                    <div class="creator-name">{{ Str::limit($creator->name, 16) }}</div>
+                                    <div class="creator-sub">{{ Str::limit($creatorBio, 20) }}</div>
+                                </div>
                             </div>
+                            <button class="btn-follow-outline {{ $isFollowing ? 'following' : '' }}" data-user-id="{{ $creator->id }}" onclick="toggleCreatorFollow(this, {{ $creator->id }})">
+                                {{ $isFollowing ? 'Following' : 'Follow' }}
+                            </button>
                         </div>
-                        <button class="btn-follow-outline" onclick="toggleCreatorFollow(this)">Follow</button>
-                    </div>
-
-                    <!-- Creator 2 -->
-                    <div class="creator-item-row">
-                        <div class="creator-left-info">
-                            <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&auto=format&fit=crop&q=80" alt="Mila Mode" class="creator-avatar-img">
-                            <div>
-                                <div class="creator-name">Mila Mode</div>
-                                <div class="creator-sub">Luxury Lifestyle</div>
-                            </div>
-                        </div>
-                        <button class="btn-follow-outline" onclick="toggleCreatorFollow(this)">Follow</button>
-                    </div>
-
-                    <!-- Creator 3 -->
-                    <div class="creator-item-row">
-                        <div class="creator-left-info">
-                            <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&auto=format&fit=crop&q=80" alt="Zen Wellness" class="creator-avatar-img">
-                            <div>
-                                <div class="creator-name">Zen Wellness</div>
-                                <div class="creator-sub">Home & Decor</div>
-                            </div>
-                        </div>
-                        <button class="btn-follow-outline" onclick="toggleCreatorFollow(this)">Follow</button>
-                    </div>
+                    @empty
+                        <div style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 10px;">No creators found.</div>
+                    @endforelse
                 </div>
             </div>
 
-            <!-- WIDGET 3: UPCOMING EVENTS -->
+            <!-- WIDGET 3: UPCOMING EVENTS (DYNAMIC LIVE STREAMS) -->
             <div class="sidebar-widget">
                 <div class="widget-title-row">
                     <h3 class="widget-title">Upcoming Events</h3>
                 </div>
                 <div class="event-list">
-                    <!-- Event 1 -->
-                    <div class="event-item-card">
-                        <div class="event-top-row">
-                            <span class="event-date-badge">AUG 15, 8:00 PM</span>
-                            <i class="bi bi-bell event-bell-icon" onclick="toggleEventBell(this)" title="Set Reminder"></i>
+                    @forelse($upcomingEvents as $evt)
+                        @php
+                            $targetRoute = ($evt->stream_type === 'pk_battle') ? route('streams.pk_battle', $evt->id) : route('streams.show', $evt->id);
+                        @endphp
+                        <div class="event-item-card">
+                            <div class="event-top-row">
+                                @if($evt->is_live)
+                                    <span class="event-date-badge" style="background: rgba(254, 44, 85, 0.15); color: #FE2C55; display: inline-flex; align-items: center; gap: 5px;">
+                                        <span class="live-pulse-dot" style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #FE2C55;"></span> LIVE NOW
+                                    </span>
+                                @elseif($evt->started_at)
+                                    <span class="event-date-badge">{{ $evt->started_at->format('M d, h:i A') }}</span>
+                                @else
+                                    <span class="event-date-badge">UPCOMING</span>
+                                @endif
+                                <i class="bi bi-bell event-bell-icon" onclick="toggleEventBell(this)" title="Set Reminder"></i>
+                            </div>
+                            <a href="{{ $targetRoute }}" style="text-decoration: none; color: inherit;">
+                                <div class="event-title" style="transition: color 0.2s;" onmouseover="this.style.color='var(--cyan-accent, #25F4EE)'" onmouseout="this.style.color='var(--text-primary, #fff)'">
+                                    {{ Str::limit($evt->title, 34) }}
+                                </div>
+                            </a>
+                            <div class="event-interested-sub" style="display: flex; align-items: center; gap: 6px; margin-top: 5px;">
+                                <span><i class="bi bi-person-video"></i> {{ $evt->host ? $evt->host->name : 'Live Host' }}</span>
+                                <span>&bull;</span>
+                                <span><i class="bi bi-people"></i> {{ number_format($evt->viewer_count ?: 450) }} Interested</span>
+                            </div>
                         </div>
-                        <div class="event-title">Mega PK Battle: Tech vs Beauty</div>
-                        <div class="event-interested-sub"><i class="bi bi-people"></i> 4.5k Interested</div>
-                    </div>
-
-                    <!-- Event 2 -->
-                    <div class="event-item-card">
-                        <div class="event-top-row">
-                            <span class="event-date-badge">AUG 16, 10:00 AM</span>
-                            <i class="bi bi-bell event-bell-icon" onclick="toggleEventBell(this)" title="Set Reminder"></i>
+                    @empty
+                        <div style="color: var(--text-muted); padding: 12px; font-size: 13px; text-align: center;">
+                            No upcoming streaming events scheduled.
                         </div>
-                        <div class="event-title">Summer Collection Launch</div>
-                        <div class="event-interested-sub"><i class="bi bi-people"></i> 1.2k Interested</div>
-                    </div>
+                    @endforelse
                 </div>
             </div>
 

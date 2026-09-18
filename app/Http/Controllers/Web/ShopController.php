@@ -88,7 +88,129 @@ class ShopController extends Controller
 
     public function cart()
     {
-        return view('shop.cart');
+        $cart = session()->get('cart', []);
+
+        $subtotal = 0;
+        foreach ($cart as $item) {
+            $subtotal += ($item['price'] * $item['quantity']);
+        }
+
+        $tax = round($subtotal * 0.13, 2);
+        $shipping = $subtotal > 0 ? 0.00 : 0.00;
+        $total = round($subtotal + $tax + $shipping, 2);
+
+        return view('shop.cart', compact('cart', 'subtotal', 'tax', 'shipping', 'total'));
+    }
+
+    public function addToCart(Request $request)
+    {
+        $productId = $request->input('product_id');
+        $quantity = max(1, (int) $request->input('quantity', 1));
+
+        $product = Product::with('seller')->find($productId);
+        if (!$product) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Product not found.'
+            ], 404);
+        }
+
+        $cart = session()->get('cart', []);
+
+        if (isset($cart[$productId])) {
+            $cart[$productId]['quantity'] += $quantity;
+        } else {
+            $cart[$productId] = [
+                'id' => $product->id,
+                'title' => $product->title,
+                'price' => (float) $product->price,
+                'compare_price' => (float) ($product->compare_price ?: ($product->price * 1.25)),
+                'image' => $product->primary_image,
+                'quantity' => $quantity,
+                'seller_name' => $product->seller ? $product->seller->name : 'Verified Store',
+                'category_name' => $product->category_name,
+            ];
+        }
+
+        session()->put('cart', $cart);
+
+        $totalItems = 0;
+        foreach ($cart as $item) {
+            $totalItems += $item['quantity'];
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Product added to cart successfully!',
+            'cart_count' => $totalItems,
+            'cart' => $cart
+        ]);
+    }
+
+    public function updateCart(Request $request)
+    {
+        $productId = $request->input('product_id');
+        $quantity = (int) $request->input('quantity', 1);
+
+        $cart = session()->get('cart', []);
+
+        if ($quantity <= 0) {
+            unset($cart[$productId]);
+        } elseif (isset($cart[$productId])) {
+            $cart[$productId]['quantity'] = $quantity;
+        }
+
+        session()->put('cart', $cart);
+
+        $subtotal = 0;
+        $totalItems = 0;
+        foreach ($cart as $item) {
+            $subtotal += ($item['price'] * $item['quantity']);
+            $totalItems += $item['quantity'];
+        }
+
+        $tax = round($subtotal * 0.13, 2);
+        $shipping = 0.00;
+        $total = round($subtotal + $tax + $shipping, 2);
+
+        return response()->json([
+            'success' => true,
+            'cart_count' => $totalItems,
+            'subtotal' => number_format($subtotal, 2),
+            'tax' => number_format($tax, 2),
+            'shipping' => number_format($shipping, 2),
+            'total' => number_format($total, 2),
+            'cart' => $cart
+        ]);
+    }
+
+    public function removeFromCart($id)
+    {
+        $cart = session()->get('cart', []);
+        if (isset($cart[$id])) {
+            unset($cart[$id]);
+            session()->put('cart', $cart);
+        }
+
+        $subtotal = 0;
+        $totalItems = 0;
+        foreach ($cart as $item) {
+            $subtotal += ($item['price'] * $item['quantity']);
+            $totalItems += $item['quantity'];
+        }
+
+        $tax = round($subtotal * 0.13, 2);
+        $shipping = 0.00;
+        $total = round($subtotal + $tax + $shipping, 2);
+
+        return response()->json([
+            'success' => true,
+            'cart_count' => $totalItems,
+            'subtotal' => number_format($subtotal, 2),
+            'tax' => number_format($tax, 2),
+            'shipping' => number_format($shipping, 2),
+            'total' => number_format($total, 2),
+        ]);
     }
 
     public function checkout()

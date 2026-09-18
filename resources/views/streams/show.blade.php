@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Zaldoris - Live Streaming. Watch realtime creator live streams, interact, and shop live deals.">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Live Streaming - Zaldoris Live Commerce Platform</title>
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="{{ asset('assets/favicon.png') }}">
@@ -552,13 +553,21 @@
                 <i class="bi bi-chevron-left"></i>
             </a>
 
+            @php
+                $streamHost = $stream->host;
+                $hostName = $streamHost ? $streamHost->name : 'Live Streamer';
+                $hostAvatar = $streamHost ? $streamHost->avatar_url : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200';
+                $hostUserId = $streamHost ? $streamHost->id : 1;
+                $isFollowing = auth()->check() && auth()->user()->following()->where('following_id', $hostUserId)->exists();
+                $followerCount = $streamHost ? ($streamHost->followers()->count() ?: 245) : 245;
+            @endphp
             <div class="stream-host-card">
                 <div class="stream-host-avatar-wrap">
-                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80" alt="Sneaker Boss">
+                    <img src="{{ $hostAvatar }}" alt="{{ $hostName }}">
                 </div>
                 
                 <h2 class="stream-host-name">
-                    Sneaker Boss
+                    {{ $hostName }}
                     <span class="badge-host-cyan">Host</span>
                 </h2>
 
@@ -566,10 +575,12 @@
                     <i class="bi bi-star-fill"></i> 4.9 (1.2k reviews)
                 </div>
 
-                <div class="stream-host-followers">245K Followers</div>
+                <div class="stream-host-followers">{{ number_format($followerCount) }} Followers</div>
 
                 <div class="stream-host-actions">
-                    <button class="btn-stream-follow" onclick="toggleStreamFollow(this)">Follow</button>
+                    <button class="btn-stream-follow {{ $isFollowing ? 'following' : '' }}" data-user-id="{{ $hostUserId }}" onclick="toggleStreamFollow(this, {{ $hostUserId }})">
+                        {{ $isFollowing ? 'Following' : 'Follow' }}
+                    </button>
                     <a href="{{ route('wallet.subscribe') }}" class="btn-stream-subscribe">Subscribe</a>
                 </div>
             </div>

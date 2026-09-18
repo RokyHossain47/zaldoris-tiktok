@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Zaldoris - Live Product Room page with real-time video stream, host details, product showcase, and live chat.">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Live Product Room - Zaldoris Live Commerce Platform</title>
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="{{ asset('assets/favicon.png') }}">
@@ -76,18 +77,28 @@
             </div>
 
             <!-- Host Identity Section -->
+            @php
+                $streamHost = $stream->host ?? null;
+                $hostName = $streamHost ? $streamHost->name : 'Live Host';
+                $hostAvatar = $streamHost ? $streamHost->avatar_url : 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120';
+                $hostUserId = $streamHost ? $streamHost->id : 1;
+                $isFollowing = auth()->check() && auth()->user()->following()->where('following_id', $hostUserId)->exists();
+                $followerCount = $streamHost ? ($streamHost->followers()->count() ?: 245) : 245;
+            @endphp
             <div class="room-host-section">
                 <div class="host-avatar-wrap">
-                    <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120&auto=format&fit=crop&q=80" alt="Sneaker Boss" class="host-avatar-img">
+                    <img src="{{ $hostAvatar }}" alt="{{ $hostName }}" class="host-avatar-img">
                     <span class="badge-host-pill">Host</span>
                 </div>
-                <h1 class="room-host-name">Sneaker Boss</h1>
+                <h1 class="room-host-name">{{ $hostName }}</h1>
                 <div class="room-host-rating">
                     <i class="bi bi-star-fill"></i>
                     <span>4.9 (1.2k reviews)</span>
                 </div>
-                <div class="room-host-followers">245K Followers</div>
-                <button type="button" class="btn-follow-cyan" onclick="toggleCreatorFollow(this)">Follow</button>
+                <div class="room-host-followers">{{ number_format($followerCount) }} Followers</div>
+                <button type="button" class="btn-follow-cyan {{ $isFollowing ? 'following' : '' }}" data-user-id="{{ $hostUserId }}" onclick="toggleCreatorFollow(this, {{ $hostUserId }})">
+                    {{ $isFollowing ? 'Following' : 'Follow' }}
+                </button>
             </div>
 
             <!-- Divider Line -->
@@ -122,8 +133,8 @@
                 </div>
 
                 <div class="product-action-row">
-                    <button type="button" class="btn-outline-cyan">Details</button>
-                    <button type="button" class="btn-solid-cyan" onclick="addCartItem('Air Jordan 1')">Add To Cart</button>
+                    <a href="{{ route('shop.product', $pinnedProduct->id ?? 1) }}" class="btn-outline-cyan" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">Details</a>
+                    <button type="button" class="btn-solid-cyan" onclick="addCartItem({{ $pinnedProduct->id ?? 1 }}, '{{ addslashes($pinnedProduct->title ?? 'Featured Drop') }}', this)">Add To Cart</button>
                 </div>
             </div>
         </aside>

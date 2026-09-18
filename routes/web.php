@@ -29,6 +29,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::get('/otp', [AuthController::class, 'showOtp'])->name('auth.otp');
 Route::post('/otp', [AuthController::class, 'verifyOtp'])->name('auth.otp.verify');
 Route::get('/notifications', [AuthController::class, 'notifications'])->name('notifications');
+Route::post('/users/{id}/toggle-follow', [AuthController::class, 'toggleFollow'])->name('users.follow.toggle');
 
 // Live Streaming & PK Battles
 Route::get('/live-streams', [StreamController::class, 'index'])->name('streams.index');
@@ -54,6 +55,9 @@ Route::get('/live-shopping', [ShopController::class, 'index']);
 Route::get('/product/{id?}', [ShopController::class, 'product'])->name('shop.product');
 Route::get('/product-details/{id?}', [ShopController::class, 'product']);
 Route::get('/cart', [ShopController::class, 'cart'])->name('shop.cart');
+Route::post('/cart/add', [ShopController::class, 'addToCart'])->name('shop.cart.add');
+Route::post('/cart/update', [ShopController::class, 'updateCart'])->name('shop.cart.update');
+Route::delete('/cart/remove/{id}', [ShopController::class, 'removeFromCart'])->name('shop.cart.remove');
 Route::get('/checkout', [ShopController::class, 'checkout'])->name('shop.checkout');
 Route::post('/checkout', [ShopController::class, 'processCheckout'])->name('shop.checkout.process');
 Route::get('/payment', [ShopController::class, 'payment'])->name('shop.payment');

@@ -36,14 +36,65 @@ function startCountdowns() {
 // ---- INTERACTION HANDLERS ----
 
 // Add item to cart
-function addCartItem(productName) {
-  const badge = document.getElementById('globalCartBadge');
-  if (badge) {
-    let curr = parseInt(badge.textContent || '0');
-    badge.textContent = curr + 1;
-    badge.style.transform = 'scale(1.3)';
-    setTimeout(() => badge.style.transform = 'scale(1)', 200);
+function addCartItem(productId, productName, btn) {
+  if (!productId) {
+    if (typeof productName === 'number') {
+      productId = productName;
+    }
   }
+
+  const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+  const csrfToken = csrfMeta ? csrfMeta.getAttribute('content') : '';
+
+  let originalBtnText = '';
+  if (btn) {
+    originalBtnText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Adding...';
+  }
+
+  fetch('/cart/add', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-TOKEN': csrfToken,
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify({
+      product_id: productId || 1,
+      quantity: 1
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '✓ Added to Cart!';
+      btn.style.background = 'linear-gradient(135deg, #00F0C8, #1ed6d0)';
+      btn.style.color = '#090D10';
+      setTimeout(() => {
+        btn.innerHTML = originalBtnText || 'Add To Cart';
+        btn.style.background = '';
+        btn.style.color = '';
+      }, 2000);
+    }
+
+    if (data && data.success) {
+      const badge = document.getElementById('globalCartBadge');
+      if (badge) {
+        badge.textContent = data.cart_count || 1;
+        badge.style.transform = 'scale(1.4)';
+        setTimeout(() => badge.style.transform = 'scale(1)', 250);
+      }
+    }
+  })
+  .catch(err => {
+    console.error('Cart error:', err);
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalBtnText || 'Add To Cart';
+    }
+  });
 }
 
 // Place Bid Handler
@@ -67,14 +118,61 @@ function handlePlaceBid(btn, itemTitle) {
 }
 
 // Creator Follow Toggle
-function toggleCreatorFollow(btn) {
-  if (btn.classList.contains('following')) {
-    btn.classList.remove('following');
-    btn.textContent = 'Follow';
-  } else {
-    btn.classList.add('following');
-    btn.textContent = 'Following';
+function toggleCreatorFollow(btn, userId) {
+  if (!userId) {
+    userId = btn.getAttribute('data-user-id');
   }
+  if (!userId) return;
+
+  const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+  const csrfToken = csrfMeta ? csrfMeta.getAttribute('content') : '';
+
+  const originalText = btn.textContent;
+  btn.disabled = true;
+
+  fetch(`/users/${userId}/toggle-follow`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-TOKEN': csrfToken,
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify({})
+  })
+  .then(res => {
+    if (res.status === 401) {
+      window.location.href = '/login';
+      return null;
+    }
+    return res.json();
+  })
+  .then(data => {
+    btn.disabled = false;
+    if (data && data.success) {
+      if (data.is_following) {
+        btn.classList.add('following');
+        btn.textContent = 'Following';
+      } else {
+        btn.classList.remove('following');
+        btn.textContent = 'Follow';
+      }
+      
+      // Update any follower count displayed nearby if present
+      const followerEl = btn.closest('.stream-host-card, .room-host-section')?.querySelector('.stream-host-followers, .room-host-followers');
+      if (followerEl && data.follower_count !== undefined) {
+        followerEl.textContent = `${data.follower_count} Followers`;
+      }
+    }
+  })
+  .catch(err => {
+    console.error('Follow error:', err);
+    btn.disabled = false;
+    btn.textContent = originalText;
+  });
+}
+
+function toggleStreamFollow(btn, userId) {
+  toggleCreatorFollow(btn, userId);
 }
 
 // Event Reminder Toggle
