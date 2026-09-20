@@ -3,14 +3,19 @@
 @section('title', 'Products Management - Super Admin')
 
 @section('content')
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
     <div>
         <h1 style="font-size: 26px; font-weight: 800; color: #fff; margin-bottom: 4px;">Products Management</h1>
-        <p style="font-size: 14px; color: var(--text-muted);">Manage inventory, pricing, featured and trending products across live shopping and marketplace.</p>
+        <p style="font-size: 14px; color: var(--text-muted);">Manage inventory, pricing, featured normal products (static purchase), and live streaming shopping items.</p>
     </div>
-    <a href="{{ route('admin.products.create') }}" style="background: linear-gradient(135deg, var(--pink-accent), var(--pink-hover)); color: #fff; text-decoration: none; padding: 12px 20px; border-radius: 10px; font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(254, 44, 85, 0.4);">
-        <i class="bi bi-plus-lg"></i> Add New Product
-    </a>
+    <div style="display: flex; gap: 12px;">
+        <a href="{{ route('admin.products.create', ['type' => 'normal']) }}" style="background: rgba(0, 240, 200, 0.15); border: 1px solid var(--cyan-accent, #00F0C8); color: var(--cyan-accent, #00F0C8); text-decoration: none; padding: 12px 18px; border-radius: 10px; font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease;">
+            <i class="bi bi-bag-plus"></i> + Add Normal Product
+        </a>
+        <a href="{{ route('admin.products.create', ['type' => 'live']) }}" style="background: linear-gradient(135deg, var(--pink-accent, #FE2C55), #FF0055); color: #fff; text-decoration: none; padding: 12px 18px; border-radius: 10px; font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(254, 44, 85, 0.4); transition: all 0.2s ease;">
+            <i class="bi bi-broadcast"></i> 🔴 + Add Live Shopping Product
+        </a>
+    </div>
 </div>
 
 <!-- FILTERS & SEARCH BAR -->
@@ -18,6 +23,8 @@
     <div class="table-header-bar">
         <div class="table-filter-pills">
             <a href="{{ route('admin.products.index') }}" class="{{ !request('filter') ? 'active' : '' }}">All Products</a>
+            <a href="{{ route('admin.products.index', ['filter' => 'normal']) }}" class="{{ request('filter') === 'normal' ? 'active' : '' }}">🛍️ Normal Products</a>
+            <a href="{{ route('admin.products.index', ['filter' => 'live']) }}" class="{{ request('filter') === 'live' ? 'active' : '' }}">🔴 Live Products</a>
             <a href="{{ route('admin.products.index', ['filter' => 'featured']) }}" class="{{ request('filter') === 'featured' ? 'active' : '' }}">🔥 Featured</a>
             <a href="{{ route('admin.products.index', ['filter' => 'trending']) }}" class="{{ request('filter') === 'trending' ? 'active' : '' }}">⚡ Trending</a>
             <a href="{{ route('admin.products.index', ['filter' => 'in_stock']) }}" class="{{ request('filter') === 'in_stock' ? 'active' : '' }}">📦 In Stock</a>
@@ -42,8 +49,8 @@
         <thead>
             <tr style="border-bottom: 1px solid var(--border-color); color: var(--text-muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">
                 <th style="padding: 16px 20px;">Product Info</th>
+                <th style="padding: 16px 20px;">Type / Target Room</th>
                 <th style="padding: 16px 20px;">Category</th>
-                <th style="padding: 16px 20px;">Seller</th>
                 <th style="padding: 16px 20px;">Price</th>
                 <th style="padding: 16px 20px;">Stock</th>
                 <th style="padding: 16px 20px; text-align: center;">Featured</th>
@@ -60,17 +67,35 @@
                             <img src="{{ $p->primary_image }}" alt="{{ $p->title }}" style="width: 48px; height: 48px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-color);">
                             <div>
                                 <div style="font-weight: 700; color: #fff; max-width: 220px; line-height: 1.3;">{{ $p->title }}</div>
-                                <div style="font-size: 11px; color: var(--text-muted);">SKU: PRD-{{ $p->id }}</div>
+                                <div style="font-size: 11px; color: var(--text-muted);">SKU: PRD-{{ $p->id }} &bull; Seller: {{ $p->seller ? $p->seller->name : 'Admin' }}</div>
                             </div>
                         </div>
+                    </td>
+                    <td style="padding: 16px 20px;">
+                        @if($p->is_live_product)
+                            <div style="display: flex; flex-direction: column; gap: 4px; align-items: flex-start;">
+                                <span style="background: rgba(254, 44, 85, 0.18); border: 1px solid rgba(254, 44, 85, 0.4); color: var(--pink-accent, #FE2C55); font-weight: 700; font-size: 11px; padding: 2px 8px; border-radius: 4px;">
+                                    🔴 Live Shopping Product
+                                </span>
+                                <a href="{{ $p->stream_id ? route('streams.show', $p->stream_id) : url('/live-product-room/' . $p->id) }}" target="_blank" style="font-size: 11px; color: var(--cyan-accent, #00F0C8); text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+                                    <i class="bi bi-play-circle-fill"></i> Go Live / Room &rarr;
+                                </a>
+                            </div>
+                        @else
+                            <div style="display: flex; flex-direction: column; gap: 4px; align-items: flex-start;">
+                                <span style="background: rgba(0, 240, 200, 0.1); border: 1px solid rgba(0, 240, 200, 0.3); color: var(--cyan-accent, #00F0C8); font-weight: 700; font-size: 11px; padding: 2px 8px; border-radius: 4px;">
+                                    🛍️ Normal Product
+                                </span>
+                                <a href="{{ route('shop.product', $p->id) }}" target="_blank" style="font-size: 11px; color: var(--text-muted); text-decoration: none;">
+                                    Static Details &rarr;
+                                </a>
+                            </div>
+                        @endif
                     </td>
                     <td style="padding: 16px 20px;">
                         <span style="background: rgba(255, 255, 255, 0.05); padding: 4px 10px; border-radius: 6px; font-size: 12px;">
                             {{ $p->category_name }}
                         </span>
-                    </td>
-                    <td style="padding: 16px 20px; color: var(--text-muted); font-size: 13px;">
-                        {{ $p->seller ? $p->seller->name : 'Platform Seller' }}
                     </td>
                     <td style="padding: 16px 20px;">
                         <div style="font-weight: 800; color: #fff;">{{ setting('currency_symbol', '$') }}{{ number_format($p->price, 2) }}</div>
@@ -108,7 +133,7 @@
                     </td>
                     <td style="padding: 16px 20px; text-align: right;">
                         <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                            <a href="{{ route('shop.product', $p->id) }}" target="_blank" class="action-btn" title="View in Shop">
+                            <a href="{{ $p->is_live_product ? ($p->stream_id ? route('streams.show', $p->stream_id) : url('/live-product-room/' . $p->id)) : route('shop.product', $p->id) }}" target="_blank" class="action-btn" title="Preview Product Details">
                                 <i class="bi bi-eye-fill" style="color: var(--text-muted);"></i>
                             </a>
                             <a href="{{ route('admin.products.edit', $p->id) }}" class="action-btn" title="Edit Product">
@@ -126,16 +151,16 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="9" style="padding: 30px; text-align: center; color: var(--text-muted);">
-                        No products found matching filters.
+                    <td colspan="9" style="padding: 32px; text-align: center; color: var(--text-muted);">
+                        No products found matching your filters.
                     </td>
                 </tr>
             @endforelse
         </tbody>
     </table>
 
-    <div style="padding: 16px 20px;">
-        {{ $products->links() }}
+    <div style="padding: 16px 20px; border-top: 1px solid var(--border-color);">
+        {{ $products->appends(request()->query())->links() }}
     </div>
 </div>
 @endsection

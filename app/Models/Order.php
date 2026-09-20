@@ -18,6 +18,9 @@ class Order extends Model
         'seller_id',
         'stream_id',
         'auction_id',
+        'coupon_id',
+        'coupon_code',
+        'discount_amount',
         'subtotal',
         'hst_tax',
         'shipping_fee',
@@ -41,6 +44,7 @@ class Order extends Model
     ];
 
     protected $casts = [
+        'discount_amount' => 'decimal:2',
         'subtotal' => 'decimal:2',
         'hst_tax' => 'decimal:2',
         'shipping_fee' => 'decimal:2',
@@ -54,6 +58,11 @@ class Order extends Model
         'shipped_at' => 'datetime',
         'delivered_at' => 'datetime',
     ];
+
+    public function coupon(): BelongsTo
+    {
+        return $this->belongsTo(Coupon::class);
+    }
 
     public function buyer(): BelongsTo
     {

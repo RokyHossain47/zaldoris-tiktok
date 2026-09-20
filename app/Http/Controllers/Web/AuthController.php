@@ -30,15 +30,30 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        $credentials = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
+        $loginInput = trim($request->input('login', $request->input('email', $request->input('username', ''))));
+        $password = (string)$request->input('password', '');
 
-        if (Auth::attempt(['email' => $credentials['email'], 'password' => $credentials['password']], $request->boolean('remember'))) {
+        if (empty($loginInput) || empty($password)) {
+            return back()->withErrors([
+                'email' => 'Please enter your email, username, or phone number and password.',
+            ])->withInput();
+        }
+
+        $user = User::where('email', $loginInput)
+            ->orWhere('username', $loginInput)
+            ->orWhere('phone', $loginInput)
+            ->first();
+
+        if ($user && Hash::check($password, $user->password)) {
+            if ($user->is_suspended) {
+                return back()->withErrors([
+                    'email' => 'Your account is currently suspended. Please contact support.',
+                ])->withInput();
+            }
+
+            Auth::login($user, $request->boolean('remember'));
             $request->session()->regenerate();
 
-            $user = Auth::user();
             if ($user->isAdmin()) {
                 return redirect()->route('admin.dashboard');
             } elseif ($user->isSeller()) {

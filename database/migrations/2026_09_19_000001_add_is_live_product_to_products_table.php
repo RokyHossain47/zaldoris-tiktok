@@ -1,0 +1,24 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::table('products', function (Blueprint $table) {
+            $table->boolean('is_live_product')->default(false)->after('is_trending');
+            $table->foreignId('stream_id')->nullable()->after('is_live_product')->constrained('streams')->nullOnDelete();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('products', function (Blueprint $table) {
+            $table->dropForeign(['stream_id']);
+            $table->dropColumn(['is_live_product', 'stream_id']);
+        });
+    }
+};

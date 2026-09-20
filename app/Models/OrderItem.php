@@ -14,6 +14,10 @@ class OrderItem extends Model
         'order_id',
         'product_id',
         'product_title',
+        'selected_color',
+        'selected_size',
+        'product_image',
+        'options',
         'quantity',
         'unit_price',
         'total_price',
@@ -23,6 +27,7 @@ class OrderItem extends Model
         'quantity' => 'integer',
         'unit_price' => 'decimal:2',
         'total_price' => 'decimal:2',
+        'options' => 'array',
     ];
 
     public function order(): BelongsTo

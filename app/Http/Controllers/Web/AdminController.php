@@ -30,6 +30,8 @@ use App\Models\PkBattle;
 use App\Models\Review;
 use App\Models\CreatorSubscription;
 use App\Models\Reaction;
+use App\Models\Coupon;
+use App\Models\CouponUsage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File;
@@ -538,14 +540,18 @@ class AdminController extends Controller
     }
 
     /**
-     * Products Management (Full CRUD + Featured & Trending).
+     * Products Management (Full CRUD + Normal vs Live Shopping separation).
      */
     public function products(Request $request)
     {
-        $query = Product::with(['seller', 'category']);
+        $query = Product::with(['seller', 'category', 'stream']);
 
         if ($request->filled('filter')) {
-            if ($request->filter === 'featured') {
+            if ($request->filter === 'normal') {
+                $query->where('is_live_product', false);
+            } elseif ($request->filter === 'live') {
+                $query->where('is_live_product', true);
+            } elseif ($request->filter === 'featured') {
                 $query->where('is_featured', true);
             } elseif ($request->filter === 'trending') {
                 $query->where('is_trending', true);
@@ -569,40 +575,106 @@ class AdminController extends Controller
         return view('admin.products.index', compact('products', 'categories'));
     }
 
-    public function createProduct()
+    public function createProduct(Request $request)
     {
+        $defaultType = $request->query('type', 'normal'); // normal or live
         $categories = Category::where('is_active', true)->orderBy('name')->get();
         $sellers = User::whereIn('role', ['seller', 'creator', 'admin'])->get();
-        return view('admin.products.create', compact('categories', 'sellers'));
+        $streams = Stream::where('is_live', true)->orderBy('id', 'desc')->get();
+        return view('admin.products.create', compact('categories', 'sellers', 'streams', 'defaultType'));
     }
 
     public function storeProduct(Request $request)
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
+            'brand' => 'nullable|string|max:255',
             'seller_id' => 'required|exists:users,id',
             'category_id' => 'nullable|exists:categories,id',
             'price' => 'required|numeric|min:0',
             'compare_price' => 'nullable|numeric|min:0',
             'stock' => 'required|integer|min:0',
             'description' => 'nullable|string',
+            'dimensions' => 'nullable|string|max:255',
+            'sourcing_country' => 'nullable|string|max:255',
             'status' => 'required|in:active,inactive,draft',
             'is_featured' => 'nullable|boolean',
             'is_trending' => 'nullable|boolean',
+            'is_live_product' => 'nullable|boolean',
+            'stream_id' => 'nullable|exists:streams,id',
             'images' => 'nullable|string',
             'image_file' => 'nullable|image|max:5120',
+            'image_files.*' => 'nullable|image|max:5120',
+            'colors' => 'nullable',
+            'sizes' => 'nullable',
+            'specifications' => 'nullable',
         ]);
 
         $images = [];
+
+        // Handle single image file upload
         if ($request->hasFile('image_file')) {
             $file = $request->file('image_file');
             $filename = 'prod_' . time() . '_' . Str::random(6) . '.' . $file->getClientOriginalExtension();
             $file->move(public_path('uploads/products'), $filename);
             $images[] = asset('uploads/products/' . $filename);
-        } elseif (!empty($validated['images'])) {
-            $images = array_map('trim', explode(',', $validated['images']));
-        } else {
+        }
+
+        // Handle multiple image files upload
+        if ($request->hasFile('image_files')) {
+            foreach ($request->file('image_files') as $file) {
+                if ($file) {
+                    $filename = 'prod_' . time() . '_' . Str::random(8) . '.' . $file->getClientOriginalExtension();
+                    $file->move(public_path('uploads/products'), $filename);
+                    $images[] = asset('uploads/products/' . $filename);
+                }
+            }
+        }
+
+        // Append comma separated image URLs if provided
+        if (!empty($validated['images'])) {
+            $urlImages = array_filter(array_map('trim', explode(',', $validated['images'])));
+            $images = array_merge($images, $urlImages);
+        }
+
+        if (empty($images)) {
             $images[] = 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600';
+        }
+
+        // Parse colors
+        $colors = [];
+        if ($request->filled('colors')) {
+            $rawColors = $request->input('colors');
+            if (is_string($rawColors)) {
+                $decoded = json_decode($rawColors, true);
+                $colors = is_array($decoded) ? $decoded : array_map(fn($c) => ['name' => trim($c), 'code' => '#1E293B'], explode(',', $rawColors));
+            } elseif (is_array($rawColors)) {
+                $colors = $rawColors;
+            }
+        }
+
+        // Parse sizes
+        $sizes = [];
+        if ($request->filled('sizes')) {
+            $rawSizes = $request->input('sizes');
+            if (is_string($rawSizes)) {
+                $decoded = json_decode($rawSizes, true);
+                $sizes = is_array($decoded) ? $decoded : array_map(fn($s) => ['name' => trim($s), 'price_modifier' => 0.00], explode(',', $rawSizes));
+            } elseif (is_array($rawSizes)) {
+                $sizes = $rawSizes;
+            }
+        }
+
+        // Parse specifications
+        $specs = [];
+        if ($request->filled('specifications')) {
+            $rawSpecs = $request->input('specifications');
+            if (is_string($rawSpecs)) {
+                $decoded = json_decode($rawSpecs, true);
+                $specs = is_array($decoded) ? $decoded : [];
+            } elseif (is_array($rawSpecs)) {
+                $specs = $rawSpecs;
+            }
         }
 
         $catName = null;
@@ -611,24 +683,53 @@ class AdminController extends Controller
             $catName = $cat ? $cat->name : null;
         }
 
+        $isLive = $request->boolean('is_live_product');
+        $streamId = $validated['stream_id'] ?? null;
+
+        if ($isLive && !$streamId) {
+            $stream = Stream::firstOrCreate(
+                ['host_id' => $validated['seller_id'], 'stream_type' => 'live_shopping', 'is_live' => true],
+                [
+                    'title' => 'Live Demo: ' . $validated['title'],
+                    'description' => 'Live shopping session and product demonstration for ' . $validated['title'],
+                    'category' => $catName ?? 'General',
+                    'agora_channel' => 'live_prod_' . time() . '_' . Str::random(4),
+                    'stream_url' => 'https://assets.mixkit.co/videos/preview/mixkit-hands-holding-a-smart-watch-41584-large.mp4',
+                    'thumbnail_url' => $images[0],
+                    'viewer_count' => rand(150, 850),
+                    'started_at' => now(),
+                ]
+            );
+            $streamId = $stream->id;
+        }
+
         Product::create([
             'seller_id' => $validated['seller_id'],
             'category_id' => $validated['category_id'] ?? null,
             'category' => $catName ?? 'General',
             'title' => $validated['title'],
+            'brand' => $validated['brand'] ?? null,
             'description' => $validated['description'] ?? '',
             'price' => $validated['price'],
             'compare_price' => $validated['compare_price'] ?? null,
             'stock' => $validated['stock'],
             'locked_stock' => 0,
             'images' => $images,
+            'colors' => $colors,
+            'sizes' => $sizes,
+            'specifications' => $specs,
+            'dimensions' => $validated['dimensions'] ?? null,
+            'sourcing_country' => $validated['sourcing_country'] ?? null,
             'status' => $validated['status'],
             'is_featured' => $request->boolean('is_featured'),
             'is_trending' => $request->boolean('is_trending'),
+            'is_live_product' => $isLive,
+            'stream_id' => $streamId,
             'is_natural_lighting_declared' => true,
         ]);
 
-        return redirect()->route('admin.products.index')->with('success', 'Product created successfully.');
+        $msg = $isLive ? 'Live Shopping Product created and attached to Live Stream Room!' : 'Normal Product created successfully for static purchases.';
+        return redirect()->route('admin.products.index', $isLive ? ['filter' => 'live'] : ['filter' => 'normal'])->with('success', $msg);
     }
 
     public function editProduct($id)
@@ -636,7 +737,8 @@ class AdminController extends Controller
         $product = Product::findOrFail($id);
         $categories = Category::where('is_active', true)->orderBy('name')->get();
         $sellers = User::whereIn('role', ['seller', 'creator', 'admin'])->get();
-        return view('admin.products.edit', compact('product', 'categories', 'sellers'));
+        $streams = Stream::where('is_live', true)->orderBy('id', 'desc')->get();
+        return view('admin.products.edit', compact('product', 'categories', 'sellers', 'streams'));
     }
 
     public function updateProduct(Request $request, $id)
@@ -645,26 +747,90 @@ class AdminController extends Controller
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
+            'brand' => 'nullable|string|max:255',
             'seller_id' => 'required|exists:users,id',
             'category_id' => 'nullable|exists:categories,id',
             'price' => 'required|numeric|min:0',
             'compare_price' => 'nullable|numeric|min:0',
             'stock' => 'required|integer|min:0',
             'description' => 'nullable|string',
+            'dimensions' => 'nullable|string|max:255',
+            'sourcing_country' => 'nullable|string|max:255',
             'status' => 'required|in:active,inactive,draft',
             'is_featured' => 'nullable|boolean',
             'is_trending' => 'nullable|boolean',
+            'is_live_product' => 'nullable|boolean',
+            'stream_id' => 'nullable|exists:streams,id',
             'images' => 'nullable|string',
             'image_file' => 'nullable|image|max:5120',
+            'image_files.*' => 'nullable|image|max:5120',
+            'colors' => 'nullable',
+            'sizes' => 'nullable',
+            'specifications' => 'nullable',
         ]);
 
+        $images = is_array($product->images) ? $product->images : [];
+
+        // Handle single image file upload
         if ($request->hasFile('image_file')) {
             $file = $request->file('image_file');
             $filename = 'prod_' . time() . '_' . Str::random(6) . '.' . $file->getClientOriginalExtension();
             $file->move(public_path('uploads/products'), $filename);
-            $product->images = [asset('uploads/products/' . $filename)];
-        } elseif (!empty($validated['images'])) {
-            $product->images = array_map('trim', explode(',', $validated['images']));
+            array_unshift($images, asset('uploads/products/' . $filename));
+        }
+
+        // Handle multiple image files upload
+        if ($request->hasFile('image_files')) {
+            foreach ($request->file('image_files') as $file) {
+                if ($file) {
+                    $filename = 'prod_' . time() . '_' . Str::random(8) . '.' . $file->getClientOriginalExtension();
+                    $file->move(public_path('uploads/products'), $filename);
+                    $images[] = asset('uploads/products/' . $filename);
+                }
+            }
+        }
+
+        if (!empty($validated['images'])) {
+            $urlImages = array_filter(array_map('trim', explode(',', $validated['images'])));
+            $images = array_unique(array_merge($images, $urlImages));
+        }
+
+        $images = array_values(array_filter($images));
+        if (empty($images)) {
+            $images[] = 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600';
+        }
+
+        // Parse colors
+        if ($request->has('colors')) {
+            $rawColors = $request->input('colors');
+            if (is_string($rawColors)) {
+                $decoded = json_decode($rawColors, true);
+                $product->colors = is_array($decoded) ? $decoded : array_map(fn($c) => ['name' => trim($c), 'code' => '#1E293B'], explode(',', $rawColors));
+            } elseif (is_array($rawColors)) {
+                $product->colors = $rawColors;
+            }
+        }
+
+        // Parse sizes
+        if ($request->has('sizes')) {
+            $rawSizes = $request->input('sizes');
+            if (is_string($rawSizes)) {
+                $decoded = json_decode($rawSizes, true);
+                $product->sizes = is_array($decoded) ? $decoded : array_map(fn($s) => ['name' => trim($s), 'price_modifier' => 0.00], explode(',', $rawSizes));
+            } elseif (is_array($rawSizes)) {
+                $product->sizes = $rawSizes;
+            }
+        }
+
+        // Parse specifications
+        if ($request->has('specifications')) {
+            $rawSpecs = $request->input('specifications');
+            if (is_string($rawSpecs)) {
+                $decoded = json_decode($rawSpecs, true);
+                $product->specifications = is_array($decoded) ? $decoded : [];
+            } elseif (is_array($rawSpecs)) {
+                $product->specifications = $rawSpecs;
+            }
         }
 
         $catName = $product->category;
@@ -673,20 +839,46 @@ class AdminController extends Controller
             $catName = $cat ? $cat->name : $catName;
         }
 
+        $isLive = $request->boolean('is_live_product');
+        $streamId = $validated['stream_id'] ?? $product->stream_id;
+
+        if ($isLive && !$streamId) {
+            $stream = Stream::firstOrCreate(
+                ['host_id' => $validated['seller_id'], 'stream_type' => 'live_shopping', 'is_live' => true],
+                [
+                    'title' => 'Live Demo: ' . $validated['title'],
+                    'description' => 'Live shopping session and product demonstration for ' . $validated['title'],
+                    'category' => $catName ?? 'General',
+                    'agora_channel' => 'live_prod_' . time() . '_' . Str::random(4),
+                    'stream_url' => 'https://assets.mixkit.co/videos/preview/mixkit-hands-holding-a-smart-watch-41584-large.mp4',
+                    'thumbnail_url' => $images[0],
+                    'viewer_count' => rand(150, 850),
+                    'started_at' => now(),
+                ]
+            );
+            $streamId = $stream->id;
+        }
+
         $product->seller_id = $validated['seller_id'];
         $product->category_id = $validated['category_id'] ?? null;
         $product->category = $catName;
         $product->title = $validated['title'];
+        $product->brand = $validated['brand'] ?? $product->brand;
         $product->description = $validated['description'] ?? $product->description;
         $product->price = $validated['price'];
         $product->compare_price = $validated['compare_price'] ?? null;
         $product->stock = $validated['stock'];
+        $product->images = $images;
+        $product->dimensions = $validated['dimensions'] ?? $product->dimensions;
+        $product->sourcing_country = $validated['sourcing_country'] ?? $product->sourcing_country;
         $product->status = $validated['status'];
         $product->is_featured = $request->boolean('is_featured');
         $product->is_trending = $request->boolean('is_trending');
+        $product->is_live_product = $isLive;
+        $product->stream_id = $isLive ? $streamId : null;
         $product->save();
 
-        return redirect()->route('admin.products.index')->with('success', 'Product updated successfully.');
+        return redirect()->route('admin.products.index')->with('success', 'Product updated successfully with images, variants, and specifications.');
     }
 
     public function deleteProduct($id)
@@ -695,6 +887,109 @@ class AdminController extends Controller
         $product->delete();
 
         return back()->with('success', 'Product deleted successfully.');
+    }
+
+    /**
+     * Orders Management (Full Admin Management).
+     */
+    public function orders(Request $request)
+    {
+        $query = Order::with(['buyer', 'seller', 'items.product'])->orderBy('id', 'desc');
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('payment_status')) {
+            $query->where('payment_status', $request->payment_status);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('order_number', 'like', "%{$search}%")
+                  ->orWhere('customer_name', 'like', "%{$search}%")
+                  ->orWhere('customer_email', 'like', "%{$search}%")
+                  ->orWhere('tracking_number', 'like', "%{$search}%");
+            });
+        }
+
+        $stats = [
+            'total_orders' => Order::count(),
+            'pending_orders' => Order::whereIn('status', ['pending', 'packing'])->count(),
+            'shipped_orders' => Order::where('status', 'shipped')->count(),
+            'delivered_orders' => Order::whereIn('status', ['delivered', 'completed'])->count(),
+            'total_volume' => Order::sum('total_amount'),
+        ];
+
+        $orders = $query->paginate(15);
+
+        return view('admin.orders.index', compact('orders', 'stats'));
+    }
+
+    public function showOrder($id)
+    {
+        $order = Order::with(['buyer', 'seller', 'items.product', 'dispute'])->findOrFail($id);
+        return response()->json([
+            'success' => true,
+            'order' => $order
+        ]);
+    }
+
+    public function updateOrderStatus(Request $request, $id)
+    {
+        $order = Order::findOrFail($id);
+
+        $validated = $request->validate([
+            'status' => 'required|in:pending,packing,shipped,delivered,cancelled,disputed',
+            'payment_status' => 'nullable|in:pending,escrow_held,released_to_seller,refunded',
+            'carrier' => 'nullable|string|max:100',
+            'tracking_number' => 'nullable|string|max:100',
+        ]);
+
+        $order->status = $validated['status'];
+        if (!empty($validated['payment_status'])) {
+            $order->payment_status = $validated['payment_status'];
+        }
+        if (!empty($validated['carrier'])) {
+            $order->carrier = $validated['carrier'];
+        }
+        if (!empty($validated['tracking_number'])) {
+            $order->tracking_number = $validated['tracking_number'];
+        }
+
+        if ($validated['status'] === 'shipped' && !$order->shipped_at) {
+            $order->shipped_at = now();
+        } elseif ($validated['status'] === 'delivered' && !$order->delivered_at) {
+            $order->delivered_at = now();
+        }
+
+        $order->save();
+
+        return back()->with('success', "Order #{$order->order_number} status updated successfully.");
+    }
+
+    public function updateOrderPayment(Request $request, $id)
+    {
+        $order = Order::findOrFail($id);
+
+        $validated = $request->validate([
+            'payment_status' => 'required|in:pending,escrow_held,released_to_seller,refunded',
+        ]);
+
+        $order->payment_status = $validated['payment_status'];
+        $order->save();
+
+        return back()->with('success', "Payment status for order #{$order->order_number} updated to {$order->payment_status}.");
+    }
+
+    public function deleteOrder($id)
+    {
+        $order = Order::findOrFail($id);
+        $num = $order->order_number;
+        $order->delete();
+
+        return back()->with('success', "Order #{$num} deleted successfully.");
     }
 
     public function toggleProductFeatured($id)
@@ -1310,5 +1605,140 @@ class AdminController extends Controller
         $auction->save();
 
         return back()->with('success', 'Auction blur state updated.');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | COUPONS & DISCOUNTS MANAGEMENT
+    |--------------------------------------------------------------------------
+    */
+
+    public function coupons(Request $request)
+    {
+        $search = $request->query('search');
+        $status = $request->query('status', 'all');
+
+        $coupons = Coupon::withCount('usages')
+            ->when($search, function($q) use ($search) {
+                $q->where('code', 'like', "%{$search}%")
+                  ->orWhere('name', 'like', "%{$search}%");
+            })
+            ->when($status === 'active', function($q) {
+                $q->where('is_active', true);
+            })
+            ->when($status === 'inactive', function($q) {
+                $q->where('is_active', false);
+            })
+            ->latest()
+            ->paginate(15);
+
+        $totalCoupons = Coupon::count();
+        $activeCoupons = Coupon::where('is_active', true)->count();
+        $totalUses = CouponUsage::count();
+        $totalDiscountGiven = CouponUsage::sum('discount_amount');
+
+        return view('admin.coupons.index', compact('coupons', 'search', 'status', 'totalCoupons', 'activeCoupons', 'totalUses', 'totalDiscountGiven'));
+    }
+
+    public function createCoupon()
+    {
+        return view('admin.coupons.create');
+    }
+
+    public function storeCoupon(Request $request)
+    {
+        $validated = $request->validate([
+            'code' => 'required|string|max:30|unique:coupons,code',
+            'name' => 'nullable|string|max:100',
+            'description' => 'nullable|string|max:500',
+            'type' => 'required|in:percentage,fixed',
+            'value' => 'required|numeric|min:0.01',
+            'min_order_amount' => 'nullable|numeric|min:0',
+            'max_discount_amount' => 'nullable|numeric|min:0',
+            'usage_limit' => 'nullable|integer|min:1',
+            'per_user_limit' => 'nullable|integer|min:1',
+            'starts_at' => 'nullable|date',
+            'expires_at' => 'nullable|date|after_or_equal:starts_at',
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        $coupon = Coupon::create([
+            'code' => strtoupper(trim($validated['code'])),
+            'name' => $validated['name'] ?? null,
+            'description' => $validated['description'] ?? null,
+            'type' => $validated['type'],
+            'value' => $validated['value'],
+            'min_order_amount' => $validated['min_order_amount'] ?? 0.00,
+            'max_discount_amount' => $validated['max_discount_amount'] ?? null,
+            'usage_limit' => $validated['usage_limit'] ?? null,
+            'per_user_limit' => $validated['per_user_limit'] ?? 1,
+            'starts_at' => $validated['starts_at'] ? \Carbon\Carbon::parse($validated['starts_at']) : null,
+            'expires_at' => $validated['expires_at'] ? \Carbon\Carbon::parse($validated['expires_at']) : null,
+            'is_active' => $request->boolean('is_active', true),
+        ]);
+
+        return redirect()->route('admin.coupons.index')->with('success', "Coupon '{$coupon->code}' created successfully!");
+    }
+
+    public function editCoupon($id)
+    {
+        $coupon = Coupon::findOrFail($id);
+        return view('admin.coupons.edit', compact('coupon'));
+    }
+
+    public function updateCoupon(Request $request, $id)
+    {
+        $coupon = Coupon::findOrFail($id);
+
+        $validated = $request->validate([
+            'code' => 'required|string|max:30|unique:coupons,code,' . $coupon->id,
+            'name' => 'nullable|string|max:100',
+            'description' => 'nullable|string|max:500',
+            'type' => 'required|in:percentage,fixed',
+            'value' => 'required|numeric|min:0.01',
+            'min_order_amount' => 'nullable|numeric|min:0',
+            'max_discount_amount' => 'nullable|numeric|min:0',
+            'usage_limit' => 'nullable|integer|min:1',
+            'per_user_limit' => 'nullable|integer|min:1',
+            'starts_at' => 'nullable|date',
+            'expires_at' => 'nullable|date',
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        $coupon->update([
+            'code' => strtoupper(trim($validated['code'])),
+            'name' => $validated['name'] ?? null,
+            'description' => $validated['description'] ?? null,
+            'type' => $validated['type'],
+            'value' => $validated['value'],
+            'min_order_amount' => $validated['min_order_amount'] ?? 0.00,
+            'max_discount_amount' => $validated['max_discount_amount'] ?? null,
+            'usage_limit' => $validated['usage_limit'] ?? null,
+            'per_user_limit' => $validated['per_user_limit'] ?? 1,
+            'starts_at' => $validated['starts_at'] ? \Carbon\Carbon::parse($validated['starts_at']) : null,
+            'expires_at' => $validated['expires_at'] ? \Carbon\Carbon::parse($validated['expires_at']) : null,
+            'is_active' => $request->boolean('is_active', true),
+        ]);
+
+        return redirect()->route('admin.coupons.index')->with('success', "Coupon '{$coupon->code}' updated successfully!");
+    }
+
+    public function deleteCoupon($id)
+    {
+        $coupon = Coupon::findOrFail($id);
+        $code = $coupon->code;
+        $coupon->delete();
+
+        return redirect()->route('admin.coupons.index')->with('success', "Coupon '{$code}' deleted successfully.");
+    }
+
+    public function toggleCouponStatus($id)
+    {
+        $coupon = Coupon::findOrFail($id);
+        $coupon->is_active = !$coupon->is_active;
+        $coupon->save();
+
+        $statusText = $coupon->is_active ? 'activated' : 'deactivated';
+        return back()->with('success', "Coupon '{$coupon->code}' has been {$statusText}.");
     }
 }

@@ -137,34 +137,34 @@
             <div class="summary-calc-table">
                 <div class="summary-calc-row">
                     <span>Subtotal</span>
-                    <span>C$899.00</span>
+                    <span id="summarySubtotal">C$899.00</span>
                 </div>
                 <div class="summary-calc-row discount-row">
                     <span>Discount (First Buy)</span>
-                    <span>-C$50.00</span>
+                    <span id="summaryDiscount">-C$50.00</span>
                 </div>
                 <div class="summary-calc-row">
                     <span>Processing Fee</span>
-                    <span>C$12.50</span>
+                    <span id="summaryProcessing">C$12.50</span>
                 </div>
                 <div class="summary-calc-row">
                     <span>Platform Fee</span>
-                    <span>C$12.50</span>
+                    <span id="summaryPlatform">C$12.50</span>
                 </div>
                 <div class="summary-calc-row">
                     <span>Shipping</span>
-                    <span>Free</span>
+                    <span id="summaryShipping" class="text-success">Free</span>
                 </div>
                 <div class="summary-calc-row">
-                    <span>GST / HST / PST</span>
-                    <span>C$111.93</span>
+                    <span>GST / HST / PST (13%)</span>
+                    <span id="summaryTax">C$111.93</span>
                 </div>
                 
                 <div class="summary-divider"></div>
 
                 <div class="summary-calc-row total-row">
                     <span>Total</span>
-                    <span>C$973.43</span>
+                    <span id="summaryTotal">C$973.43</span>
                 </div>
             </div>
 
@@ -181,7 +181,7 @@
             <div class="shipping-methods-section">
                 <h3 class="shipping-section-title">Shipping Methods</h3>
                 
-                <label class="shipping-option-card active" onclick="selectShippingOption(this)">
+                <label class="shipping-option-card active" onclick="selectShippingOption(this, 0)">
                     <div class="shipping-option-left">
                         <input type="radio" name="shipMethod" checked>
                         <span>Standard Delivery</span>
@@ -189,7 +189,7 @@
                     <span class="ship-price-val free-text">Free</span>
                 </label>
 
-                <label class="shipping-option-card" onclick="selectShippingOption(this)">
+                <label class="shipping-option-card" onclick="selectShippingOption(this, 25)">
                     <div class="shipping-option-left">
                         <input type="radio" name="shipMethod">
                         <span>Express Delivery</span>
@@ -201,7 +201,7 @@
             <!-- Total Payment Box -->
             <div class="total-pay-box">
                 <span class="total-pay-label">Total Payment Amount</span>
-                <span class="total-pay-val">C$973.43</span>
+                <span class="total-pay-val" id="summaryGrandTotal">C$973.43</span>
             </div>
 
             <!-- Checkout Button -->
@@ -225,7 +225,7 @@
             Experience the future of shopping with realtime interaction, live demonstrations, and exclusive community deals.
         </p>
         <div class="footer-copyright-line">
-            © 2024 LiveStreamShop. All rights reserved.
+            © 2026 LiveStreamShop. All rights reserved.
         </div>
     </div>
 </footer>
@@ -238,7 +238,102 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="js/main.js"></script>
 <script>
-    // Quantity Stepper Handler
+    let shippingCost = 0;
+    let promoDiscount = 50.00;
+
+    function renderCartFromStorage() {
+        const stored = JSON.parse(localStorage.getItem('zal_cart') || '[]');
+        const container = document.getElementById('cartItemsContainer');
+        if (!container) return;
+
+        if (stored.length > 0) {
+            container.innerHTML = '';
+            stored.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = 'cart-item-card';
+                card.innerHTML = `
+                    <div class="cart-item-top">
+                        <div class="cart-item-left">
+                            <img src="${item.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200&auto=format&fit=crop&q=80'}" alt="${item.title}" class="cart-item-thumb">
+                            <div class="cart-item-info">
+                                <h2 class="cart-item-title">${item.title}</h2>
+                                <p style="font-size: 0.78rem; color: #8A99AD; margin: 4px 0 0 0;">${item.color || ''} &bull; ${item.size || ''}</p>
+                            </div>
+                        </div>
+                        <div class="cart-item-right">
+                            <button type="button" class="btn-delete-cart-item" title="Remove Item" onclick="removeStoredItem(${index})">
+                                <i class="bi bi-trash-fill"></i>
+                            </button>
+                            <span class="cart-item-price">C$${(item.price * item.quantity).toFixed(2)}</span>
+                        </div>
+                    </div>
+                    <div class="cart-item-bottom">
+                        <span class="cart-qty-label">Quantity</span>
+                        <div class="quantity-stepper">
+                            <button type="button" class="btn-step" onclick="updateStoredQty(${index}, -1)">—</button>
+                            <span class="step-num">${item.quantity}</span>
+                            <button type="button" class="btn-step" onclick="updateStoredQty(${index}, 1)">+</button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+        recalcTotals();
+    }
+
+    function removeStoredItem(index) {
+        const stored = JSON.parse(localStorage.getItem('zal_cart') || '[]');
+        stored.splice(index, 1);
+        localStorage.setItem('zal_cart', JSON.stringify(stored));
+        renderCartFromStorage();
+        updateGlobalCartBadge();
+    }
+
+    function updateStoredQty(index, change) {
+        const stored = JSON.parse(localStorage.getItem('zal_cart') || '[]');
+        if (stored[index]) {
+            stored[index].quantity += change;
+            if (stored[index].quantity < 1) stored[index].quantity = 1;
+            localStorage.setItem('zal_cart', JSON.stringify(stored));
+            renderCartFromStorage();
+            updateGlobalCartBadge();
+        }
+    }
+
+    function updateGlobalCartBadge() {
+        const stored = JSON.parse(localStorage.getItem('zal_cart') || '[]');
+        let total = 0;
+        stored.forEach(i => total += (i.quantity || 1));
+        const badge = document.getElementById('globalCartBadge');
+        if (badge) badge.textContent = total;
+    }
+
+    function recalcTotals() {
+        const stored = JSON.parse(localStorage.getItem('zal_cart') || '[]');
+        let subtotal = 0;
+        if (stored.length > 0) {
+            stored.forEach(item => {
+                subtotal += (item.price * item.quantity);
+            });
+        } else {
+            subtotal = 499.00; // default display
+        }
+
+        const discount = promoDiscount;
+        const processing = 12.50;
+        const platform = 12.50;
+        const tax = (subtotal - discount > 0) ? (subtotal - discount) * 0.13 : 0;
+        const grandTotal = Math.max(0, subtotal - discount + processing + platform + shippingCost + tax);
+
+        if (document.getElementById('summarySubtotal')) document.getElementById('summarySubtotal').textContent = `C$${subtotal.toFixed(2)}`;
+        if (document.getElementById('summaryDiscount')) document.getElementById('summaryDiscount').textContent = `-C$${discount.toFixed(2)}`;
+        if (document.getElementById('summaryTax')) document.getElementById('summaryTax').textContent = `C$${tax.toFixed(2)}`;
+        if (document.getElementById('summaryTotal')) document.getElementById('summaryTotal').textContent = `C$${grandTotal.toFixed(2)}`;
+        if (document.getElementById('summaryGrandTotal')) document.getElementById('summaryGrandTotal').textContent = `C$${grandTotal.toFixed(2)}`;
+    }
+
+    // Quantity Stepper Fallback Handler
     function updateItemQty(btn, change) {
         const stepper = btn.parentElement;
         const numSpan = stepper.querySelector('.step-num');
@@ -250,7 +345,7 @@
         }
     }
 
-    // Remove Item Handler
+    // Remove Item Fallback Handler
     function removeCartCard(btn) {
         const card = btn.closest('.cart-item-card');
         if (card) {
@@ -263,26 +358,39 @@
     }
 
     // Shipping Option Switch Handler
-    function selectShippingOption(selectedCard) {
+    function selectShippingOption(selectedCard, cost = 0) {
         document.querySelectorAll('.shipping-option-card').forEach(card => card.classList.remove('active'));
         selectedCard.classList.add('active');
         const radio = selectedCard.querySelector('input[type="radio"]');
         if (radio) radio.checked = true;
+        shippingCost = cost;
+        const shipDisplay = document.getElementById('summaryShipping');
+        if (shipDisplay) {
+            shipDisplay.textContent = cost > 0 ? `+C$${cost.toFixed(2)}` : 'Free';
+        }
+        recalcTotals();
     }
 
     // Promo Code Handler
     function handleApplyPromoCode() {
         const input = document.getElementById('promoCodeInput');
         if (input && input.value.trim() !== '') {
-            alert(`Promo code '${input.value.trim()}' applied successfully!`);
+            promoDiscount = 75.00;
+            alert(`Promo code '${input.value.trim()}' applied! Extra C$25 discount added.`);
             input.value = '';
+            recalcTotals();
         }
     }
 
     // Checkout Handler
     function handleProceedCheckout() {
-        alert('Proceeding to Checkout Gateway...');
+        window.location.href = 'checkout.html';
     }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        renderCartFromStorage();
+        updateGlobalCartBadge();
+    });
 </script>
 </body>
 </html>

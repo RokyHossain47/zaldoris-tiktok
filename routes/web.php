@@ -49,15 +49,17 @@ Route::get('/auction/{id?}/result', [AuctionController::class, 'result'])->name(
 Route::get('/auction-result/{id?}', [AuctionController::class, 'result']);
 Route::post('/auction/{id}/bid', [AuctionController::class, 'placeBid'])->name('auctions.bid');
 
-// Live Commerce & Shop
 Route::get('/shop', [ShopController::class, 'index'])->name('shop.index');
 Route::get('/live-shopping', [ShopController::class, 'index']);
 Route::get('/product/{id?}', [ShopController::class, 'product'])->name('shop.product');
 Route::get('/product-details/{id?}', [ShopController::class, 'product']);
+Route::post('/product/{id}/review', [ShopController::class, 'storeReview'])->name('shop.product.review');
 Route::get('/cart', [ShopController::class, 'cart'])->name('shop.cart');
 Route::post('/cart/add', [ShopController::class, 'addToCart'])->name('shop.cart.add');
 Route::post('/cart/update', [ShopController::class, 'updateCart'])->name('shop.cart.update');
 Route::delete('/cart/remove/{id}', [ShopController::class, 'removeFromCart'])->name('shop.cart.remove');
+Route::post('/cart/coupon/apply', [ShopController::class, 'applyCoupon'])->name('shop.coupon.apply');
+Route::post('/cart/coupon/remove', [ShopController::class, 'removeCoupon'])->name('shop.coupon.remove');
 Route::get('/checkout', [ShopController::class, 'checkout'])->name('shop.checkout');
 Route::post('/checkout', [ShopController::class, 'processCheckout'])->name('shop.checkout.process');
 Route::get('/payment', [ShopController::class, 'payment'])->name('shop.payment');
@@ -183,6 +185,22 @@ Route::prefix('admin')->middleware('admin')->group(function () {
     Route::delete('/auctions/{id}', [AdminController::class, 'deleteAuction'])->name('admin.auctions.delete');
     Route::post('/auctions/{id}/toggle-status', [AdminController::class, 'toggleAuctionStatus'])->name('admin.auctions.toggle_status');
     Route::post('/auctions/{id}/toggle-blur', [AdminController::class, 'toggleAuctionBlur'])->name('admin.auctions.toggle_blur');
+
+    // Orders Management (Full Admin Management)
+    Route::get('/orders', [AdminController::class, 'orders'])->name('admin.orders.index');
+    Route::get('/orders/{id}', [AdminController::class, 'showOrder'])->name('admin.orders.show');
+    Route::put('/orders/{id}/status', [AdminController::class, 'updateOrderStatus'])->name('admin.orders.update_status');
+    Route::put('/orders/{id}/payment', [AdminController::class, 'updateOrderPayment'])->name('admin.orders.update_payment');
+    Route::delete('/orders/{id}', [AdminController::class, 'deleteOrder'])->name('admin.orders.delete');
+
+    // Coupons & Discounts Management (Full CRUD)
+    Route::get('/coupons', [AdminController::class, 'coupons'])->name('admin.coupons.index');
+    Route::get('/coupons/create', [AdminController::class, 'createCoupon'])->name('admin.coupons.create');
+    Route::post('/coupons', [AdminController::class, 'storeCoupon'])->name('admin.coupons.store');
+    Route::get('/coupons/{id}/edit', [AdminController::class, 'editCoupon'])->name('admin.coupons.edit');
+    Route::put('/coupons/{id}', [AdminController::class, 'updateCoupon'])->name('admin.coupons.update');
+    Route::delete('/coupons/{id}', [AdminController::class, 'deleteCoupon'])->name('admin.coupons.delete');
+    Route::post('/coupons/{id}/toggle', [AdminController::class, 'toggleCouponStatus'])->name('admin.coupons.toggle');
 
     Route::get('/disputes', [AdminController::class, 'disputes'])->name('admin.disputes');
     Route::post('/disputes/{id}/resolve', [AdminController::class, 'resolveDispute'])->name('admin.disputes.resolve');

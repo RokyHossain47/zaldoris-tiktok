@@ -85,7 +85,19 @@
                             <img src="{{ $item['image'] ?? 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200' }}" alt="{{ $item['title'] }}" class="cart-item-thumb">
                             <div class="cart-item-info">
                                 <h2 class="cart-item-title">{{ Str::limit($item['title'], 32) }}</h2>
-                                <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">{{ $item['seller_name'] ?? 'Verified Seller' }}</div>
+                                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 4px;">
+                                    @if(!empty($item['selected_color']))
+                                        <span style="background: rgba(0, 240, 200, 0.12); color: #00F0C8; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(0, 240, 200, 0.25);">
+                                            {{ $item['selected_color'] }}
+                                        </span>
+                                    @endif
+                                    @if(!empty($item['selected_size']))
+                                        <span style="background: rgba(255, 255, 255, 0.08); color: #E2E8F0; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px;">
+                                            {{ $item['selected_size'] }}
+                                        </span>
+                                    @endif
+                                    <span style="font-size: 12px; color: var(--text-muted);">{{ $item['seller_name'] ?? 'Verified Seller' }}</span>
+                                </div>
                             </div>
                         </div>
                         <div class="cart-item-right">
@@ -128,6 +140,13 @@
                     <span>Subtotal</span>
                     <span id="summarySubtotal">{{ setting('currency_symbol', '$') }}{{ number_format($subtotal, 2) }}</span>
                 </div>
+
+                <!-- Discount Row -->
+                <div class="summary-calc-row" id="summaryDiscountRow" style="{{ $discount > 0 ? '' : 'display: none;' }}; color: #00F0C8;">
+                    <span>Discount (<span id="summaryCouponCode">{{ $couponSession['code'] ?? '' }}</span>)</span>
+                    <span id="summaryDiscount">-{{ setting('currency_symbol', '$') }}{{ number_format($discount, 2) }}</span>
+                </div>
+
                 <div class="summary-calc-row">
                     <span>Shipping</span>
                     <span class="free-text">Free</span>
@@ -145,17 +164,32 @@
                 </div>
             </div>
 
-            <!-- Promo Code Input Wrap -->
-            <div class="promo-code-wrap">
-                <div class="promo-input-group">
-                    <i class="bi bi-tag"></i>
-                    <input type="text" placeholder="Add promo code" class="promo-input" id="promoCodeInput">
+            <!-- Applied Coupon Display -->
+            <div id="appliedCouponBox" style="{{ $couponSession ? 'display: flex;' : 'display: none;' }} justify-content-between; align-items: center; background: rgba(0, 240, 200, 0.1); border: 1px solid #00F0C8; border-radius: 8px; padding: 10px 14px; margin-bottom: 16px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <i class="bi bi-ticket-perforated-fill" style="color: #00F0C8; font-size: 16px;"></i>
+                    <div>
+                        <div style="font-weight: 800; font-family: monospace; color: #00F0C8; font-size: 13px;" id="appliedCouponTag">{{ $couponSession['code'] ?? '' }}</div>
+                        <small style="color: var(--text-muted); font-size: 11px;">Coupon applied</small>
+                    </div>
                 </div>
-                <button type="button" class="btn-apply-promo" onclick="handleApplyPromoCode()">Apply</button>
+                <button type="button" onclick="handleRemoveCoupon()" title="Remove Coupon" style="background: none; border: none; color: #FE2C55; font-size: 18px; cursor: pointer; padding: 0;">
+                    <i class="bi bi-x-circle-fill"></i>
+                </button>
             </div>
 
+            <!-- Promo Code Input Wrap -->
+            <div class="promo-code-wrap" id="promoInputWrap" style="{{ $couponSession ? 'display: none;' : '' }}">
+                <div class="promo-input-group">
+                    <i class="bi bi-tag"></i>
+                    <input type="text" placeholder="Enter coupon (e.g. WELCOME10)" class="promo-input" id="promoCodeInput" style="text-transform: uppercase;">
+                </div>
+                <button type="button" class="btn-apply-promo" id="btnApplyCoupon" onclick="handleApplyPromoCode()">Apply</button>
+            </div>
+            <div id="promoFeedbackMsg" style="display: none; font-size: 12px; margin-top: 6px; padding: 4px 8px; border-radius: 4px;"></div>
+
             <!-- Shipping Methods Section -->
-            <div class="shipping-methods-section">
+            <div class="shipping-methods-section" style="margin-top: 20px;">
                 <h3 class="shipping-section-title">Shipping Methods</h3>
                 
                 <label class="shipping-option-card active" onclick="selectShippingOption(this)">
@@ -286,11 +320,30 @@
         const totalEl = document.getElementById('summaryTotal');
         const payTotalEl = document.getElementById('summaryPayTotal');
         const badge = document.getElementById('globalCartBadge');
+        const discountRow = document.getElementById('summaryDiscountRow');
+        const discountVal = document.getElementById('summaryDiscount');
+        const couponTag = document.getElementById('summaryCouponCode');
+        const appliedBox = document.getElementById('appliedCouponBox');
+        const appliedTag = document.getElementById('appliedCouponTag');
+        const inputWrap = document.getElementById('promoInputWrap');
 
         if (subtotalEl) subtotalEl.textContent = currencySymbol + data.subtotal;
         if (taxEl) taxEl.textContent = currencySymbol + data.tax;
         if (totalEl) totalEl.textContent = currencySymbol + data.total;
         if (payTotalEl) payTotalEl.textContent = currencySymbol + data.total;
+
+        if (data.discount && parseFloat(data.discount) > 0) {
+            if (discountRow) discountRow.style.display = 'flex';
+            if (discountVal) discountVal.textContent = '-' + currencySymbol + data.discount;
+            if (couponTag && data.coupon) couponTag.textContent = data.coupon.code;
+            if (appliedBox) appliedBox.style.display = 'flex';
+            if (appliedTag && data.coupon) appliedTag.textContent = data.coupon.code;
+            if (inputWrap) inputWrap.style.display = 'none';
+        } else {
+            if (discountRow) discountRow.style.display = 'none';
+            if (appliedBox) appliedBox.style.display = 'none';
+            if (inputWrap) inputWrap.style.display = 'flex';
+        }
 
         if (badge) {
             badge.textContent = data.cart_count || 0;
@@ -307,13 +360,83 @@
         if (radio) radio.checked = true;
     }
 
-    // Promo Code Handler
+    // Promo Code Apply Handler
     function handleApplyPromoCode() {
         const input = document.getElementById('promoCodeInput');
-        if (input && input.value.trim() !== '') {
-            alert(`Promo code '${input.value.trim()}' applied successfully!`);
-            input.value = '';
+        const btn = document.getElementById('btnApplyCoupon');
+        const feedback = document.getElementById('promoFeedbackMsg');
+        const code = input ? input.value.trim() : '';
+
+        if (!code) {
+            showPromoFeedback('Please enter a promo code.', false);
+            return;
         }
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
+
+        fetch('/cart/coupon/apply', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ code: code })
+        })
+        .then(res => res.json())
+        .then(data => {
+            btn.disabled = false;
+            btn.innerHTML = 'Apply';
+
+            if (data && data.success) {
+                showPromoFeedback(data.message, true);
+                updateSummaryDisplay(data);
+                if (input) input.value = '';
+            } else {
+                showPromoFeedback(data.message || 'Invalid coupon code.', false);
+            }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btn.innerHTML = 'Apply';
+            showPromoFeedback('Failed to apply coupon. Please try again.', false);
+        });
+    }
+
+    // Promo Code Remove Handler
+    function handleRemoveCoupon() {
+        fetch('/cart/coupon/remove', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data && data.success) {
+                showPromoFeedback('Coupon removed', true);
+                updateSummaryDisplay(data);
+            }
+        })
+        .catch(err => console.error('Coupon remove error:', err));
+    }
+
+    function showPromoFeedback(msg, isSuccess) {
+        const feedback = document.getElementById('promoFeedbackMsg');
+        if (!feedback) return;
+
+        feedback.textContent = msg;
+        feedback.style.display = 'block';
+        feedback.style.background = isSuccess ? 'rgba(0, 240, 200, 0.15)' : 'rgba(254, 44, 85, 0.15)';
+        feedback.style.color = isSuccess ? '#00F0C8' : '#FE2C55';
+        feedback.style.border = isSuccess ? '1px solid #00F0C8' : '1px solid #FE2C55';
+
+        setTimeout(() => {
+            feedback.style.display = 'none';
+        }, 4000);
     }
 </script>
 </body>

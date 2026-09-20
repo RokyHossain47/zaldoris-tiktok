@@ -31,6 +31,11 @@ class PkBattle extends Model
         'host2_score' => 'integer',
     ];
 
+    public function stream(): BelongsTo
+    {
+        return $this->belongsTo(Stream::class, 'stream1_id');
+    }
+
     public function stream1(): BelongsTo
     {
         return $this->belongsTo(Stream::class, 'stream1_id');
@@ -51,7 +56,22 @@ class PkBattle extends Model
         return $this->belongsTo(User::class, 'host2_id');
     }
 
+    public function hostUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'host1_id');
+    }
+
+    public function challengerUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'host2_id');
+    }
+
     public function winner(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'winner_id');
+    }
+
+    public function winnerUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'winner_id');
     }

@@ -135,32 +135,31 @@
 
                 <div class="grid-3-col">
                     @forelse($featuredLiveProducts as $product)
+                        @php
+                            $liveRoomUrl = $product->stream_id 
+                                ? route('streams.show', $product->stream_id) 
+                                : url('/live-product-room/' . $product->id);
+                        @endphp
                         <div class="zal-card">
-                            <a href="{{ route('shop.product', $product->id) }}" style="text-decoration: none; color: inherit;">
+                            <a href="{{ $liveRoomUrl }}" style="text-decoration: none; color: inherit;">
                                 <div class="live-card-thumb">
                                     <img src="{{ $product->primary_image }}" alt="{{ $product->title }}">
-                                    @if($product->is_trending)
-                                        <div class="badge-live-top" style="background: linear-gradient(135deg, #FF6B00, #FF0055);"><span class="live-pulse-dot"></span> HOT</div>
-                                    @elseif($product->is_featured)
-                                        <div class="badge-live-top" style="background: var(--pink-accent, #FE2C55);"><span class="live-pulse-dot"></span> FEATURED</div>
-                                    @else
-                                        <div class="badge-live-top"><span class="live-pulse-dot"></span> LIVE</div>
-                                    @endif
-                                    <div class="badge-viewers-top"><i class="bi bi-box-seam"></i> {{ $product->stock }} in stock</div>
+                                    <div class="badge-live-top" style="background: linear-gradient(135deg, #FE2C55, #FF0055);"><span class="live-pulse-dot"></span> LIVE ROOM</div>
+                                    <div class="badge-viewers-top"><i class="bi bi-eye-fill"></i> Live Demo</div>
                                 </div>
                             </a>
                             <div class="live-card-body">
-                                <a href="{{ route('shop.product', $product->id) }}" style="text-decoration: none; color: inherit;">
+                                <a href="{{ $liveRoomUrl }}" style="text-decoration: none; color: inherit;">
                                     <div class="live-card-title">{{ Str::limit($product->title, 26) }}</div>
                                 </a>
                                 <div class="host-row" style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px;">
                                     <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
                                         <img src="{{ $product->seller && $product->seller->avatar_url ? $product->seller->avatar_url : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100' }}" alt="{{ $product->seller ? $product->seller->name : 'Seller' }}" class="host-avatar">
-                                        <span class="host-name" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 110px;">{{ $product->seller ? $product->seller->name : 'Verified Store' }}</span>
+                                        <span class="host-name" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 110px;">{{ $product->seller ? $product->seller->name : 'Live Host' }}</span>
                                     </div>
-                                    <div style="font-weight: 800; font-size: 15px; color: var(--pink-accent, #FE2C55); flex-shrink: 0;">
-                                        {{ setting('currency_symbol', '$') }}{{ number_format($product->price, 2) }}
-                                    </div>
+                                    <a href="{{ $liveRoomUrl }}" class="btn-watch-live-pill" style="background: rgba(254, 44, 85, 0.15); border: 1px solid rgba(254, 44, 85, 0.4); color: #FE2C55; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                                        <i class="bi bi-play-circle-fill"></i> Watch Live
+                                    </a>
                                 </div>
                             </div>
                         </div>

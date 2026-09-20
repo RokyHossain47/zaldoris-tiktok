@@ -96,11 +96,11 @@
                 </div>
             @endif
 
-            <!-- Email or Mobile Number -->
+            <!-- Email, Username or Phone -->
             <div class="auth-form-group">
-                <label class="auth-label" for="loginEmail">Email Address</label>
+                <label class="auth-label" for="loginEmail">Email, Username, or Phone</label>
                 <div class="auth-input-wrap">
-                    <input type="email" id="loginEmail" name="email" value="{{ old('email') }}" class="auth-input" placeholder="name@example.com" required autocomplete="username" autofocus>
+                    <input type="text" id="loginEmail" name="email" value="{{ old('email', old('login')) }}" class="auth-input" placeholder="admin@zaldoris.com or username" required autocomplete="username" autofocus>
                 </div>
             </div>
 
@@ -111,6 +111,27 @@
                     <input type="password" id="loginPassword" name="password" class="auth-input" placeholder="********" required autocomplete="current-password">
                     <button type="button" class="toggle-password-btn" id="togglePasswordBtn" title="Toggle password visibility">
                         <i class="bi bi-eye" id="togglePasswordIcon"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Demo Quick Fill Helpers -->
+            <div style="background: rgba(255,255,255,0.04); border: 1px dashed rgba(255,255,255,0.15); border-radius: 8px; padding: 10px 12px; margin-bottom: 16px;">
+                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; font-weight: 600;">
+                    <i class="bi bi-lightning-charge-fill" style="color: #00F0C8;"></i> Quick Demo Fill:
+                </div>
+                <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                    <button type="button" onclick="fillCreds('admin@zaldoris.com', 'password')" class="btn btn-sm" style="background: rgba(0, 240, 200, 0.15); border: 1px solid #00F0C8; color: #00F0C8; font-size: 11px; padding: 3px 8px; border-radius: 4px; cursor: pointer;">
+                        Admin
+                    </button>
+                    <button type="button" onclick="fillCreds('seller@zaldoris.com', 'password')" class="btn btn-sm" style="background: rgba(254, 44, 85, 0.15); border: 1px solid #FE2C55; color: #FE2C55; font-size: 11px; padding: 3px 8px; border-radius: 4px; cursor: pointer;">
+                        Seller
+                    </button>
+                    <button type="button" onclick="fillCreds('creator1@zaldoris.com', 'password')" class="btn btn-sm" style="background: rgba(168, 85, 247, 0.15); border: 1px solid #A855F7; color: #A855F7; font-size: 11px; padding: 3px 8px; border-radius: 4px; cursor: pointer;">
+                        Creator
+                    </button>
+                    <button type="button" onclick="fillCreds('buyer@zaldoris.com', 'password')" class="btn btn-sm" style="background: rgba(59, 130, 246, 0.15); border: 1px solid #3B82F6; color: #3B82F6; font-size: 11px; padding: 3px 8px; border-radius: 4px; cursor: pointer;">
+                        Buyer
                     </button>
                 </div>
             </div>
@@ -207,6 +228,12 @@
             togglePasswordIcon.classList.toggle('bi-eye');
             togglePasswordIcon.classList.toggle('bi-eye-slash');
         });
+    }
+
+    // Quick demo fill helper
+    function fillCreds(login, pass) {
+        document.getElementById('loginEmail').value = login;
+        document.getElementById('loginPassword').value = pass;
     }
 </script>
 </body>

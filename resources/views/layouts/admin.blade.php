@@ -580,6 +580,26 @@
                 </ul>
             </li>
 
+            <!-- ORDERS MANAGEMENT -->
+            <li>
+                <a href="{{ route('admin.orders.index') }}" class="sidebar-link {{ request()->routeIs('admin.orders.*') ? 'active' : '' }}">
+                    <div class="sidebar-link-inner">
+                        <i class="bi bi-cart-check nav-icon"></i>
+                        <span>Orders</span>
+                    </div>
+                </a>
+            </li>
+
+            <!-- COUPONS & DISCOUNTS MANAGEMENT -->
+            <li>
+                <a href="{{ route('admin.coupons.index') }}" class="sidebar-link {{ request()->routeIs('admin.coupons.*') ? 'active' : '' }}">
+                    <div class="sidebar-link-inner">
+                        <i class="bi bi-ticket-perforated nav-icon"></i>
+                        <span>Coupons</span>
+                    </div>
+                </a>
+            </li>
+
             <!-- AUCTIONS MENU & SUB-MENUS -->
             <li class="sidebar-dropdown {{ request()->routeIs('admin.auctions.*') ? 'open' : '' }}">
                 <div class="sidebar-link sidebar-dropdown-toggle {{ request()->routeIs('admin.auctions.*') ? 'active' : '' }}" style="cursor: pointer;">

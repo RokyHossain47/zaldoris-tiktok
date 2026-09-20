@@ -10,6 +10,7 @@ use App\Models\Auction;
 use App\Models\Advertisement;
 use App\Models\User;
 use App\Models\Category;
+use App\Models\Order;
 
 class HomeController extends Controller
 {
@@ -36,12 +37,21 @@ class HomeController extends Controller
             ->take(3)
             ->get();
 
-        // Featured Live Shopping - Latest 3 Products
-        $featuredLiveProducts = Product::with(['seller', 'category'])
+        // Featured Live Shopping - Live Products with Stream
+        $featuredLiveProducts = Product::with(['seller', 'category', 'stream'])
             ->where('status', 'active')
+            ->where('is_live_product', true)
             ->latest()
             ->take(3)
             ->get();
+
+        if ($featuredLiveProducts->isEmpty()) {
+            $featuredLiveProducts = Product::with(['seller', 'category', 'stream'])
+                ->where('status', 'active')
+                ->latest()
+                ->take(3)
+                ->get();
+        }
 
         $activeAuctions = Auction::with(['seller', 'highestBidder'])
             ->where('status', 'active')
@@ -50,12 +60,21 @@ class HomeController extends Controller
             ->take(6)
             ->get();
 
-        // Featured Products
+        // Featured Normal / Static Products
         $featuredProducts = Product::with(['seller', 'category'])
             ->where('status', 'active')
+            ->where('is_live_product', false)
             ->where('is_featured', true)
             ->take(8)
             ->get();
+
+        if ($featuredProducts->isEmpty()) {
+            $featuredProducts = Product::with(['seller', 'category'])
+                ->where('status', 'active')
+                ->where('is_live_product', false)
+                ->take(8)
+                ->get();
+        }
 
         if ($featuredProducts->isEmpty()) {
             $featuredProducts = Product::with(['seller', 'category'])
@@ -64,9 +83,10 @@ class HomeController extends Controller
                 ->get();
         }
 
-        // Trending Products
+        // Trending Normal / Static Products
         $trendingProducts = Product::with(['seller', 'category'])
             ->where('status', 'active')
+            ->where('is_live_product', false)
             ->where('is_trending', true)
             ->take(6)
             ->get();
@@ -74,6 +94,7 @@ class HomeController extends Controller
         if ($trendingProducts->isEmpty()) {
             $trendingProducts = Product::with(['seller', 'category'])
                 ->where('status', 'active')
+                ->where('is_live_product', false)
                 ->latest()
                 ->take(6)
                 ->get();
