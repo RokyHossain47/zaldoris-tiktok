@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Zaldoris - Live Product Room page with real-time video stream, host details, product showcase, and live chat.">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Live Product Room - Zaldoris Live Commerce Platform</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ asset('assets/favicon.png') }}">
+    <link rel="shortcut icon" href="{{ asset('assets/favicon.png') }}">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="{{ asset('css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+
+<!-- NAVBAR / HEADER -->
+<header class="zal-navbar">
+    <div class="zal-navbar-inner">
+        <!-- Logo -->
+        <a class="zal-brand" href="{{ route('home') }}">
+            <img src="{{ asset('assets/logo.png') }}" alt="Zaldoris" class="zal-brand-logo">
+        </a>
+
+        <!-- Center Nav Links -->
+        <ul class="zal-nav-menu">
+            <li><a href="{{ route('home') }}" class="zal-nav-link active">Home</a></li>
+            <li><a href="{{ route('shop.index') }}" class="zal-nav-link">Live Shopping</a></li>
+            <li><a href="{{ route('auctions.index') }}" class="zal-nav-link">Live Auction</a></li>
+            <li><a href="#" class="zal-nav-link">Live Academy</a></li>
+            <li><a href="{{ route('streams.index') }}" class="zal-nav-link">Live Streaming</a></li>
+            <li><a href="{{ route('streams.pk_battle', 1) }}" class="zal-nav-link">PK Battle</a></li>
+        </ul>
+
+                <!-- Right Action Icons -->
+        <div class="zal-nav-actions">
+            <a href="{{ route('search') }}" class="nav-icon-btn" title="Search"><i class="bi bi-search"></i></a>
+            @auth
+                <button class="nav-icon-btn" id="navTicketBtn" title="Wallet"><i class="bi bi-wallet2"></i></button>
+                <a href="{{ route('notifications') }}" class="nav-icon-btn" title="Notifications">
+                    <i class="bi bi-bell"></i>
+                    <span class="icon-badge-dot"></span>
+                </a>
+                <a href="{{ route('shop.cart') }}" class="nav-icon-btn" title="Cart">
+                    <i class="bi bi-cart3"></i>
+                    <span class="icon-badge-num" id="globalCartBadge">2</span>
+                </a>
+                <a href="{{ route('dashboard.creator') }}" class="nav-avatar-btn" title="Profile">
+                    <img src="{{ auth()->user()->avatar_url ?? 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100&auto=format&fit=crop&q=80' }}" alt="{{ auth()->user()->name }}">
+                </a>
+            @else
+                <a href="{{ route('login') }}" class="btn-login-nav" style="background: linear-gradient(135deg, var(--cyan-accent, #00F0C8), #1ed6d0); color: #090D10; text-decoration: none; padding: 7px 18px; border-radius: 20px; font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; margin-left: 8px;">
+                    <i class="bi bi-box-arrow-in-right"></i> Log In
+                </a>
+            @endauth
+        </div>
+    </div>
+</header>
+
+<!-- MAIN CONTAINER -->
+<main class="page-container">
+
+    <!-- THREE-COLUMN LAYOUT GRID -->
+    <div class="room-layout-grid">
+
+        <!-- COLUMN 1: LEFT SIDEBAR (HOST & FEATURED PRODUCT) -->
+        <aside class="room-left-card">
+            <!-- Back Button -->
+            <div class="room-back-btn-wrap">
+                <a href="{{ route('home') }}" class="auth-back-btn" title="Back to Home">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            </div>
+
+            <!-- Host Identity Section -->
+            @php
+                $streamHost = $stream->host ?? null;
+                $hostName = $streamHost ? $streamHost->name : 'Live Host';
+                $hostAvatar = $streamHost ? $streamHost->avatar_url : 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120';
+                $hostUserId = $streamHost ? $streamHost->id : 1;
+                $isFollowing = auth()->check() && auth()->user()->following()->where('following_id', $hostUserId)->exists();
+                $followerCount = $streamHost ? ($streamHost->followers()->count() ?: 245) : 245;
+            @endphp
+            <div class="room-host-section">
+                <div class="host-avatar-wrap">
+                    <img src="{{ $hostAvatar }}" alt="{{ $hostName }}" class="host-avatar-img">
+                    <span class="badge-host-pill">Host</span>
+                </div>
+                <h1 class="room-host-name">{{ $hostName }}</h1>
+                <div class="room-host-rating">
+                    <i class="bi bi-star-fill"></i>
+                    <span>4.9 (1.2k reviews)</span>
+                </div>
+                <div class="room-host-followers">{{ number_format($followerCount) }} Followers</div>
+                <button type="button" class="btn-follow-cyan {{ $isFollowing ? 'following' : '' }}" data-user-id="{{ $hostUserId }}" onclick="toggleCreatorFollow(this, {{ $hostUserId }})">
+                    {{ $isFollowing ? 'Following' : 'Follow' }}
+                </button>
+            </div>
+
+            <!-- Divider Line -->
+            <div class="room-divider"></div>
+
+            <!-- Featured Product Showcase Box -->
+            <div class="room-product-box">
+                <div class="product-head-row">
+                    <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100&auto=format&fit=crop&q=80" alt="Air Jordan 1" class="product-thumb-img">
+                    <h2 class="product-title-text">Air Jordan 1 Retro High '85</h2>
+                </div>
+
+                <div class="product-rating-line">
+                    <i class="bi bi-star-fill"></i>
+                    <span>4.5</span>
+                </div>
+
+                <div class="product-price-line">
+                    <span>Price : </span>
+                    <span class="product-price-val">C$420</span>
+                    <span class="product-price-strike">C$500</span>
+                </div>
+
+                <p class="product-desc-text">
+                    Unboxing these 1985 Grails 👟<br>
+                    Liquidating the whole collection on my live stream this Thursday at 7 PM EST! Tap the tag to...
+                </p>
+
+                <div class="product-sound-line">
+                    <i class="bi bi-music-note-beamed"></i>
+                    <span>Original Sound - @sneaker_boss</span>
+                </div>
+
+                <div class="product-action-row">
+                    <a href="{{ route('shop.product', $pinnedProduct->id ?? 1) }}" class="btn-outline-cyan" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">Details</a>
+                    <button type="button" class="btn-solid-cyan" onclick="addCartItem({{ $pinnedProduct->id ?? 1 }}, '{{ addslashes($pinnedProduct->title ?? 'Featured Drop') }}', this)">Add To Cart</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- COLUMN 2: CENTER LIVE STREAM VIDEO PLAYER -->
+        <div class="room-center-card">
+            <!-- Stream Top Control Overlay Header -->
+            <div class="stream-top-nav">
+                <div class="stream-top-left">
+                    <span class="badge-live-pill"><span class="live-pulse-dot"></span> LIVE</span>
+                    <span class="badge-stream-meta"><i class="bi bi-eye-fill"></i> 2,483 Viewers</span>
+                    <span class="badge-stream-meta">HD</span>
+                </div>
+                <div class="stream-top-right">
+                    <a href="#" class="stream-nav-link">Product</a>
+                    <a href="#" class="stream-nav-link active">For you</a>
+                </div>
+            </div>
+
+            <!-- Video Player Frame Box -->
+            <div class="video-player-frame">
+                <!-- Stream Video Player Background -->
+                <video class="video-stream-bg" autoplay loop muted playsinline poster="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&auto=format&fit=crop&q=80">
+                    <source src="https://assets.mixkit.co/videos/preview/mixkit-hands-holding-a-smart-watch-41584-large.mp4" type="video/mp4">
+                    <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" type="video/mp4">
+                </video>
+
+                <!-- Overlay Translucent Banner -->
+                <div class="video-overlay-banner">
+                    Calculated based on your regional jurisdiction.
+                </div>
+
+                <!-- Floating Right Action Column inside Video Frame -->
+                <div class="video-action-column">
+                    <!-- Heart Action -->
+                    <div class="video-action-item">
+                        <button type="button" class="video-action-btn" title="Like">
+                            <i class="bi bi-heart-fill" style="color: #FF3565;"></i>
+                        </button>
+                        <span class="video-action-label">12.4K</span>
+                    </div>
+
+                    <!-- Share Action -->
+                    <div class="video-action-item">
+                        <button type="button" class="video-action-btn" title="Share">
+                            <i class="bi bi-share-fill"></i>
+                        </button>
+                        <span class="video-action-label">12.4K</span>
+                    </div>
+
+                    <!-- Options Action -->
+                    <div class="video-action-item">
+                        <button type="button" class="video-action-btn" title="More Options">
+                            <i class="bi bi-three-dots-vertical"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- COLUMN 3: RIGHT SIDEBAR (LIVE CHAT) -->
+        <aside class="room-right-card">
+            <!-- Chat Title Row -->
+            <div class="chat-header-row">
+                <h2 class="chat-title">Live Chat <span class="notif-dot-cyan"></span></h2>
+            </div>
+
+            <!-- Flash Sale Promo Banner -->
+            <div class="flash-sale-banner" id="flashSaleBanner">
+                <span><i class="bi bi-clock-history"></i> Flash Sale ends in 10 minutes</span>
+                <button type="button" class="btn-close-banner" onclick="document.getElementById('flashSaleBanner').style.display='none'">✕</button>
+            </div>
+
+            <!-- Chat Messages Scroll Container -->
+            <div class="chat-messages-container" id="chatMsgBox">
+                <!-- Message 1 -->
+                <div class="chat-msg-item">
+                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=60&auto=format&fit=crop&q=80" alt="Fashionista92" class="chat-user-avatar">
+                    <div class="chat-msg-body">
+                        <div class="chat-username-row">
+                            <span class="chat-username">Fashionista92</span>
+                        </div>
+                        <div class="chat-bubble">
+                            Does this blouse come in extra small?
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Message 2 (Host Message) -->
+                <div class="chat-msg-item">
+                    <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=60&auto=format&fit=crop&q=80" alt="Sarah Boutique" class="chat-user-avatar">
+                    <div class="chat-msg-body">
+                        <div class="chat-username-row">
+                            <span class="chat-username">Sarah Boutique</span>
+                            <span class="badge-host-mini">host</span>
+                        </div>
+                        <div class="chat-bubble host-bubble">
+                            Yes! We have 5 units of XS left in stock right now!
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Message 3 -->
+                <div class="chat-msg-item">
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=60&auto=format&fit=crop&q=80" alt="AlexTrend" class="chat-user-avatar">
+                    <div class="chat-msg-body">
+                        <div class="chat-username-row">
+                            <span class="chat-username">AlexTrend</span>
+                        </div>
+                        <div class="chat-bubble">
+                            The quality looks amazing on HD!
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Message 4 -->
+                <div class="chat-msg-item">
+                    <img src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=60&auto=format&fit=crop&q=80" alt="Mila_Vibe" class="chat-user-avatar">
+                    <div class="chat-msg-body">
+                        <div class="chat-username-row">
+                            <span class="chat-username">Mila_Vibe</span>
+                        </div>
+                        <div class="chat-bubble">
+                            Just bought the tote! So excited ✨
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Footer Input & Actions -->
+            <div class="chat-footer-box">
+                <form onsubmit="handleSendChatMessage(event)" class="chat-input-row">
+                    <input type="text" id="chatInputField" class="chat-input-field" placeholder="Say something..." required autocomplete="off">
+                    <button type="submit" class="chat-send-btn" title="Send">
+                        <i class="bi bi-send-fill"></i>
+                    </button>
+                </form>
+
+                <div class="chat-toolbar-row">
+                    <div class="chat-tools-left">
+                        <button type="button" class="btn-tool-icon" title="Emoji">
+                            <i class="bi bi-emoji-smile"></i>
+                        </button>
+                        <span class="btn-gif-pill">GIF</span>
+                    </div>
+
+                    <button type="button" class="btn-send-gift-link" onclick="handleSendGift()">
+                        <i class="bi bi-gift-fill"></i>
+                        <span>Send Gift</span>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+    </div>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="zal-footer-center">
+    <div class="container">
+        <!-- Center Logo -->
+        <a href="{{ route('home') }}">
+            <img src="{{ asset('assets/logo.png') }}" alt="Zaldoris" class="footer-logo-img">
+        </a>
+        <p class="footer-tagline-text">
+            Experience the future of shopping with realtime interaction, live demonstrations, and exclusive community deals.
+        </p>
+        <div class="footer-copyright-line">
+            © 2024 LiveStreamShop. All rights reserved.
+        </div>
+    </div>
+</footer>
+
+<!-- FLOATING WIDGET BUTTON -->
+<button class="floating-action-widget" title="Live Chat">
+    <i class="bi bi-chat-dots-fill"></i>
+</button>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ asset('js/main.js') }}"></script>
+<script>
+    // Live Chat Send Message Handler
+    function handleSendChatMessage(event) {
+        event.preventDefault();
+        const input = document.getElementById('chatInputField');
+        const box = document.getElementById('chatMsgBox');
+        if (input && input.value.trim() !== '' && box) {
+            const msgText = input.value.trim();
+            const msgItem = document.createElement('div');
+            msgItem.className = 'chat-msg-item';
+            msgItem.innerHTML = `
+                <img src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=60&auto=format&fit=crop&q=80" alt="You" class="chat-user-avatar">
+                <div class="chat-msg-body">
+                    <div class="chat-username-row">
+                        <span class="chat-username" style="color: var(--accent);">You</span>
+                    </div>
+                    <div class="chat-bubble">
+                        ${msgText}
+                    </div>
+                </div>
+            `;
+            box.appendChild(msgItem);
+            box.scrollTop = box.scrollHeight;
+            input.value = '';
+        }
+    }
+
+    // Send Gift Handler
+    function handleSendGift() {
+        const box = document.getElementById('chatMsgBox');
+        if (box) {
+            const msgItem = document.createElement('div');
+            msgItem.className = 'chat-msg-item';
+            msgItem.innerHTML = `
+                <img src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=60&auto=format&fit=crop&q=80" alt="You" class="chat-user-avatar">
+                <div class="chat-msg-body">
+                    <div class="chat-username-row">
+                        <span class="chat-username" style="color: var(--accent);">You</span>
+                    </div>
+                    <div class="chat-bubble" style="border-color: var(--accent); background: rgba(0,240,200,0.1);">
+                        🎁 Sent a 'Diamond Sparkle' gift! 💎✨
+                    </div>
+                </div>
+            `;
+            box.appendChild(msgItem);
+            box.scrollTop = box.scrollHeight;
+        }
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 50 50' width='50' height='50'>
+  <g transform='translate(2, 1)'>
+    <!-- Top purple bar -->
+    <path d='M10 2 L45 2 L35 17 L0 17 Z' fill='#6C38FF' />
+    <!-- Middle Pink Play Button ▶ -->
+    <path d='M15 15 L38 25 L15 35 Z' fill='#FF2D55' />
+    <!-- Bottom cyan bar -->
+    <path d='M10 32 L45 32 L35 47 L0 47 Z' fill='#00F0C8' />
+  </g>
+</svg>

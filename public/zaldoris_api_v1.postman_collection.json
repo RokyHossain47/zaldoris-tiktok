@@ -1,0 +1,3705 @@
+{
+    "info": {
+        "_postman_id": "zaldoris-api-v1-collection",
+        "name": "Zaldoris TikTok E-Commerce API v1",
+        "description": "Complete REST API collection for Zaldoris TikTok Live E-Commerce Platform matching all 24 specification modules.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://127.0.0.1:8000/api/v1",
+            "type": "string"
+        },
+        {
+            "key": "token",
+            "value": "",
+            "type": "string"
+        }
+    ],
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{token}}",
+                "type": "string"
+            }
+        ]
+    },
+    "item": [
+        {
+            "name": "01. App Config & Bootstrap",
+            "item": [
+                {
+                    "name": "Get App Configuration",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/app-config",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "app-config"
+                            ],
+                            "query": []
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "02. Authentication & Verification",
+            "item": [
+                {
+                    "name": "Register New User",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/register",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "register"
+                            ],
+                            "query": []
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Jane Doe\",\n    \"email\": \"janedoe@example.com\",\n    \"username\": \"janedoe\",\n    \"phone\": \"+14155552671\",\n    \"password\": \"password123\",\n    \"password_confirmation\": \"password123\"\n}"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    if (jsonData.data && jsonData.data.token) {",
+                                    "        pm.collectionVariables.set('token', jsonData.data.token);",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "User Login",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/login",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "login"
+                            ],
+                            "query": []
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"email\": \"admin@zaldoris.com\",\n    \"password\": \"password\",\n    \"device_name\": \"iPhone 15 Pro\"\n}"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    if (jsonData.data && jsonData.data.token) {",
+                                    "        pm.collectionVariables.set('token', jsonData.data.token);",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Social OAuth Callback/Exchange",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/social/google",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "social",
+                                "google"
+                            ],
+                            "query": []
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"provider_token\": \"mock_google_oauth_token_xyz\",\n    \"device_name\": \"Mobile Safari\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Refresh Access Token",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/refresh",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "refresh"
+                            ],
+                            "query": []
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "[]"
+                        }
+                    }
+                },
+                {
+                    "name": "User Logout",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/logout",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "logout"
+                            ],
+                            "query": []
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "[]"
+                        }
+                    }
+                },
+                {
+                    "name": "Verify Auth Challenge (OTP)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/challenges/1/verify",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "challenges",
+                                "1",
+                                "verify"
+                            ],
+                            "query": []
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"code\": \"123456\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Resend Auth Challenge (OTP)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/challenges/1/resend",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "challenges",
+                                "1",
+                                "resend"
+                            ],
+                            "query": []
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "[]"
+                        }
+                    }
+                },
+                {
+                    "name": "Request Password Reset OTP",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/password-reset/requests",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "password-reset",
+                                "requests"
+                            ],
+                            "query": []
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"contact\": \"janedoe@example.com\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Complete Password Reset",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/password-reset/complete",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "password-reset",
+                                "complete"
+                            ],
+                            "query": []
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"token\": \"rst_sample_token_123\",\n    \"password\": \"newpassword123\",\n    \"password_confirmation\": \"newpassword123\"\n}"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "03. User Profile & Preferences",
+            "item": [
+                {
+                    "name": "Get Current User Profile (/me)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/me",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "me"
+                            ],
+                            "query": []
+                        }
+                    }
+                },
+                {
+                    "name": "Update Current Profile",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/me",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "me"
+                            ],
+                            "query": []
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Jane Updated\",\n    \"bio\": \"Fashion and live shopping enthusiast \\ud83d\\udecd\\ufe0f\\u2728\",\n    \"avatar_url\": \"https://images.unsplash.com/photo-1534528741775-53994a69daeb\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Get User Dashboard Overview",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/me/dashboard",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "me",
+                                "dashboard"
+                            ],
+                            "query": []
+                        }
+                    }
+                },
+                {
+                    "name": "Get Public User Profile",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/users/1",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "users",
+                                "1"
+                            ],
+                            "query": []
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    }
+                },
+                {
+                    "name": "Get User Preferences",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/me/preferences",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "me",
+                                "preferences"
+                            ],
+                            "query": []
+                        }
+                    }
+                },
+                {
+                    "name": "Update User Preferences",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/me/preferences",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "me",
+                                "preferences"
+                            ],
+                            "query": []
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"currency\": \"USD\",\n    \"language\": \"en\",\n    \"theme\": \"dark\",\n    \"push_notifications\": true,\n    \"email_marketing\": false\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Request Contact Information Change",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/me/contact-change-requests",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "me",
+                                "contact-change-requests"
+                            ],
+                            "query": []
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"type\": \"email\",\n    \"new_value\": \"jane.new@example.com\"\n}"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "04. Addresses & Shipping",
+            "item": [
+                {
+                    "name": "List User Addresses",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/me/addresses",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "me",
+                                "addresses"
+                            ],
+                            "query": []
+                        }
+                    }
+                },
+                {
+                    "name": "Create New Address",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/me/addresses",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "me",
+                                "addresses"
+                            ],
+                            "query": []
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"recipient_name\": \"Jane Doe\",\n    \"phone\": \"+14155552671\",\n    \"street_address\": \"742 Evergreen Terrace\",\n    \"apartment_suite\": \"Suite 4B\",\n    \"city\": \"Springfield\",\n    \"state\": \"OR\",\n    \"postal_code\": \"97477\",\n    \"country\": \"USA\",\n    \"is_default\": true\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Get Single Address",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/me/addresses/1",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "me",
+                                "addresses",
+                                "1"
+                            ],
+                            "query": []
+                        }
+                    }
+                },
+                {
+                    "name": "Update Address",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/me/addresses/1",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "me",
+                                "addresses",
+                                "1"
+                            ],
+                            "query": []
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"recipient_name\": \"Jane Doe-Smith\",\n    \"street_address\": \"742 Evergreen Terrace Apt 5\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Address",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/me/addresses/1",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "me",
+                                "addresses",
+                                "1"
+                            ],
+                            "query": []
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "05. Social & Follow Graph",
+            "item": [
+                {
+                    "name": "Get User Followers",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/users/1/followers",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "users",
+                                "1",
+                                "followers"
+                            ],
+                            "query": []
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    }
+                },
+                {
+                    "name": "Get User Following",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/users/1/following",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "users",
+                                "1",
+                                "following"
+                            ],
+                            "query": []
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    }
+                },
+                {
+                    "name": "Get Follow Suggestions",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/me/follow-suggestions",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "me",
+                                "follow-suggestions"
+                            ],
+                            "query": []
+                        }
+                    }
+                },
+                {
+                    "name": "Follow a User",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/me/following/2",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "me",
+                                "following",
+                                "2"
+                            ],
+                            "query": []
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "[]"
+                        }
+                    }
+                },
+                {
+                    "name": "Unfollow a User",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/me/following/2",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "me",
+                                "following",
+                                "2"
+                            ],
+                            "query": []
+                        }
+                    }
+                },
+                {
+                    "name": "Get Shared Activity With User",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/users/2/shared-activity",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "users",
+                                "2",
+                                "shared-activity"
+                            ],
+                            "query": []
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "06. Home, Discovery & Search",
+            "item": [
+                {
+                    "name": "Get Home Feeds (Live, Featured, Auctions)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/home",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "home"
+                            ],
+                            "query": []
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    }
+                },
+                {
+                    "name": "List Product Categories",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/categories",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "categories"
+                            ],
+                            "query": []
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    }
+                },
+                {
+                    "name": "Get Search Discovery & Trending",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/search/discovery",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "search",
+                                "discovery"
+                            ],
+                            "query": []
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    }
+                },
+                {
+                    "name": "Execute Search Query",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/search",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "search"
+                            ],
+                            "query": [
+                                {
+                                    "key": "q",
+                                    "value": "shoes"
+                                },
+                                {
+                                    "key": "type",
+                                    "value": "all"
+                                }
+                            ]
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    }
+                },
+                {
+                    "name": "Get User Search History",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/me/search-history",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "me",
+                                "search-history"
+                            ],
+                            "query": []
+                        }
+                    }
+                },
+                {
+                    "name": "Clear User Search History",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/me/search-history",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "me",
+                                "search-history"
+                            ],
+                            "query": []
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "07. Products & Catalog",
+            "item": [
+                {
+                    "name": "List Products (Paginated & Filterable)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/products",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "products"
+                            ],
+                            "query": [
+                                {
+                                    "key": "category_id",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "per_page",
+                                    "value": "10"
+                                }
+                            ]
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    }
+                },
+                {
+                    "name": "Get Product Details (With Variants & Specs)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/products/1",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "products",
+                                "1"
+                            ],
+                            "query": []
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "08. Wishlist",
+            "item": [
+                {
+                    "name": "Get Current Wishlist Items",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/me/wishlist",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "me",
+                                "wishlist"
+                            ],
+                            "query": []
+                        }
+                    }
+                },
+                {
+                    "name": "Add Product to Wishlist",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/me/wishlist",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "me",
+                                "wishlist"
+                            ],
+                            "query": []
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"product_id\": 1\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Remove Product from Wishlist",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/me/wishlist/1",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "me",
+                                "wishlist",
+                                "1"
+                            ],
+                            "query": []
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "09. Cart & Cart Items",
+            "item": [
+                {
+                    "name": "Get Shopping Cart Summary",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/cart",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "cart"
+                            ],
+                            "query": []
+                        }
+                    }
+                },
+                {
+                    "name": "Add Item to Shopping Cart",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/cart/items",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "cart",
+                                "items"
+                            ],
+                            "query": []
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"product_id\": 1,\n    \"quantity\": 2,\n    \"variant\": {\n        \"color\": \"Midnight Blue\",\n        \"size\": \"L\"\n    }\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Update Cart Item Quantity",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/cart/items/1",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "cart",
+                                "items",
+                                "1"
+                            ],
+                            "query": []
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"quantity\": 3\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Remove Item from Cart",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/cart/items/1",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "cart",
+                                "items",
+                                "1"
+                            ],
+                            "query": []
+                        }
+                    }
+                },
+                {
+                    "name": "Clear Whole Cart",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/cart",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "cart"
+                            ],
+                            "query": []
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "10. Payment Methods & Setup Sessions",
+            "item": [
+                {
+                    "name": "Get Saved Payment Methods",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/me/payment-methods",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "me",
+                                "payment-methods"
+                            ],
+                            "query": []
+                        }
+                    }
+                },
+                {
+                    "name": "Create Setup Session (Stripe/PaymentSheet)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/payment-method-setup-sessions",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "payment-method-setup-sessions"
+                            ],
+                            "query": []
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "[]"
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Saved Payment Method",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/me/payment-methods/1",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "me",
+                                "payment-methods",
+                                "1"
+                            ],
+                            "query": []
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "11. Checkout & Quotes",
+            "item": [
+                {
+                    "name": "Create Checkout Quote",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/checkout/quotes",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "checkout",
+                                "quotes"
+                            ],
+                            "query": []
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"shipping_address_id\": 1,\n    \"billing_address_id\": 1,\n    \"coupon_code\": \"WELCOME10\",\n    \"items\": [\n        {\n            \"product_id\": 1,\n            \"quantity\": 1,\n            \"variant\": {\n                \"color\": \"Black\"\n            }\n        }\n    ]\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Get Checkout Quote Details",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/checkout/quotes/1",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "checkout",
+                                "quotes",
+                                "1"
+                            ],
+                            "query": []
+                        }
+                    }
+                },
+                {
+                    "name": "Confirm Checkout Quote (Create Order & Payment)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/checkout/quotes/1/confirm",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "checkout",
+                                "quotes",
+                                "1",
+                                "confirm"
+                            ],
+                            "query": []
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"payment_method_id\": 1,\n    \"idempotency_key\": \"quote_confirm_1789817116\"\n}"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "12. Payments & 3DS Challenges",
+            "item": [
+                {
+                    "name": "Get Payment Status",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/payments/1",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "payments",
+                                "1"
+                            ],
+                            "query": []
+                        }
+                    }
+                },
+                {
+                    "name": "Confirm / Capture Payment",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/payments/1/confirm",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "payments",
+                                "1",
+                                "confirm"
+                            ],
+                            "query": []
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"payment_token\": \"tok_stripe_3ds_confirmed_992\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Verify Payment 3DS Challenge",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/payments/1/challenges/challenge_123/verify",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "payments",
+                                "1",
+                                "challenges",
+                                "challenge_123",
+                                "verify"
+                            ],
+                            "query": []
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"auth_result\": \"success\"\n}"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "13. Orders, Tracking & Returns",
+            "item": [
+                {
+                    "name": "Get Order History",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/me/orders",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "me",
+                                "orders"
+                            ],
+                            "query": []
+                        }
+                    }
+                },
+                {
+                    "name": "Get Single Order Details",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/orders/1",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "orders",
+                                "1"
+                            ],
+                            "query": []
+                        }
+                    }
+                },
+                {
+                    "name": "Re-order Previous Order Items",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/orders/1/reorder",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "orders",
+                                "1",
+                                "reorder"
+                            ],
+                            "query": []
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "[]"
+                        }
+                    }
+                },
+                {
+                    "name": "Get Order Shipments & Tracking Timeline",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/orders/1/shipments",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "orders",
+                                "1",
+                                "shipments"
+                            ],
+                            "query": []
+                        }
+                    }
+                },
+                {
+                    "name": "Check Order Return Eligibility",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/orders/1/return-eligibility",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "orders",
+                                "1",
+                                "return-eligibility"
+                            ],
+                            "query": []
+                        }
+                    }
+                },
+                {
+                    "name": "Create Order Return Request",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/orders/1/returns",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "orders",
+                                "1",
+                                "returns"
+                            ],
+                            "query": []
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"reason\": \"Item defective / wrong size\",\n    \"items\": [\n        {\n            \"order_item_id\": 1,\n            \"quantity\": 1\n        }\n    ]\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Get Return Request Details",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/returns/1",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "returns",
+                                "1"
+                            ],
+                            "query": []
+                        }
+                    }
+                },
+                {
+                    "name": "Get Refund Status",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/refunds/1",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "refunds",
+                                "1"
+                            ],
+                            "query": []
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "14. Auctions & Bidding",
+            "item": [
+                {
+                    "name": "List Live & Upcoming Auctions",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/auctions",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auctions"
+                            ],
+                            "query": []
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    }
+                },
+                {
+                    "name": "Get Auction Details",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/auctions/1",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auctions",
+                                "1"
+                            ],
+                            "query": []
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    }
+                },
+                {
+                    "name": "Get Bid History & Highest Bidders",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/auctions/1/bids",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auctions",
+                                "1",
+                                "bids"
+                            ],
+                            "query": []
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    }
+                },
+                {
+                    "name": "Calculate Next Bid Increment Preview",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/auctions/1/bid-previews",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auctions",
+                                "1",
+                                "bid-previews"
+                            ],
+                            "query": []
+                        }
+                    }
+                },
+                {
+                    "name": "Place a Live Bid (With Anti-Sniping Protection)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/auctions/1/bids",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auctions",
+                                "1",
+                                "bids"
+                            ],
+                            "query": []
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"bid_amount\": 150\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Get User Active/Won Auctions",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/me/auctions",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "me",
+                                "auctions"
+                            ],
+                            "query": []
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "15. Live Streaming & Interactions",
+            "item": [
+                {
+                    "name": "List Active Live Streams",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/live-sessions",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "live-sessions"
+                            ],
+                            "query": []
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    }
+                },
+                {
+                    "name": "Get Live Session Details & Stream URLs",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/live-sessions/1",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "live-sessions",
+                                "1"
+                            ],
+                            "query": []
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    }
+                },
+                {
+                    "name": "Join Live Session",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/live-sessions/1/join",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "live-sessions",
+                                "1",
+                                "join"
+                            ],
+                            "query": []
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "[]"
+                        }
+                    }
+                },
+                {
+                    "name": "Send Live Heartbeat Ping",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/live-sessions/1/heartbeat",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "live-sessions",
+                                "1",
+                                "heartbeat"
+                            ],
+                            "query": []
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "[]"
+                        }
+                    }
+                },
+                {
+                    "name": "Leave Live Session",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/live-sessions/1/leave",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "live-sessions",
+                                "1",
+                                "leave"
+                            ],
+                            "query": []
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "[]"
+                        }
+                    }
+                },
+                {
+                    "name": "Get Live Stream Comments",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/live-sessions/1/comments",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "live-sessions",
+                                "1",
+                                "comments"
+                            ],
+                            "query": []
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    }
+                },
+                {
+                    "name": "Post a Live Comment",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/live-sessions/1/comments",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "live-sessions",
+                                "1",
+                                "comments"
+                            ],
+                            "query": []
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"content\": \"Is this dress available in pink?\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Send Reaction / Like Tap",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/live-sessions/1/reactions",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "live-sessions",
+                                "1",
+                                "reactions"
+                            ],
+                            "query": []
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"reaction_type\": \"heart\",\n    \"count\": 10\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Broadcast Stream Share Event",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/live-sessions/1/shares",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "live-sessions",
+                                "1",
+                                "shares"
+                            ],
+                            "query": []
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "[]"
+                        }
+                    }
+                },
+                {
+                    "name": "Get Showcase / Tagged Products for Stream",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/live-sessions/1/items",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "live-sessions",
+                                "1",
+                                "items"
+                            ],
+                            "query": []
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    }
+                },
+                {
+                    "name": "Pin a Showcase Product (Host Only)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/live-sessions/1/pinned-item",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "live-sessions",
+                                "1",
+                                "pinned-item"
+                            ],
+                            "query": []
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"product_id\": 1\n}"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "16. PK Battles",
+            "item": [
+                {
+                    "name": "Get PK Battle State & Live Scores",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/pk-battles/1",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "pk-battles",
+                                "1"
+                            ],
+                            "query": []
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "17. Wallet, Coins & Packages",
+            "item": [
+                {
+                    "name": "Get User Coin Balance & Wallet",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/me/wallet",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "me",
+                                "wallet"
+                            ],
+                            "query": []
+                        }
+                    }
+                },
+                {
+                    "name": "Get Available Coin Packages",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/coin-packages",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "coin-packages"
+                            ],
+                            "query": []
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    }
+                },
+                {
+                    "name": "Create Coin Purchase Quote",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/coin-purchase-quotes",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "coin-purchase-quotes"
+                            ],
+                            "query": []
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"package_id\": 1\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Purchase Coins With Stored Balance/Gateway",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/coin-purchases",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "coin-purchases"
+                            ],
+                            "query": []
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"quote_id\": 1,\n    \"payment_method_id\": 1\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Verify In-App Store Purchase (Apple/Google)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/store-purchases/verify",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "store-purchases",
+                                "verify"
+                            ],
+                            "query": []
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"store\": \"apple_app_store\",\n    \"receipt_data\": \"MIIT8QYJKoZIhvcNAQcCoIIT4jCCE94CAQExDz...\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Get Wallet Transaction History",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/me/wallet/transactions",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "me",
+                                "wallet",
+                                "transactions"
+                            ],
+                            "query": []
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "18. Gifting System",
+            "item": [
+                {
+                    "name": "Get List of Available Virtual Gifts",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/gifts",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "gifts"
+                            ],
+                            "query": []
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    }
+                },
+                {
+                    "name": "Send Virtual Gift in Stream / PK Battle",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/gift-sends",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "gift-sends"
+                            ],
+                            "query": []
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"gift_id\": 1,\n    \"recipient_id\": 2,\n    \"live_session_id\": 1,\n    \"pk_battle_id\": 1,\n    \"combo_count\": 5\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Get User Sent/Received Gifts History",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/me/gifts",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "me",
+                                "gifts"
+                            ],
+                            "query": []
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "19. Creator Subscriptions",
+            "item": [
+                {
+                    "name": "Get Creator Subscription Plans",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/creators/1/subscription-plans",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "creators",
+                                "1",
+                                "subscription-plans"
+                            ],
+                            "query": []
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    }
+                },
+                {
+                    "name": "Get Subscription Quote",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/subscription-quotes",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "subscription-quotes"
+                            ],
+                            "query": []
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"plan_id\": 1\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Subscribe to Creator",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/subscriptions",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "subscriptions"
+                            ],
+                            "query": []
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"quote_id\": 1,\n    \"payment_method_id\": 1\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Get User Active Subscriptions",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/me/subscriptions",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "me",
+                                "subscriptions"
+                            ],
+                            "query": []
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "20. Rewards & Tier Conversions",
+            "item": [
+                {
+                    "name": "Get Reward Tiers & Benefits",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/reward-tiers",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "reward-tiers"
+                            ],
+                            "query": []
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    }
+                },
+                {
+                    "name": "Get User Loyalty Points & Tier Progress",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/me/rewards",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "me",
+                                "rewards"
+                            ],
+                            "query": []
+                        }
+                    }
+                },
+                {
+                    "name": "Get Points Conversion Quote",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/wallet/conversion-quotes",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "wallet",
+                                "conversion-quotes"
+                            ],
+                            "query": []
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"points\": 500\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Convert Loyalty Points to Coins/Coupons",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/wallet/conversions",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "wallet",
+                                "conversions"
+                            ],
+                            "query": []
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"quote_id\": 1\n}"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "21. Direct Chat & Messaging",
+            "item": [
+                {
+                    "name": "Get User Conversations List",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/me/conversations",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "me",
+                                "conversations"
+                            ],
+                            "query": []
+                        }
+                    }
+                },
+                {
+                    "name": "Start / Open Conversation with User",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/conversations",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "conversations"
+                            ],
+                            "query": []
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"recipient_id\": 2\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Get Chat Message History",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/conversations/1/messages",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "conversations",
+                                "1",
+                                "messages"
+                            ],
+                            "query": []
+                        }
+                    }
+                },
+                {
+                    "name": "Send Chat Message",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/conversations/1/messages",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "conversations",
+                                "1",
+                                "messages"
+                            ],
+                            "query": []
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"message_type\": \"text\",\n    \"content\": \"Hello, is this item still available in stock?\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Mark Conversation Messages as Read",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/conversations/1/read",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "conversations",
+                                "1",
+                                "read"
+                            ],
+                            "query": []
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "[]"
+                        }
+                    }
+                },
+                {
+                    "name": "Mark Messages as Delivered",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/conversations/1/delivered",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "conversations",
+                                "1",
+                                "delivered"
+                            ],
+                            "query": []
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "[]"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "22. Notifications & Device Tokens",
+            "item": [
+                {
+                    "name": "Get In-App Notifications List",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/me/notifications",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "me",
+                                "notifications"
+                            ],
+                            "query": []
+                        }
+                    }
+                },
+                {
+                    "name": "Get Unread Notifications Count",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/me/notifications/unread-count",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "me",
+                                "notifications",
+                                "unread-count"
+                            ],
+                            "query": []
+                        }
+                    }
+                },
+                {
+                    "name": "Register Push Device FCM/APNs Token",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/me/devices/inst_dev_uuid_1001",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "me",
+                                "devices",
+                                "inst_dev_uuid_1001"
+                            ],
+                            "query": []
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"device_type\": \"ios\",\n    \"push_token\": \"fcm_mock_device_token_xyz9982\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Unregister Device Token",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/me/devices/inst_dev_uuid_1001",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "me",
+                                "devices",
+                                "inst_dev_uuid_1001"
+                            ],
+                            "query": []
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "23. Moderation, Reporting & Blocking",
+            "item": [
+                {
+                    "name": "Submit a Moderation Report",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/reports",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "reports"
+                            ],
+                            "query": []
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"target_type\": \"stream\",\n    \"target_id\": 1,\n    \"reason\": \"inappropriate_content\",\n    \"description\": \"Violates community guidelines\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Block a User",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/me/blocked-users/3",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "me",
+                                "blocked-users",
+                                "3"
+                            ],
+                            "query": []
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "[]"
+                        }
+                    }
+                },
+                {
+                    "name": "Unblock a User",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/me/blocked-users/3",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "me",
+                                "blocked-users",
+                                "3"
+                            ],
+                            "query": []
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "24. Media Uploads",
+            "item": [
+                {
+                    "name": "Upload Image or Media File",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/uploads",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "uploads"
+                            ],
+                            "query": []
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"file_url\": \"https://images.unsplash.com/photo-1523275335684-37898b6baf30\"\n}"
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}
