@@ -5,6 +5,12 @@
 
     RewriteEngine On
 
+    # Block access to sensitive files and directories
+    RewriteRule ^(\.env|\.git|composer\.(json|lock)|package\.(json|lock)|artisan|storage/logs/|storage/framework/|app/|bootstrap/|config/|database/|resources/|routes/|tests/|vendor/) - [F,L,NC]
+
+    # Route static assets to public folder
+    RewriteRule ^(assets|css|js|storage|build|images|favicon\.ico|robots\.txt)(.*)$ public/$1$2 [L,NC]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
@@ -18,8 +24,9 @@
     RewriteCond %{REQUEST_URI} (.+)/$
     RewriteRule ^ %1 [L,R=301]
 
-    # Send Requests To Front Controller...
+    # Send all other requests To Front Controller...
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
