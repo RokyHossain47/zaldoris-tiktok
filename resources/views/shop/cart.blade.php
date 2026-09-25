@@ -69,7 +69,7 @@
         <a href="{{ url()->previous() ?: route('shop.index') }}" class="notif-back-btn" title="Back">
             <i class="bi bi-chevron-left"></i>
         </a>
-        <h1 class="notif-page-title">Shopping Cart ({{ count($cart) }} Items)</h1>
+        <h1 class="notif-page-title">Shopping Cart (<span id="cartHeaderCount">{{ count($cart) }}</span> Items)</h1>
     </div>
 
     <!-- TWO-COLUMN CART & SUMMARY GRID -->
@@ -101,19 +101,30 @@
                             </div>
                         </div>
                         <div class="cart-item-right">
-                            <button type="button" class="btn-delete-cart-item" title="Remove Item" onclick="removeCartCard(this, {{ $id }})">
+                            <button type="button" class="btn-delete-cart-item" title="Remove Item" onclick="removeCartCard(this, '{{ $id }}')">
                                 <i class="bi bi-trash-fill"></i>
                             </button>
-                            <span class="cart-item-price">{{ setting('currency_symbol', '$') }}{{ number_format($item['price'], 2) }}</span>
+                            <div style="text-align: right;">
+                                <span class="cart-item-price" id="lineTotal_{{ $id }}">{{ setting('currency_symbol', '$') }}{{ number_format($item['price'] * $item['quantity'], 2) }}</span>
+                                @if($item['quantity'] > 1)
+                                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;" id="unitPrice_{{ $id }}">
+                                        ({{ setting('currency_symbol', '$') }}{{ number_format($item['price'], 2) }} each)
+                                    </div>
+                                @else
+                                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px; display: none;" id="unitPrice_{{ $id }}">
+                                        ({{ setting('currency_symbol', '$') }}{{ number_format($item['price'], 2) }} each)
+                                    </div>
+                                @endif
+                            </div>
                         </div>
                     </div>
 
                     <div class="cart-item-bottom">
                         <span class="cart-qty-label">Quantity</span>
                         <div class="quantity-stepper">
-                            <button type="button" class="btn-step" onclick="updateItemQty(this, -1, {{ $id }})">—</button>
+                            <button type="button" class="btn-step" onclick="updateItemQty(this, -1, '{{ $id }}')">—</button>
                             <span class="step-num">{{ $item['quantity'] }}</span>
-                            <button type="button" class="btn-step" onclick="updateItemQty(this, 1, {{ $id }})">+</button>
+                            <button type="button" class="btn-step" onclick="updateItemQty(this, 1, '{{ $id }}')">+</button>
                         </div>
                     </div>
                 </div>
@@ -149,7 +160,9 @@
 
                 <div class="summary-calc-row">
                     <span>Shipping</span>
-                    <span class="free-text">Free</span>
+                    <span id="summaryShipping" class="{{ $shipping > 0 ? '' : 'free-text' }}">
+                        {{ $shipping > 0 ? setting('currency_symbol', '$') . number_format($shipping, 2) : 'Free' }}
+                    </span>
                 </div>
                 <div class="summary-calc-row">
                     <span>GST / HST (13%)</span>
@@ -192,21 +205,36 @@
             <div class="shipping-methods-section" style="margin-top: 20px;">
                 <h3 class="shipping-section-title">Shipping Methods</h3>
                 
-                <label class="shipping-option-card active" onclick="selectShippingOption(this)">
-                    <div class="shipping-option-left">
-                        <input type="radio" name="shipMethod" checked>
-                        <span>Standard Delivery</span>
-                    </div>
-                    <span class="ship-price-val free-text">Free</span>
-                </label>
-
-                <label class="shipping-option-card" onclick="selectShippingOption(this)">
-                    <div class="shipping-option-left">
-                        <input type="radio" name="shipMethod">
-                        <span>Express Priority Delivery</span>
-                    </div>
-                    <span class="ship-price-val">Free</span>
-                </label>
+                @forelse($shippingMethods as $method)
+                    @php
+                        $isSelected = ($selectedShippingMethod['id'] ?? '') === $method['id'];
+                        $costVal = (float)($method['cost'] ?? 0);
+                    @endphp
+                    <label class="shipping-option-card {{ $isSelected ? 'active' : '' }}" onclick="selectShippingOption(this)" data-cost="{{ $costVal }}" data-id="{{ $method['id'] }}">
+                        <div class="shipping-option-left">
+                            <input type="radio" name="shipMethod" value="{{ $method['id'] }}" {{ $isSelected ? 'checked' : '' }} data-cost="{{ $costVal }}" data-id="{{ $method['id'] }}">
+                            <div>
+                                <span>{{ $method['name'] }}</span>
+                                @if(!empty($method['delivery_time']))
+                                    <small style="display: block; font-size: 11px; color: var(--text-muted);">{{ $method['delivery_time'] }}</small>
+                                @endif
+                            </div>
+                        </div>
+                        @if($costVal == 0)
+                            <span class="ship-price-val free-text">Free</span>
+                        @else
+                            <span class="ship-price-val" style="color: #fff; font-weight: 700;">{{ setting('currency_symbol', '$') }}{{ number_format($costVal, 2) }}</span>
+                        @endif
+                    </label>
+                @empty
+                    <label class="shipping-option-card active" data-cost="0">
+                        <div class="shipping-option-left">
+                            <input type="radio" name="shipMethod" checked data-cost="0">
+                            <span>Standard Delivery</span>
+                        </div>
+                        <span class="ship-price-val free-text">Free</span>
+                    </label>
+                @endforelse
             </div>
 
             <!-- Total Payment Box -->
@@ -252,89 +280,190 @@
 <script>
     const currencySymbol = '{{ setting("currency_symbol", "$") }}';
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    let currentSubtotal = {{ (float)$subtotal }};
+    let currentDiscount = {{ (float)$discount }};
+
+    function getSelectedShippingCost() {
+        const checked = document.querySelector('input[name="shipMethod"]:checked');
+        return checked ? parseFloat(checked.getAttribute('data-cost') || 0) : 0;
+    }
+
+    function recalculateTotals() {
+        const shippingCost = getSelectedShippingCost();
+        const taxableAmount = Math.max(0, currentSubtotal - currentDiscount);
+        const tax = Math.round((taxableAmount + shippingCost) * 0.13 * 100) / 100;
+        const total = Math.round((taxableAmount + shippingCost + tax) * 100) / 100;
+
+        const subtotalEl = document.getElementById('summarySubtotal');
+        const taxEl = document.getElementById('summaryTax');
+        const totalEl = document.getElementById('summaryTotal');
+        const payTotalEl = document.getElementById('summaryPayTotal');
+        const shippingEl = document.getElementById('summaryShipping');
+
+        if (subtotalEl) subtotalEl.textContent = currencySymbol + currentSubtotal.toFixed(2);
+        if (taxEl) taxEl.textContent = currencySymbol + tax.toFixed(2);
+        if (totalEl) totalEl.textContent = currencySymbol + total.toFixed(2);
+        if (payTotalEl) payTotalEl.textContent = currencySymbol + total.toFixed(2);
+        if (shippingEl) {
+            if (shippingCost > 0) {
+                shippingEl.textContent = currencySymbol + shippingCost.toFixed(2);
+                shippingEl.className = '';
+            } else {
+                shippingEl.textContent = 'Free';
+                shippingEl.className = 'free-text';
+            }
+        }
+    }
 
     // Quantity Stepper Handler
     function updateItemQty(btn, change, productId) {
         const stepper = btn.parentElement;
         const numSpan = stepper.querySelector('.step-num');
+        const card = btn.closest('.cart-item-card');
         if (!numSpan || !productId) return;
 
         let current = parseInt(numSpan.textContent) || 1;
         current += change;
-        if (current < 1) current = 1;
+
+        if (current <= 0) {
+            removeCartCard(btn, productId);
+            return;
+        }
+
         numSpan.textContent = current;
+        btn.disabled = true;
 
         fetch('/cart/update', {
             method: 'POST',
+            credentials: 'same-origin',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest',
                 'Accept': 'application/json'
             },
             body: JSON.stringify({ product_id: productId, quantity: current })
         })
-        .then(res => res.json())
+        .then(res => {
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return res.json();
+        })
         .then(data => {
+            btn.disabled = false;
             if (data && data.success) {
                 updateSummaryDisplay(data);
+                if (data.item_quantity !== undefined) {
+                    numSpan.textContent = data.item_quantity;
+                }
+                const lineTotalEl = document.getElementById('lineTotal_' + productId) || (card ? card.querySelector('.cart-item-price') : null);
+                if (lineTotalEl && data.item_line_total) {
+                    lineTotalEl.textContent = currencySymbol + data.item_line_total;
+                }
+                const unitPriceEl = document.getElementById('unitPrice_' + productId);
+                if (unitPriceEl && data.item_unit_price) {
+                    if (data.item_quantity > 1) {
+                        unitPriceEl.textContent = `(${currencySymbol}${data.item_unit_price} each)`;
+                        unitPriceEl.style.display = 'block';
+                    } else {
+                        unitPriceEl.style.display = 'none';
+                    }
+                }
             }
         })
-        .catch(err => console.error('Cart update error:', err));
+        .catch(err => {
+            btn.disabled = false;
+            console.error('Cart update error:', err);
+        });
     }
 
     // Remove Item Handler
     function removeCartCard(btn, productId) {
-        const card = btn.closest('.cart-item-card');
-        if (!card || !productId) return;
+        const card = btn ? btn.closest('.cart-item-card') : document.querySelector(`.cart-item-card[data-product-id="${productId}"]`);
+        if (!productId) return;
 
-        card.style.opacity = '0';
-        card.style.transform = 'scale(0.95)';
-        card.style.transition = 'all 0.25s ease';
+        if (btn) btn.disabled = true;
 
-        fetch(`/cart/remove/${productId}`, {
-            method: 'DELETE',
+        if (card) {
+            card.style.opacity = '0.3';
+            card.style.transform = 'scale(0.95)';
+            card.style.transition = 'all 0.25s ease';
+            card.style.pointerEvents = 'none';
+        }
+
+        fetch(`/cart/remove/${encodeURIComponent(productId)}`, {
+            method: 'POST',
+            credentials: 'same-origin',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest',
                 'Accept': 'application/json'
             }
         })
-        .then(res => res.json())
+        .then(res => {
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return res.json();
+        })
         .then(data => {
-            setTimeout(() => {
-                card.remove();
-                if (data && data.success) {
-                    updateSummaryDisplay(data);
-                    if (data.cart_count === 0) {
-                        window.location.reload();
+            if (card) card.remove();
+            if (data && data.success) {
+                updateSummaryDisplay(data);
+                if (data.cart_count === 0) {
+                    const container = document.getElementById('cartItemsContainer');
+                    if (container) {
+                        container.innerHTML = `
+                            <div style="background: var(--bg-card, #1c1d2e); border: 1px solid var(--border-color, rgba(255,255,255,0.07)); border-radius: 14px; padding: 40px; text-align: center; color: var(--text-muted);">
+                                <i class="bi bi-cart-x" style="font-size: 48px; color: var(--pink-accent, #FE2C55); display: block; margin-bottom: 12px;"></i>
+                                <h3 style="color: #fff; font-size: 18px; margin-bottom: 8px;">Your Shopping Cart is Empty</h3>
+                                <p style="font-size: 14px; margin-bottom: 20px;">Discover trending items, live shopping auctions, and exclusive creator drops.</p>
+                                <a href="/shop" class="btn-shop-now-cyan" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px; padding: 10px 24px; border-radius: 8px; font-weight: 700; background: #00F0C8; color: #000;">
+                                    <i class="bi bi-bag-plus-fill"></i> Explore Live Shopping
+                                </a>
+                            </div>
+                        `;
                     }
                 }
-            }, 200);
+            }
         })
-        .catch(err => console.error('Cart remove error:', err));
+        .catch(err => {
+            console.error('Cart remove error:', err);
+            if (card) {
+                card.style.opacity = '1';
+                card.style.transform = 'none';
+                card.style.pointerEvents = 'auto';
+            }
+            if (btn) btn.disabled = false;
+        });
     }
 
     function updateSummaryDisplay(data) {
-        const subtotalEl = document.getElementById('summarySubtotal');
-        const taxEl = document.getElementById('summaryTax');
-        const totalEl = document.getElementById('summaryTotal');
-        const payTotalEl = document.getElementById('summaryPayTotal');
-        const badge = document.getElementById('globalCartBadge');
+        if (data.discount_raw !== undefined) {
+            currentDiscount = parseFloat(data.discount_raw) || 0;
+        } else if (data.discount !== undefined) {
+            currentDiscount = parseFloat(data.discount.toString().replace(/,/g, '')) || 0;
+        }
+        if (data.subtotal_raw !== undefined) {
+            currentSubtotal = parseFloat(data.subtotal_raw) || currentSubtotal;
+        } else if (data.subtotal !== undefined) {
+            currentSubtotal = parseFloat(data.subtotal.toString().replace(/,/g, '')) || currentSubtotal;
+        }
+
         const discountRow = document.getElementById('summaryDiscountRow');
         const discountVal = document.getElementById('summaryDiscount');
         const couponTag = document.getElementById('summaryCouponCode');
         const appliedBox = document.getElementById('appliedCouponBox');
         const appliedTag = document.getElementById('appliedCouponTag');
         const inputWrap = document.getElementById('promoInputWrap');
+        const badge = document.getElementById('globalCartBadge');
+        const headerCount = document.getElementById('cartHeaderCount');
 
-        if (subtotalEl) subtotalEl.textContent = currencySymbol + data.subtotal;
-        if (taxEl) taxEl.textContent = currencySymbol + data.tax;
-        if (totalEl) totalEl.textContent = currencySymbol + data.total;
-        if (payTotalEl) payTotalEl.textContent = currencySymbol + data.total;
+        if (headerCount && data.cart_count !== undefined) {
+            headerCount.textContent = data.cart_count;
+        }
 
-        if (data.discount && parseFloat(data.discount) > 0) {
+        if (currentDiscount > 0) {
             if (discountRow) discountRow.style.display = 'flex';
-            if (discountVal) discountVal.textContent = '-' + currencySymbol + data.discount;
+            if (discountVal) discountVal.textContent = '-' + currencySymbol + currentDiscount.toFixed(2);
             if (couponTag && data.coupon) couponTag.textContent = data.coupon.code;
             if (appliedBox) appliedBox.style.display = 'flex';
             if (appliedTag && data.coupon) appliedTag.textContent = data.coupon.code;
@@ -345,11 +474,13 @@
             if (inputWrap) inputWrap.style.display = 'flex';
         }
 
-        if (badge) {
-            badge.textContent = data.cart_count || 0;
+        if (badge && data.cart_count !== undefined) {
+            badge.textContent = data.cart_count;
             badge.style.transform = 'scale(1.3)';
             setTimeout(() => badge.style.transform = 'scale(1)', 200);
         }
+
+        recalculateTotals();
     }
 
     // Shipping Option Switch Handler
@@ -357,7 +488,10 @@
         document.querySelectorAll('.shipping-option-card').forEach(card => card.classList.remove('active'));
         selectedCard.classList.add('active');
         const radio = selectedCard.querySelector('input[type="radio"]');
-        if (radio) radio.checked = true;
+        if (radio) {
+            radio.checked = true;
+        }
+        recalculateTotals();
     }
 
     // Promo Code Apply Handler

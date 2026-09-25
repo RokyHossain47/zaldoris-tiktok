@@ -612,12 +612,18 @@ class AdminController extends Controller
 
         $images = [];
 
+        $pubDir = public_path('uploads/products');
+        $baseDir = base_path('uploads/products');
+        if (!file_exists($pubDir)) { @mkdir($pubDir, 0755, true); }
+        if (!file_exists($baseDir)) { @mkdir($baseDir, 0755, true); }
+
         // Handle single image file upload
         if ($request->hasFile('image_file')) {
             $file = $request->file('image_file');
             $filename = 'prod_' . time() . '_' . Str::random(6) . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('uploads/products'), $filename);
-            $images[] = asset('uploads/products/' . $filename);
+            $file->move($pubDir, $filename);
+            @copy($pubDir . '/' . $filename, $baseDir . '/' . $filename);
+            $images[] = 'uploads/products/' . $filename;
         }
 
         // Handle multiple image files upload
@@ -625,8 +631,9 @@ class AdminController extends Controller
             foreach ($request->file('image_files') as $file) {
                 if ($file) {
                     $filename = 'prod_' . time() . '_' . Str::random(8) . '.' . $file->getClientOriginalExtension();
-                    $file->move(public_path('uploads/products'), $filename);
-                    $images[] = asset('uploads/products/' . $filename);
+                    $file->move($pubDir, $filename);
+                    @copy($pubDir . '/' . $filename, $baseDir . '/' . $filename);
+                    $images[] = 'uploads/products/' . $filename;
                 }
             }
         }
@@ -646,10 +653,22 @@ class AdminController extends Controller
         if ($request->filled('colors')) {
             $rawColors = $request->input('colors');
             if (is_string($rawColors)) {
-                $decoded = json_decode($rawColors, true);
-                $colors = is_array($decoded) ? $decoded : array_map(fn($c) => ['name' => trim($c), 'code' => '#1E293B'], explode(',', $rawColors));
-            } elseif (is_array($rawColors)) {
-                $colors = $rawColors;
+                $rawColors = json_decode($rawColors, true) ?: array_map(fn($c) => ['name' => trim($c), 'code' => '#1E293B'], explode(',', $rawColors));
+            }
+            if (is_array($rawColors)) {
+                foreach ($rawColors as $c) {
+                    if (is_array($c) && !empty($c['name'])) {
+                        $colors[] = [
+                            'name' => trim($c['name']),
+                            'code' => !empty($c['code']) ? $c['code'] : '#1E293B',
+                        ];
+                    } elseif (is_string($c) && trim($c) !== '') {
+                        $colors[] = [
+                            'name' => trim($c),
+                            'code' => '#1E293B',
+                        ];
+                    }
+                }
             }
         }
 
@@ -658,10 +677,22 @@ class AdminController extends Controller
         if ($request->filled('sizes')) {
             $rawSizes = $request->input('sizes');
             if (is_string($rawSizes)) {
-                $decoded = json_decode($rawSizes, true);
-                $sizes = is_array($decoded) ? $decoded : array_map(fn($s) => ['name' => trim($s), 'price_modifier' => 0.00], explode(',', $rawSizes));
-            } elseif (is_array($rawSizes)) {
-                $sizes = $rawSizes;
+                $rawSizes = json_decode($rawSizes, true) ?: array_map(fn($s) => ['name' => trim($s), 'price_modifier' => 0.00], explode(',', $rawSizes));
+            }
+            if (is_array($rawSizes)) {
+                foreach ($rawSizes as $s) {
+                    if (is_array($s) && !empty($s['name'])) {
+                        $sizes[] = [
+                            'name' => trim($s['name']),
+                            'price_modifier' => (float) ($s['price_modifier'] ?? 0),
+                        ];
+                    } elseif (is_string($s) && trim($s) !== '') {
+                        $sizes[] = [
+                            'name' => trim($s),
+                            'price_modifier' => 0.00,
+                        ];
+                    }
+                }
             }
         }
 
@@ -670,10 +701,25 @@ class AdminController extends Controller
         if ($request->filled('specifications')) {
             $rawSpecs = $request->input('specifications');
             if (is_string($rawSpecs)) {
-                $decoded = json_decode($rawSpecs, true);
-                $specs = is_array($decoded) ? $decoded : [];
-            } elseif (is_array($rawSpecs)) {
-                $specs = $rawSpecs;
+                $rawSpecs = json_decode($rawSpecs, true) ?: [];
+            }
+            if (is_array($rawSpecs)) {
+                foreach ($rawSpecs as $k => $v) {
+                    if (is_array($v)) {
+                        $kName = trim($v['key'] ?? $v['name'] ?? '');
+                        $vVal = trim($v['val'] ?? $v['value'] ?? '');
+                        if ($kName !== '' && $vVal !== '') {
+                            $specs[$kName] = $vVal;
+                        }
+                    } elseif (is_string($v) && trim($v) !== '') {
+                        if (is_string($k) && !is_numeric($k)) {
+                            $specs[trim($k)] = trim($v);
+                        } elseif (str_contains($v, ':')) {
+                            [$sk, $sv] = explode(':', $v, 2);
+                            $specs[trim($sk)] = trim($sv);
+                        }
+                    }
+                }
             }
         }
 
@@ -771,12 +817,18 @@ class AdminController extends Controller
 
         $images = is_array($product->images) ? $product->images : [];
 
+        $pubDir = public_path('uploads/products');
+        $baseDir = base_path('uploads/products');
+        if (!file_exists($pubDir)) { @mkdir($pubDir, 0755, true); }
+        if (!file_exists($baseDir)) { @mkdir($baseDir, 0755, true); }
+
         // Handle single image file upload
         if ($request->hasFile('image_file')) {
             $file = $request->file('image_file');
             $filename = 'prod_' . time() . '_' . Str::random(6) . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('uploads/products'), $filename);
-            array_unshift($images, asset('uploads/products/' . $filename));
+            $file->move($pubDir, $filename);
+            @copy($pubDir . '/' . $filename, $baseDir . '/' . $filename);
+            array_unshift($images, 'uploads/products/' . $filename);
         }
 
         // Handle multiple image files upload
@@ -784,8 +836,9 @@ class AdminController extends Controller
             foreach ($request->file('image_files') as $file) {
                 if ($file) {
                     $filename = 'prod_' . time() . '_' . Str::random(8) . '.' . $file->getClientOriginalExtension();
-                    $file->move(public_path('uploads/products'), $filename);
-                    $images[] = asset('uploads/products/' . $filename);
+                    $file->move($pubDir, $filename);
+                    @copy($pubDir . '/' . $filename, $baseDir . '/' . $filename);
+                    $images[] = 'uploads/products/' . $filename;
                 }
             }
         }
@@ -804,33 +857,78 @@ class AdminController extends Controller
         if ($request->has('colors')) {
             $rawColors = $request->input('colors');
             if (is_string($rawColors)) {
-                $decoded = json_decode($rawColors, true);
-                $product->colors = is_array($decoded) ? $decoded : array_map(fn($c) => ['name' => trim($c), 'code' => '#1E293B'], explode(',', $rawColors));
-            } elseif (is_array($rawColors)) {
-                $product->colors = $rawColors;
+                $rawColors = json_decode($rawColors, true) ?: array_map(fn($c) => ['name' => trim($c), 'code' => '#1E293B'], explode(',', $rawColors));
             }
+            $parsedColors = [];
+            if (is_array($rawColors)) {
+                foreach ($rawColors as $c) {
+                    if (is_array($c) && !empty($c['name'])) {
+                        $parsedColors[] = [
+                            'name' => trim($c['name']),
+                            'code' => !empty($c['code']) ? $c['code'] : '#1E293B',
+                        ];
+                    } elseif (is_string($c) && trim($c) !== '') {
+                        $parsedColors[] = [
+                            'name' => trim($c),
+                            'code' => '#1E293B',
+                        ];
+                    }
+                }
+            }
+            $product->colors = $parsedColors;
         }
 
         // Parse sizes
         if ($request->has('sizes')) {
             $rawSizes = $request->input('sizes');
             if (is_string($rawSizes)) {
-                $decoded = json_decode($rawSizes, true);
-                $product->sizes = is_array($decoded) ? $decoded : array_map(fn($s) => ['name' => trim($s), 'price_modifier' => 0.00], explode(',', $rawSizes));
-            } elseif (is_array($rawSizes)) {
-                $product->sizes = $rawSizes;
+                $rawSizes = json_decode($rawSizes, true) ?: array_map(fn($s) => ['name' => trim($s), 'price_modifier' => 0.00], explode(',', $rawSizes));
             }
+            $parsedSizes = [];
+            if (is_array($rawSizes)) {
+                foreach ($rawSizes as $s) {
+                    if (is_array($s) && !empty($s['name'])) {
+                        $parsedSizes[] = [
+                            'name' => trim($s['name']),
+                            'price_modifier' => (float) ($s['price_modifier'] ?? 0),
+                        ];
+                    } elseif (is_string($s) && trim($s) !== '') {
+                        $parsedSizes[] = [
+                            'name' => trim($s),
+                            'price_modifier' => 0.00,
+                        ];
+                    }
+                }
+            }
+            $product->sizes = $parsedSizes;
         }
 
         // Parse specifications
         if ($request->has('specifications')) {
             $rawSpecs = $request->input('specifications');
             if (is_string($rawSpecs)) {
-                $decoded = json_decode($rawSpecs, true);
-                $product->specifications = is_array($decoded) ? $decoded : [];
-            } elseif (is_array($rawSpecs)) {
-                $product->specifications = $rawSpecs;
+                $rawSpecs = json_decode($rawSpecs, true) ?: [];
             }
+            $parsedSpecs = [];
+            if (is_array($rawSpecs)) {
+                foreach ($rawSpecs as $k => $v) {
+                    if (is_array($v)) {
+                        $kName = trim($v['key'] ?? $v['name'] ?? '');
+                        $vVal = trim($v['val'] ?? $v['value'] ?? '');
+                        if ($kName !== '' && $vVal !== '') {
+                            $parsedSpecs[$kName] = $vVal;
+                        }
+                    } elseif (is_string($v) && trim($v) !== '') {
+                        if (is_string($k) && !is_numeric($k)) {
+                            $parsedSpecs[trim($k)] = trim($v);
+                        } elseif (str_contains($v, ':')) {
+                            [$sk, $sv] = explode(':', $v, 2);
+                            $parsedSpecs[trim($sk)] = trim($sv);
+                        }
+                    }
+                }
+            }
+            $product->specifications = $parsedSpecs;
         }
 
         $catName = $product->category;
@@ -1117,6 +1215,46 @@ class AdminController extends Controller
         Setting::set('creator_subscription_price', $request->creator_subscription_price ?? '7.99', 'system');
 
         return back()->with('success', 'System settings updated successfully.');
+    }
+
+    /**
+     * Settings: Shipping Methods Sub-menu.
+     */
+    public function shippingSettings()
+    {
+        $methods = \App\Services\ShippingService::getMethods();
+        return view('admin.settings.shipping', compact('methods'));
+    }
+
+    public function updateShippingSettings(Request $request)
+    {
+        $methodsInput = $request->input('methods', []);
+        $parsedMethods = [];
+
+        if (is_array($methodsInput)) {
+            foreach ($methodsInput as $index => $item) {
+                $name = trim($item['name'] ?? '');
+                if ($name !== '') {
+                    $parsedMethods[] = [
+                        'id' => !empty($item['id']) ? Str::slug($item['id'], '_') : Str::slug($name, '_') . '_' . ($index + 1),
+                        'name' => $name,
+                        'cost' => (float)($item['cost'] ?? 0),
+                        'delivery_time' => trim($item['delivery_time'] ?? '3 - 5 Business Days'),
+                        'description' => trim($item['description'] ?? ''),
+                        'is_active' => isset($item['is_active']) ? (bool)$item['is_active'] : false,
+                        'is_default' => isset($item['is_default']) ? (bool)$item['is_default'] : false,
+                    ];
+                }
+            }
+        }
+
+        if (count($parsedMethods) === 0) {
+            $parsedMethods = \App\Services\ShippingService::defaultMethods();
+        }
+
+        Setting::set('shipping_methods', json_encode($parsedMethods), 'shipping');
+
+        return back()->with('success', 'Shipping methods updated successfully.');
     }
 
     /**

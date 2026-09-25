@@ -57,7 +57,7 @@ Route::post('/product/{id}/review', [ShopController::class, 'storeReview'])->nam
 Route::get('/cart', [ShopController::class, 'cart'])->name('shop.cart');
 Route::post('/cart/add', [ShopController::class, 'addToCart'])->name('shop.cart.add');
 Route::post('/cart/update', [ShopController::class, 'updateCart'])->name('shop.cart.update');
-Route::delete('/cart/remove/{id}', [ShopController::class, 'removeFromCart'])->name('shop.cart.remove');
+Route::match(['delete', 'post'], '/cart/remove/{id}', [ShopController::class, 'removeFromCart'])->name('shop.cart.remove');
 Route::post('/cart/coupon/apply', [ShopController::class, 'applyCoupon'])->name('shop.coupon.apply');
 Route::post('/cart/coupon/remove', [ShopController::class, 'removeCoupon'])->name('shop.coupon.remove');
 Route::get('/checkout', [ShopController::class, 'checkout'])->name('shop.checkout');
@@ -168,13 +168,15 @@ Route::prefix('admin')->middleware('admin')->group(function () {
     Route::delete('/reactions/{id}', [AdminController::class, 'deleteReaction'])->name('admin.reactions.delete');
     Route::post('/reactions/{id}/toggle', [AdminController::class, 'toggleReaction'])->name('admin.reactions.toggle');
 
-    // Settings (3 Sub-menus: General, SEO, System)
+    // Settings (4 Sub-menus: General, SEO, System, Shipping)
     Route::get('/settings/general', [AdminController::class, 'generalSettings'])->name('admin.settings.general');
     Route::post('/settings/general', [AdminController::class, 'updateGeneralSettings'])->name('admin.settings.general.update');
     Route::get('/settings/seo', [AdminController::class, 'seoSettings'])->name('admin.settings.seo');
     Route::post('/settings/seo', [AdminController::class, 'updateSeoSettings'])->name('admin.settings.seo.update');
     Route::get('/settings/system', [AdminController::class, 'systemSettings'])->name('admin.settings.system');
     Route::post('/settings/system', [AdminController::class, 'updateSystemSettings'])->name('admin.settings.system.update');
+    Route::get('/settings/shipping', [AdminController::class, 'shippingSettings'])->name('admin.settings.shipping');
+    Route::post('/settings/shipping', [AdminController::class, 'updateShippingSettings'])->name('admin.settings.shipping.update');
 
     // Auctions Management (Full CRUD)
     Route::get('/auctions', [AdminController::class, 'auctions'])->name('admin.auctions.index');
@@ -205,4 +207,17 @@ Route::prefix('admin')->middleware('admin')->group(function () {
     Route::get('/disputes', [AdminController::class, 'disputes'])->name('admin.disputes');
     Route::post('/disputes/{id}/resolve', [AdminController::class, 'resolveDispute'])->name('admin.disputes.resolve');
 });
+
+// Fallback direct static asset handler for uploads (ensures images always serve in WAMP / local subdirectories)
+Route::get('uploads/{path}', function ($path) {
+    $fullPath = public_path('uploads/' . $path);
+    if (!file_exists($fullPath)) {
+        $fullPath = base_path('uploads/' . $path);
+    }
+    if (file_exists($fullPath) && is_file($fullPath)) {
+        return response()->file($fullPath);
+    }
+    abort(404);
+})->where('path', '.*');
+
 

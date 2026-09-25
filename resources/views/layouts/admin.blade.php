@@ -429,6 +429,47 @@
         .status-active { background: rgba(37, 244, 238, 0.15); color: #25F4EE; }
         .status-blocked { background: rgba(254, 44, 85, 0.15); color: #FE2C55; }
 
+        /* UNIVERSAL ACTION BUTTONS */
+        .action-btn {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 34px !important;
+            height: 34px !important;
+            border-radius: 8px !important;
+            background: rgba(255, 255, 255, 0.05) !important;
+            border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1)) !important;
+            color: #CBD5E1 !important;
+            cursor: pointer !important;
+            text-decoration: none !important;
+            font-size: 14px !important;
+            transition: all 0.2s ease !important;
+            padding: 0 !important;
+            line-height: 1 !important;
+            box-sizing: border-box !important;
+        }
+        .action-btn:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.12) !important;
+            color: #fff !important;
+            border-color: rgba(255, 255, 255, 0.3) !important;
+        }
+        .action-btn-view:hover {
+            border-color: #38bdf8 !important;
+            color: #38bdf8 !important;
+            background: rgba(56, 189, 248, 0.15) !important;
+        }
+        .action-btn-edit:hover {
+            border-color: var(--cyan-accent, #00F0C8) !important;
+            color: var(--cyan-accent, #00F0C8) !important;
+            background: rgba(0, 240, 200, 0.15) !important;
+        }
+        .action-btn-delete:hover {
+            border-color: var(--pink-accent, #FE2C55) !important;
+            color: var(--pink-accent, #FE2C55) !important;
+            background: rgba(254, 44, 85, 0.15) !important;
+        }
+
 
         /* PAGINATION STYLES */
         .pagination {
@@ -696,6 +737,12 @@
                         <a href="{{ route('admin.settings.system') }}" class="sidebar-sublink {{ request()->routeIs('admin.settings.system') ? 'active' : '' }}">
                             <i class="bi bi-cpu" style="font-size: 12px;"></i>
                             <span>System Settings</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('admin.settings.shipping') }}" class="sidebar-sublink {{ request()->routeIs('admin.settings.shipping') ? 'active' : '' }}">
+                            <i class="bi bi-truck" style="font-size: 12px;"></i>
+                            <span>Shipping Methods</span>
                         </a>
                     </li>
                 </ul>

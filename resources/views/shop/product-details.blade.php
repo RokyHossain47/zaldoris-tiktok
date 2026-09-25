@@ -1099,11 +1099,8 @@
     $discountPercent = $comparePrice > $price ? round(($saveAmount / $comparePrice) * 100) : 0;
     
     // Images gallery
-    $galleryImages = is_array($product->images) && count($product->images) > 0 
-        ? $product->images 
-        : [$product->primary_image ?? 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&auto=format&fit=crop&q=80'];
-        
-    $mainImg = $galleryImages[0];
+    $galleryImages = $product->gallery_images;
+    $mainImg = $galleryImages[0] ?? $product->primary_image;
 
     $seller = $product->seller;
     $sellerName = $seller ? $seller->name : setting('site_name', 'Zaldoris Merchant');
@@ -1381,22 +1378,36 @@
             <!-- Feature Quick Highlights -->
             <div class="product-highlights-box">
                 <div class="highlights-grid">
-                    <div class="highlight-item">
-                        <i class="bi bi-shield-check"></i>
-                        <span>Authentic Guarantee</span>
-                    </div>
-                    <div class="highlight-item">
-                        <i class="bi bi-truck"></i>
-                        <span>Fast Doorstep Delivery</span>
-                    </div>
-                    <div class="highlight-item">
-                        <i class="bi bi-cpu-fill"></i>
-                        <span>Premium Hardware</span>
-                    </div>
-                    <div class="highlight-item">
-                        <i class="bi bi-patch-check-fill"></i>
-                        <span>2-Year Official Warranty</span>
-                    </div>
+                    @php $highlightShown = 0; @endphp
+                    @foreach($specsList as $hk => $hv)
+                        @if(!in_array($hk, ['Dimensions', 'Sourcing Country', 'Brand']) && $highlightShown < 4)
+                            <div class="highlight-item">
+                                <i class="bi bi-check2-circle text-info"></i>
+                                <span><strong>{{ $hk }}:</strong> {{ is_array($hv) ? implode(', ', $hv) : $hv }}</span>
+                            </div>
+                            @php $highlightShown++; @endphp
+                        @endif
+                    @endforeach
+                    @if($highlightShown < 4)
+                        @if($highlightShown === 0)
+                            <div class="highlight-item">
+                                <i class="bi bi-shield-check text-info"></i>
+                                <span>Authentic Guarantee</span>
+                            </div>
+                            <div class="highlight-item">
+                                <i class="bi bi-truck text-info"></i>
+                                <span>Fast Doorstep Delivery</span>
+                            </div>
+                            <div class="highlight-item">
+                                <i class="bi bi-cpu-fill text-info"></i>
+                                <span>Premium Hardware</span>
+                            </div>
+                        @endif
+                        <div class="highlight-item">
+                            <i class="bi bi-patch-check-fill text-info"></i>
+                            <span>2-Year Official Warranty</span>
+                        </div>
+                    @endif
                 </div>
             </div>
 
@@ -1414,96 +1425,36 @@
             <button class="tab-btn-pill" onclick="switchProductTab('shipping', this)">Shipping & Returns</button>
         </div>
 
-        <!-- TAB 1: OVERVIEW -->
+        <!-- TAB 1: OVERVIEW & FEATURES -->
         <div class="tab-pane-content active" id="tab-overview">
             <h3 class="mb-3" style="font-size: 1.25rem; font-weight: 700; color: #fff;">Product Overview</h3>
-            <p style="color: #CBD5E1; line-height: 1.7; margin-bottom: 20px;">
+            <p style="color: #CBD5E1; line-height: 1.7; margin-bottom: 24px; font-size: 0.95rem;">
                 {{ $product->description ?: 'Engineered with top-tier materials and rigorous craftsmanship, this product is built for relentless endurance and pristine aesthetics. Tested under demanding real-world conditions to provide a superior user experience.' }}
             </p>
-            <div class="row g-4 mt-2">
-                <div class="col-md-4">
-                    <div style="background: #090D10; border: 1px solid var(--p-card-border); border-radius: 14px; padding: 20px;">
-                        <i class="bi bi-patch-check-fill text-info" style="font-size: 1.6rem;"></i>
-                        <h4 class="mt-2 mb-1" style="font-size: 1.05rem; font-weight: 700; color: #fff;">Premium Quality</h4>
-                        <p style="font-size: 0.82rem; color: var(--p-text-muted); margin: 0;">Inspected and certified by verified merchants with genuine source guarantees.</p>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div style="background: #090D10; border: 1px solid var(--p-card-border); border-radius: 14px; padding: 20px;">
-                        <i class="bi bi-lightning-charge-fill text-warning" style="font-size: 1.6rem;"></i>
-                        <h4 class="mt-2 mb-1" style="font-size: 1.05rem; font-weight: 700; color: #fff;">Fast Processing</h4>
-                        <p style="font-size: 0.82rem; color: var(--p-text-muted); margin: 0;">Orders dispatched within 24 hours from local fulfillment centers.</p>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div style="background: #090D10; border: 1px solid var(--p-card-border); border-radius: 14px; padding: 20px;">
-                        <i class="bi bi-shield-shaded text-success" style="font-size: 1.6rem;"></i>
-                        <h4 class="mt-2 mb-1" style="font-size: 1.05rem; font-weight: 700; color: #fff;">Buyer Protection</h4>
-                        <p style="font-size: 0.82rem; color: var(--p-text-muted); margin: 0;">Protected by Zaldoris 100% money-back safe payment policy.</p>
-                    </div>
-                </div>
-            </div>
         </div>
 
         <!-- TAB 2: TECHNICAL SPECIFICATIONS -->
         <div class="tab-pane-content" id="tab-specs">
             <h3 class="mb-3" style="font-size: 1.25rem; font-weight: 700; color: #fff;">Technical Specifications</h3>
+            @if(count($specsList) > 0)
             <div style="background: #090D10; border: 1px solid var(--p-card-border); border-radius: 14px; overflow: hidden;">
                 <table class="spec-table">
                     <tbody>
-                        <tr>
-                            <th>Product Title</th>
-                            <td>{{ $product->title }}</td>
-                        </tr>
-                        @if($product->brand)
-                        <tr>
-                            <th>Brand</th>
-                            <td>{{ $product->brand }}</td>
-                        </tr>
-                        @endif
-                        <tr>
-                            <th>Category</th>
-                            <td>{{ $product->category_name ?? 'General Goods' }}</td>
-                        </tr>
-                        @if($product->dimensions)
-                        <tr>
-                            <th>Dimensions</th>
-                            <td>{{ $product->dimensions }}</td>
-                        </tr>
-                        @endif
-                        @if($product->sourcing_country)
-                        <tr>
-                            <th>Sourcing / Origin</th>
-                            <td>{{ $product->sourcing_country }}</td>
-                        </tr>
-                        @endif
                         @foreach($specsList as $specKey => $specVal)
-                            @if(!in_array($specKey, ['Brand', 'Dimensions', 'Sourcing Country']))
-                            <tr>
-                                <th>{{ $specKey }}</th>
-                                <td>{{ is_array($specVal) ? implode(', ', $specVal) : $specVal }}</td>
-                            </tr>
-                            @endif
+                        <tr>
+                            <th>{{ $specKey }}</th>
+                            <td>{{ is_array($specVal) ? implode(', ', $specVal) : $specVal }}</td>
+                        </tr>
                         @endforeach
-                        <tr>
-                            <th>Stock Status</th>
-                            <td>{{ $product->available_stock > 0 ? $product->available_stock . ' units ready to dispatch' : 'In Stock (Ready to ship)' }}</td>
-                        </tr>
-                        <tr>
-                            <th>Seller / Merchant</th>
-                            <td>{{ $sellerName }}</td>
-                        </tr>
-                        <tr>
-                            <th>Natural Lighting Declared</th>
-                            <td>{{ $product->is_natural_lighting_declared ? 'Yes (Color-accurate real footage)' : 'Standard Studio Condition' }}</td>
-                        </tr>
-                        <tr>
-                            <th>Warranty & Assurance</th>
-                            <td>2-Year Official Manufacturer Warranty included</td>
-                        </tr>
                     </tbody>
                 </table>
             </div>
+            @else
+            <div style="background: #090D10; border: 1px solid var(--p-card-border); border-radius: 14px; padding: 28px; text-align: center; color: var(--p-text-muted);">
+                <i class="bi bi-info-circle text-info" style="font-size: 1.8rem; display: block; margin-bottom: 8px;"></i>
+                No technical specifications added for this product.
+            </div>
+            @endif
         </div>
 
         <!-- TAB 3: CUSTOMER REVIEWS -->

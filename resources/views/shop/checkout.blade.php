@@ -72,7 +72,7 @@
         <h1 class="notif-page-title">Secure Checkout</h1>
     </div>
 
-    @if($errors->any())
+    @if(isset($errors) && $errors->any())
         <div style="background: rgba(254, 44, 85, 0.15); border: 1px solid #FE2C55; color: #FE2C55; padding: 14px 18px; border-radius: 10px; font-size: 13px; margin-bottom: 24px;">
             <ul style="margin: 0; padding-left: 20px;">
                 @foreach($errors->all() as $err)
@@ -122,6 +122,63 @@
                             <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">Country *</label>
                             <input type="text" name="country" value="{{ old('country', 'Canada') }}" placeholder="Country" required style="width: 100%; background: var(--bg-card-inner); border: 1px solid var(--border-color); color: #fff; padding: 9px 12px; border-radius: 8px; font-size: 13px;">
                         </div>
+                    </div>
+                </div>
+
+                <!-- Shipping Method Selection Card -->
+                <div class="cart-item-card" style="display: block; padding: 24px; margin-bottom: 20px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 8px;">
+                        <h3 style="font-size: 16px; font-weight: 800; color: #fff; margin: 0; display: flex; align-items: center; gap: 8px;">
+                            <i class="bi bi-truck" style="color: #00F0C8;"></i> Shipping & Delivery Method
+                        </h3>
+                        <span style="font-size: 12px; font-weight: 600; color: var(--text-muted);">Select preferred carrier speed</span>
+                    </div>
+
+                    <div class="shipping-methods-list" style="display: flex; flex-direction: column; gap: 12px;">
+                        @forelse($shippingMethods as $method)
+                            @php
+                                $isSelected = ($selectedShippingMethod['id'] ?? '') === $method['id'];
+                                $costVal = (float)($method['cost'] ?? 0);
+                            @endphp
+                            <label class="shipping-option-card {{ $isSelected ? 'active' : '' }}" 
+                                   style="display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-radius: 12px; cursor: pointer; transition: all 0.25s ease; border: 1.5px solid {{ $isSelected ? '#00F0C8' : 'var(--border-color)' }}; background: {{ $isSelected ? 'rgba(0, 240, 200, 0.08)' : 'var(--bg-card-inner)' }};">
+                                <div style="display: flex; align-items: center; gap: 14px;">
+                                    <input type="radio" 
+                                           name="shipping_method" 
+                                           value="{{ $method['id'] }}" 
+                                           data-cost="{{ $costVal }}" 
+                                           data-name="{{ $method['name'] }}"
+                                           data-time="{{ $method['delivery_time'] ?? '' }}"
+                                           {{ $isSelected ? 'checked' : '' }} 
+                                           onchange="handleShippingMethodChange(this)"
+                                           style="accent-color: #00F0C8; width: 18px; height: 18px; cursor: pointer;">
+                                    <div>
+                                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                            <span style="font-size: 14px; font-weight: 700; color: #fff;">{{ $method['name'] }}</span>
+                                            @if(!empty($method['delivery_time']))
+                                                <span style="font-size: 11px; font-weight: 600; background: rgba(0, 240, 200, 0.12); color: #00F0C8; padding: 2px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                                                    <i class="bi bi-clock-history"></i> {{ $method['delivery_time'] }}
+                                                </span>
+                                            @endif
+                                        </div>
+                                        @if(!empty($method['description']))
+                                            <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
+                                                {{ $method['description'] }}
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                                <div style="text-align: right; min-width: 80px;">
+                                    @if($costVal == 0)
+                                        <span style="font-size: 14px; font-weight: 800; color: #00F0C8; background: rgba(0, 240, 200, 0.15); padding: 4px 10px; border-radius: 6px;">FREE</span>
+                                    @else
+                                        <span style="font-size: 14px; font-weight: 800; color: #fff;">{{ setting('currency_symbol', '$') }}{{ number_format($costVal, 2) }}</span>
+                                    @endif
+                                </div>
+                            </label>
+                        @empty
+                            <div style="padding: 14px; color: var(--text-muted); font-size: 13px;">Standard shipping applied.</div>
+                        @endforelse
                     </div>
                 </div>
 
@@ -215,8 +272,10 @@
                     </div>
 
                     <div class="summary-calc-row">
-                        <span>Shipping</span>
-                        <span class="free-text">Free</span>
+                        <span>Shipping Fee</span>
+                        <span id="summaryShipping" class="{{ $shipping > 0 ? '' : 'free-text' }}">
+                            {{ $shipping > 0 ? setting('currency_symbol', '$') . number_format($shipping, 2) : 'Free' }}
+                        </span>
                     </div>
                     <div class="summary-calc-row">
                         <span>GST / HST (13%)</span>
@@ -298,12 +357,68 @@
 <script>
     const currencySymbol = '{{ setting("currency_symbol", "$") }}';
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    let currentSubtotal = {{ (float)$subtotal }};
+    let currentDiscount = {{ (float)$discount }};
 
-    function updateSummaryDisplay(data) {
+    function getSelectedShippingCost() {
+        const checked = document.querySelector('input[name="shipping_method"]:checked');
+        return checked ? parseFloat(checked.getAttribute('data-cost') || 0) : 0;
+    }
+
+    function recalculateTotals() {
+        const shippingCost = getSelectedShippingCost();
+        const taxableAmount = Math.max(0, currentSubtotal - currentDiscount);
+        const tax = Math.round((taxableAmount + shippingCost) * 0.13 * 100) / 100;
+        const total = Math.round((taxableAmount + shippingCost + tax) * 100) / 100;
+
         const subtotalEl = document.getElementById('summarySubtotal');
         const taxEl = document.getElementById('summaryTax');
         const totalEl = document.getElementById('summaryTotal');
         const payTotalEl = document.getElementById('summaryPayTotal');
+        const shippingEl = document.getElementById('summaryShipping');
+
+        if (subtotalEl) subtotalEl.textContent = currencySymbol + currentSubtotal.toFixed(2);
+        if (taxEl) taxEl.textContent = currencySymbol + tax.toFixed(2);
+        if (totalEl) totalEl.textContent = currencySymbol + total.toFixed(2);
+        if (payTotalEl) payTotalEl.textContent = currencySymbol + total.toFixed(2);
+        if (shippingEl) {
+            if (shippingCost > 0) {
+                shippingEl.textContent = currencySymbol + shippingCost.toFixed(2);
+                shippingEl.className = '';
+            } else {
+                shippingEl.textContent = 'Free';
+                shippingEl.className = 'free-text';
+            }
+        }
+    }
+
+    function handleShippingMethodChange(radio) {
+        document.querySelectorAll('.shipping-option-card').forEach(card => {
+            card.classList.remove('active');
+            card.style.borderColor = 'var(--border-color)';
+            card.style.background = 'var(--bg-card-inner)';
+        });
+
+        const card = radio.closest('.shipping-option-card');
+        if (card) {
+            card.classList.add('active');
+            card.style.borderColor = '#00F0C8';
+            card.style.background = 'rgba(0, 240, 200, 0.08)';
+        }
+
+        recalculateTotals();
+    }
+
+    function updateSummaryDisplay(data) {
+        if (data.discount_raw !== undefined) {
+            currentDiscount = parseFloat(data.discount_raw) || 0;
+        } else if (data.discount !== undefined) {
+            currentDiscount = parseFloat(data.discount) || 0;
+        }
+        if (data.subtotal_raw !== undefined) {
+            currentSubtotal = parseFloat(data.subtotal_raw) || currentSubtotal;
+        }
+
         const discountRow = document.getElementById('summaryDiscountRow');
         const discountVal = document.getElementById('summaryDiscount');
         const couponTag = document.getElementById('summaryCouponCode');
@@ -312,14 +427,9 @@
         const inputWrap = document.getElementById('promoInputWrap');
         const hiddenCode = document.getElementById('hiddenCouponCode');
 
-        if (subtotalEl) subtotalEl.textContent = currencySymbol + data.subtotal;
-        if (taxEl) taxEl.textContent = currencySymbol + data.tax;
-        if (totalEl) totalEl.textContent = currencySymbol + data.total;
-        if (payTotalEl) payTotalEl.textContent = currencySymbol + data.total;
-
-        if (data.discount && parseFloat(data.discount) > 0) {
+        if (currentDiscount > 0) {
             if (discountRow) discountRow.style.display = 'flex';
-            if (discountVal) discountVal.textContent = '-' + currencySymbol + data.discount;
+            if (discountVal) discountVal.textContent = '-' + currencySymbol + currentDiscount.toFixed(2);
             if (couponTag && data.coupon) couponTag.textContent = data.coupon.code;
             if (appliedBox) appliedBox.style.display = 'flex';
             if (appliedTag && data.coupon) appliedTag.textContent = data.coupon.code;
@@ -331,6 +441,8 @@
             if (inputWrap) inputWrap.style.display = 'flex';
             if (hiddenCode) hiddenCode.value = '';
         }
+
+        recalculateTotals();
     }
 
     function handleApplyPromoCode() {

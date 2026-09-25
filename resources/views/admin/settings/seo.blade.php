@@ -12,7 +12,7 @@
     </div>
 
     <!-- SETTINGS SUB-NAV TABS -->
-    <div style="display: flex; gap: 8px; margin-bottom: 24px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+    <div style="display: flex; gap: 8px; margin-bottom: 24px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; flex-wrap: wrap;">
         <a href="{{ route('admin.settings.general') }}" style="background: rgba(255,255,255,0.05); color: var(--text-muted); padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none;">
             <i class="bi bi-sliders"></i> General
         </a>
@@ -21,6 +21,9 @@
         </a>
         <a href="{{ route('admin.settings.system') }}" style="background: rgba(255,255,255,0.05); color: var(--text-muted); padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none;">
             <i class="bi bi-cpu"></i> System & Localization
+        </a>
+        <a href="{{ route('admin.settings.shipping') }}" style="background: rgba(255,255,255,0.05); color: var(--text-muted); padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none;">
+            <i class="bi bi-truck"></i> Shipping Methods
         </a>
     </div>
 

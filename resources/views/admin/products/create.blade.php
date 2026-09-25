@@ -128,11 +128,6 @@
                     <label style="display: block; font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 6px;">Upload Multiple Image Files</label>
                     <input type="file" name="image_files[]" multiple accept="image/*" style="width: 100%; background: #0c0d14; border: 1px dashed var(--border-color); color: #fff; padding: 14px 16px; border-radius: 10px; font-size: 13px;">
                 </div>
-
-                <div>
-                    <label style="display: block; font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 6px;">Or Paste Image URLs (Comma Separated)</label>
-                    <input type="text" name="images" placeholder="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800, https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800" style="width: 100%; background: #0c0d14; border: 1px solid var(--border-color); color: #fff; padding: 12px 16px; border-radius: 10px; font-size: 13px;">
-                </div>
             </div>
 
             <!-- VARIANT FINISH: COLORS BUILDER -->
@@ -188,12 +183,12 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
                     <div>
                         <h3 style="font-size: 15px; font-weight: 800; color: #fff; margin: 0;">
-                            <i class="bi bi-cpu text-success"></i> Technical Specifications
+                            <i class="bi bi-cpu text-success"></i> Technical Specifications & Features
                         </h3>
-                        <p style="font-size: 13px; color: var(--text-muted); margin: 4px 0 0 0;">Add key-value specifications displayed on the product details page.</p>
+                        <p style="font-size: 13px; color: var(--text-muted); margin: 4px 0 0 0;">Add key-value specifications and feature highlights displayed on the product details page.</p>
                     </div>
-                    <button type="button" onclick="addSpecRow()" style="background: rgba(0, 240, 200, 0.12); color: var(--cyan-accent); border: 1px solid var(--cyan-accent); padding: 6px 14px; border-radius: 8px; font-weight: 700; font-size: 12px; cursor: pointer;">
-                        + Add Specification
+                    <button type="button" onclick="addSpecRow()" style="background: rgba(0, 240, 200, 0.15); color: var(--cyan-accent); border: 1px solid var(--cyan-accent); padding: 8px 16px; border-radius: 8px; font-weight: 800; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                        <i class="bi bi-plus-circle-fill"></i> + Add Specification
                     </button>
                 </div>
 

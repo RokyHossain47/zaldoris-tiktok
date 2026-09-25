@@ -132,18 +132,18 @@
                         </span>
                     </td>
                     <td style="padding: 16px 20px; text-align: right;">
-                        <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                            <a href="{{ $p->is_live_product ? ($p->stream_id ? route('streams.show', $p->stream_id) : url('/live-product-room/' . $p->id)) : route('shop.product', $p->id) }}" target="_blank" class="action-btn" title="Preview Product Details">
-                                <i class="bi bi-eye-fill" style="color: var(--text-muted);"></i>
+                        <div style="display: flex; gap: 8px; justify-content: flex-end; align-items: center;">
+                            <a href="{{ $p->is_live_product ? ($p->stream_id ? route('streams.show', $p->stream_id) : url('/live-product-room/' . $p->id)) : route('shop.product', $p->id) }}" target="_blank" class="action-btn action-btn-view" title="Preview Product Details">
+                                <i class="bi bi-eye-fill"></i>
                             </a>
-                            <a href="{{ route('admin.products.edit', $p->id) }}" class="action-btn" title="Edit Product">
-                                <i class="bi bi-pencil-fill" style="color: var(--cyan-accent);"></i>
+                            <a href="{{ route('admin.products.edit', $p->id) }}" class="action-btn action-btn-edit" title="Edit Product">
+                                <i class="bi bi-pencil-fill"></i>
                             </a>
-                            <form action="{{ route('admin.products.delete', $p->id) }}" method="POST" onsubmit="return confirm('Delete this product permanently?');" style="margin: 0;">
+                            <form action="{{ route('admin.products.delete', $p->id) }}" method="POST" onsubmit="return confirm('Delete this product permanently?');" style="margin: 0; display: inline-flex;">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="action-btn" title="Delete Product">
-                                    <i class="bi bi-trash-fill" style="color: var(--pink-accent);"></i>
+                                <button type="submit" class="action-btn action-btn-delete" title="Delete Product">
+                                    <i class="bi bi-trash-fill"></i>
                                 </button>
                             </form>
                         </div>

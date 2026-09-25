@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Services\TaxService;
+use App\Services\ShippingService;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 
@@ -202,6 +203,7 @@ class ShopController extends Controller
         }
 
         session()->put('cart', $cart);
+        session()->save();
 
         $totalItems = 0;
         foreach ($cart as $item) {
@@ -218,18 +220,40 @@ class ShopController extends Controller
 
     public function updateCart(Request $request)
     {
-        $productId = $request->input('product_id');
+        $key = (string)($request->input('product_id') ?? $request->input('id') ?? $request->input('cart_key'));
         $quantity = (int) $request->input('quantity', 1);
 
         $cart = session()->get('cart', []);
 
-        if ($quantity <= 0) {
-            unset($cart[$productId]);
-        } elseif (isset($cart[$productId])) {
-            $cart[$productId]['quantity'] = $quantity;
+        $targetKey = null;
+        if (isset($cart[$key])) {
+            $targetKey = $key;
+        } else {
+            foreach ($cart as $k => $item) {
+                if ((string)($item['id'] ?? '') === $key || (string)($item['cart_key'] ?? '') === $key || (string)$k === $key) {
+                    $targetKey = $k;
+                    break;
+                }
+            }
+        }
+
+        $itemLineTotal = 0;
+        $itemUnitPrice = 0;
+        $itemQty = 0;
+
+        if ($targetKey) {
+            if ($quantity <= 0) {
+                unset($cart[$targetKey]);
+            } else {
+                $cart[$targetKey]['quantity'] = $quantity;
+                $itemQty = $quantity;
+                $itemUnitPrice = (float)($cart[$targetKey]['price'] ?? 0);
+                $itemLineTotal = round($itemUnitPrice * $quantity, 2);
+            }
         }
 
         session()->put('cart', $cart);
+        session()->save();
 
         $subtotal = 0;
         $totalItems = 0;
@@ -263,22 +287,39 @@ class ShopController extends Controller
             'success' => true,
             'cart_count' => $totalItems,
             'subtotal' => number_format($subtotal, 2),
+            'subtotal_raw' => $subtotal,
             'discount' => number_format($discount, 2),
+            'discount_raw' => $discount,
             'tax' => number_format($tax, 2),
             'shipping' => number_format($shipping, 2),
             'total' => number_format($total, 2),
             'coupon' => $couponSession,
+            'item_key' => $targetKey,
+            'item_quantity' => $itemQty,
+            'item_unit_price' => number_format($itemUnitPrice, 2),
+            'item_line_total' => number_format($itemLineTotal, 2),
             'cart' => $cart
         ]);
     }
 
     public function removeFromCart($id)
     {
+        $idStr = (string)$id;
         $cart = session()->get('cart', []);
-        if (isset($cart[$id])) {
-            unset($cart[$id]);
-            session()->put('cart', $cart);
+        
+        if (isset($cart[$idStr])) {
+            unset($cart[$idStr]);
+        } else {
+            foreach ($cart as $k => $item) {
+                if ((string)($item['id'] ?? '') === $idStr || (string)($item['cart_key'] ?? '') === $idStr || (string)$k === $idStr) {
+                    unset($cart[$k]);
+                    break;
+                }
+            }
         }
+
+        session()->put('cart', $cart);
+        session()->save();
 
         $subtotal = 0;
         $totalItems = 0;
@@ -309,9 +350,12 @@ class ShopController extends Controller
 
         return response()->json([
             'success' => true,
+            'message' => 'Item removed from cart.',
             'cart_count' => $totalItems,
             'subtotal' => number_format($subtotal, 2),
+            'subtotal_raw' => $subtotal,
             'discount' => number_format($discount, 2),
+            'discount_raw' => $discount,
             'tax' => number_format($tax, 2),
             'shipping' => number_format($shipping, 2),
             'total' => number_format($total, 2),
@@ -442,12 +486,16 @@ class ShopController extends Controller
             }
         }
 
+        $shippingMethods = ShippingService::getActiveMethods();
+        $defaultMethod = ShippingService::getDefaultMethod();
+        $selectedShippingMethod = $defaultMethod ?? ($shippingMethods[0] ?? ['id' => 'standard_delivery', 'name' => 'Standard Ground Delivery', 'cost' => 0.00]);
+        $shipping = (float)($selectedShippingMethod['cost'] ?? 0.00);
+
         $taxableAmount = max(0, $subtotal - $discount);
-        $tax = round($taxableAmount * 0.13, 2);
-        $shipping = 0.00;
+        $tax = round(($taxableAmount + $shipping) * 0.13, 2);
         $total = round($taxableAmount + $tax + $shipping, 2);
 
-        return view('shop.cart', compact('cart', 'subtotal', 'discount', 'tax', 'shipping', 'total', 'couponSession'));
+        return view('shop.cart', compact('cart', 'subtotal', 'discount', 'tax', 'shipping', 'total', 'couponSession', 'shippingMethods', 'selectedShippingMethod'));
     }
 
     public function checkout()
@@ -473,12 +521,16 @@ class ShopController extends Controller
             }
         }
 
+        $shippingMethods = ShippingService::getActiveMethods();
+        $defaultMethod = ShippingService::getDefaultMethod();
+        $selectedShippingMethod = $defaultMethod ?? ($shippingMethods[0] ?? ['id' => 'standard_delivery', 'name' => 'Standard Ground Delivery', 'cost' => 0.00]);
+        $shipping = (float)($selectedShippingMethod['cost'] ?? 0.00);
+
         $taxableAmount = max(0, $subtotal - $discount);
-        $tax = round($taxableAmount * 0.13, 2);
-        $shipping = 0.00;
+        $tax = round(($taxableAmount + $shipping) * 0.13, 2);
         $total = round($taxableAmount + $tax + $shipping, 2);
 
-        return view('shop.checkout', compact('cart', 'subtotal', 'discount', 'tax', 'shipping', 'total', 'couponSession'));
+        return view('shop.checkout', compact('cart', 'subtotal', 'discount', 'tax', 'shipping', 'total', 'couponSession', 'shippingMethods', 'selectedShippingMethod'));
     }
 
     public function payment()
@@ -500,6 +552,7 @@ class ShopController extends Controller
             'postal_code' => 'required|string',
             'country' => 'required|string',
             'payment_method' => 'nullable|string',
+            'shipping_method' => 'nullable|string',
             'coupon_code' => 'nullable|string',
         ]);
 
@@ -551,8 +604,17 @@ class ShopController extends Controller
                 }
             }
 
+            // Determine Shipping Method & Cost
+            $shippingMethodId = $request->input('shipping_method');
+            $chosenMethod = ShippingService::findMethod($shippingMethodId);
+            if (!$chosenMethod) {
+                $chosenMethod = ShippingService::getDefaultMethod() ?? ['id' => 'standard_delivery', 'name' => 'Standard Ground Delivery', 'cost' => 0.00];
+            }
+            $shippingFee = (float)($chosenMethod['cost'] ?? 0.00);
+            $carrierName = $chosenMethod['name'] ?? 'Standard Ground Delivery';
+
             $taxableSubtotal = max(0, $subtotal - $discount);
-            $totals = TaxService::calculateOrderTotals($taxableSubtotal);
+            $totals = TaxService::calculateOrderTotals($taxableSubtotal, $shippingFee);
             $orderNumber = 'ORD-' . strtoupper(Str::random(10));
 
             $order = Order::create([
@@ -578,11 +640,14 @@ class ShopController extends Controller
                     'province' => $validated['province'],
                     'postal_code' => $validated['postal_code'],
                     'country' => $validated['country'],
+                    'shipping_method_id' => $chosenMethod['id'] ?? 'standard_delivery',
+                    'shipping_method_name' => $carrierName,
+                    'shipping_delivery_time' => $chosenMethod['delivery_time'] ?? '',
                 ],
                 'status' => 'packing',
                 'dispatch_deadline' => now()->addHours(48),
                 'tracking_number' => 'EP' . rand(100000000, 999999999) . 'CA',
-                'carrier' => 'easypost',
+                'carrier' => $carrierName,
                 'requires_signature' => $totals['requires_signature'],
             ]);
 

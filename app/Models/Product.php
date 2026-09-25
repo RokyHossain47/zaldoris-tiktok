@@ -113,12 +113,55 @@ class Product extends Model
         return $this->hasMany(OrderItem::class);
     }
 
+    public static function normalizeImageUrl(?string $img): string
+    {
+        if (empty($img)) {
+            return 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&auto=format&fit=crop&q=80';
+        }
+
+        $img = trim($img);
+
+        // If it starts with http:// or https://
+        if (str_starts_with($img, 'http://') || str_starts_with($img, 'https://')) {
+            $parsed = parse_url($img);
+            $path = $parsed['path'] ?? '';
+            // If it's a local uploaded image, dynamically resolve with asset() for current domain/port/subpath
+            if (str_contains($path, 'uploads/')) {
+                $subPath = substr($path, strpos($path, 'uploads/'));
+                return asset($subPath);
+            }
+            return $img;
+        }
+
+        // Relative path
+        return asset(ltrim($img, '/'));
+    }
+
+    public function getGalleryImagesAttribute(): array
+    {
+        $raw = $this->images;
+        if (is_string($raw)) {
+            $decoded = json_decode($raw, true);
+            $raw = is_array($decoded) ? $decoded : array_filter(array_map('trim', explode(',', $raw)));
+        }
+        $list = [];
+        if (is_array($raw)) {
+            foreach ($raw as $img) {
+                if (is_string($img) && trim($img) !== '') {
+                    $list[] = static::normalizeImageUrl(trim($img));
+                }
+            }
+        }
+        if (count($list) === 0) {
+            $list[] = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&auto=format&fit=crop&q=80';
+        }
+        return array_values($list);
+    }
+
     public function getPrimaryImageAttribute(): string
     {
-        if (!empty($this->images) && is_array($this->images) && count($this->images) > 0) {
-            return $this->images[0];
-        }
-        return 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=60';
+        $gallery = $this->gallery_images;
+        return $gallery[0] ?? 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=60';
     }
 
     public function getAvailableStockAttribute(): int
@@ -128,12 +171,16 @@ class Product extends Model
 
     public function getColorsListAttribute(): array
     {
-        if (!empty($this->colors) && is_array($this->colors)) {
+        $raw = $this->colors;
+        if (is_string($raw)) {
+            $raw = json_decode($raw, true);
+        }
+        if (!empty($raw) && is_array($raw)) {
             $list = [];
-            foreach ($this->colors as $c) {
+            foreach ($raw as $c) {
                 if (is_array($c) && !empty($c['name'])) {
                     $list[] = [
-                        'name' => $c['name'],
+                        'name' => trim($c['name']),
                         'code' => !empty($c['code']) ? $c['code'] : '#1E293B',
                     ];
                 } elseif (is_string($c) && trim($c) !== '') {
@@ -157,12 +204,16 @@ class Product extends Model
 
     public function getSizesListAttribute(): array
     {
-        if (!empty($this->sizes) && is_array($this->sizes)) {
+        $raw = $this->sizes;
+        if (is_string($raw)) {
+            $raw = json_decode($raw, true);
+        }
+        if (!empty($raw) && is_array($raw)) {
             $list = [];
-            foreach ($this->sizes as $s) {
+            foreach ($raw as $s) {
                 if (is_array($s) && !empty($s['name'])) {
                     $list[] = [
-                        'name' => $s['name'],
+                        'name' => trim($s['name']),
                         'price_modifier' => (float) ($s['price_modifier'] ?? 0),
                     ];
                 } elseif (is_string($s) && trim($s) !== '') {
@@ -185,17 +236,46 @@ class Product extends Model
 
     public function getSpecsListAttribute(): array
     {
-        $specs = is_array($this->specifications) ? $this->specifications : [];
-        if (!isset($specs['Dimensions']) && $this->dimensions) {
-            $specs['Dimensions'] = $this->dimensions;
+        $raw = $this->specifications;
+        if (is_string($raw)) {
+            $raw = json_decode($raw, true);
         }
-        if (!isset($specs['Sourcing Country']) && $this->sourcing_country) {
-            $specs['Sourcing Country'] = $this->sourcing_country;
+        $normalized = [];
+        if (is_array($raw)) {
+            foreach ($raw as $k => $v) {
+                if (is_array($v)) {
+                    $specKey = trim($v['key'] ?? $v['name'] ?? '');
+                    $specVal = trim($v['val'] ?? $v['value'] ?? '');
+                    if ($specKey !== '' && $specVal !== '') {
+                        $normalized[$specKey] = $specVal;
+                    } elseif (!empty($v)) {
+                        $filtered = array_filter($v);
+                        if (!empty($filtered)) {
+                            $normalized[$k] = implode(', ', $filtered);
+                        }
+                    }
+                } elseif (is_string($v) || is_numeric($v)) {
+                    if (is_string($k) && !is_numeric($k)) {
+                        if (trim((string) $v) !== '') {
+                            $normalized[$k] = (string) $v;
+                        }
+                    } else {
+                        if (str_contains((string) $v, ':')) {
+                            [$sk, $sv] = explode(':', (string) $v, 2);
+                            if (trim($sk) !== '' && trim($sv) !== '') {
+                                $normalized[trim($sk)] = trim($sv);
+                            }
+                        } else {
+                            if (trim((string) $v) !== '') {
+                                $normalized['Specification ' . ($k + 1)] = (string) $v;
+                            }
+                        }
+                    }
+                }
+            }
         }
-        if (!isset($specs['Brand']) && $this->brand) {
-            $specs['Brand'] = $this->brand;
-        }
-        return $specs;
+
+        return $normalized;
     }
 
     public function getAverageRatingAttribute(): float
