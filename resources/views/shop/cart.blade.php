@@ -79,7 +79,7 @@
         <div class="cart-items-column" id="cartItemsContainer">
 
             @forelse($cart as $id => $item)
-                <div class="cart-item-card" data-product-id="{{ $id }}">
+                <div class="cart-item-card" data-product-id="{{ $id }}" data-unit-price="{{ (float)$item['price'] }}" data-quantity="{{ (int)$item['quantity'] }}">
                     <div class="cart-item-top">
                         <div class="cart-item-left">
                             <img src="{{ $item['image'] ?? 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200' }}" alt="{{ $item['title'] }}" class="cart-item-thumb">
@@ -101,8 +101,8 @@
                             </div>
                         </div>
                         <div class="cart-item-right">
-                            <button type="button" class="btn-delete-cart-item" title="Remove Item" onclick="removeCartCard(this, '{{ $id }}')">
-                                <i class="bi bi-trash-fill"></i>
+                            <button type="button" class="btn-delete-cart-item" title="Remove Item" data-id="{{ $id }}" onclick="removeCartCard(this, '{{ $id }}')">
+                                <i class="bi bi-trash-fill" style="pointer-events: none;"></i>
                             </button>
                             <div style="text-align: right;">
                                 <span class="cart-item-price" id="lineTotal_{{ $id }}">{{ setting('currency_symbol', '$') }}{{ number_format($item['price'] * $item['quantity'], 2) }}</span>
@@ -280,8 +280,14 @@
 <script>
     const currencySymbol = '{{ setting("currency_symbol", "$") }}';
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    const cartUpdateUrl = '{{ route("shop.cart.update") }}';
+    const cartRemoveBaseUrl = '{{ url("/cart/remove") }}';
+    const couponApplyUrl = '{{ route("shop.coupon.apply") }}';
+    const couponRemoveUrl = '{{ route("shop.coupon.remove") }}';
+    
     let currentSubtotal = {{ (float)$subtotal }};
     let currentDiscount = {{ (float)$discount }};
+    const qtyDebounceTimers = {};
 
     function getSelectedShippingCost() {
         const checked = document.querySelector('input[name="shipMethod"]:checked');
@@ -300,13 +306,13 @@
         const payTotalEl = document.getElementById('summaryPayTotal');
         const shippingEl = document.getElementById('summaryShipping');
 
-        if (subtotalEl) subtotalEl.textContent = currencySymbol + currentSubtotal.toFixed(2);
-        if (taxEl) taxEl.textContent = currencySymbol + tax.toFixed(2);
-        if (totalEl) totalEl.textContent = currencySymbol + total.toFixed(2);
-        if (payTotalEl) payTotalEl.textContent = currencySymbol + total.toFixed(2);
+        if (subtotalEl) subtotalEl.textContent = currencySymbol + currentSubtotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        if (taxEl) taxEl.textContent = currencySymbol + tax.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        if (totalEl) totalEl.textContent = currencySymbol + total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        if (payTotalEl) payTotalEl.textContent = currencySymbol + total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         if (shippingEl) {
             if (shippingCost > 0) {
-                shippingEl.textContent = currencySymbol + shippingCost.toFixed(2);
+                shippingEl.textContent = currencySymbol + shippingCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 shippingEl.className = '';
             } else {
                 shippingEl.textContent = 'Free';
@@ -315,12 +321,35 @@
         }
     }
 
-    // Quantity Stepper Handler
+    function recalculateClientCartTotals() {
+        let subtotal = 0;
+        let totalQty = 0;
+        document.querySelectorAll('.cart-item-card[data-product-id]').forEach(c => {
+            const q = parseInt(c.getAttribute('data-quantity')) || 0;
+            const p = parseFloat(c.getAttribute('data-unit-price')) || 0;
+            subtotal += (q * p);
+            totalQty += q;
+        });
+        currentSubtotal = subtotal;
+
+        const badge = document.getElementById('globalCartBadge');
+        const headerCount = document.getElementById('cartHeaderCount');
+        if (badge) {
+            badge.textContent = totalQty;
+            badge.style.transform = 'scale(1.2)';
+            setTimeout(() => badge.style.transform = 'scale(1)', 150);
+        }
+        if (headerCount) headerCount.textContent = totalQty;
+
+        recalculateTotals();
+    }
+
+    // Quantity Stepper Handler - Instant Realtime (0ms)
     function updateItemQty(btn, change, productId) {
         const stepper = btn.parentElement;
-        const numSpan = stepper.querySelector('.step-num');
-        const card = btn.closest('.cart-item-card');
-        if (!numSpan || !productId) return;
+        const numSpan = stepper ? stepper.querySelector('.step-num') : null;
+        const card = btn.closest('.cart-item-card') || document.querySelector(`.cart-item-card[data-product-id="${productId}"]`);
+        if (!numSpan || !productId || !card) return;
 
         let current = parseInt(numSpan.textContent) || 1;
         current += change;
@@ -330,10 +359,43 @@
             return;
         }
 
+        // 1. Instant DOM Update (0ms delay)
         numSpan.textContent = current;
-        btn.disabled = true;
+        card.setAttribute('data-quantity', current);
 
-        fetch('/cart/update', {
+        const unitPrice = parseFloat(card.getAttribute('data-unit-price')) || 0;
+        const lineTotal = unitPrice * current;
+
+        const lineTotalEl = document.getElementById('lineTotal_' + productId) || card.querySelector('.cart-item-price');
+        if (lineTotalEl) {
+            lineTotalEl.textContent = currencySymbol + lineTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        const unitPriceEl = document.getElementById('unitPrice_' + productId);
+        if (unitPriceEl) {
+            if (current > 1) {
+                unitPriceEl.textContent = `(${currencySymbol}${unitPrice.toFixed(2)} each)`;
+                unitPriceEl.style.display = 'block';
+            } else {
+                unitPriceEl.style.display = 'none';
+            }
+        }
+
+        // 2. Instant Totals & Subtotal recalculation
+        recalculateClientCartTotals();
+
+        // 3. Debounced Server Sync
+        if (qtyDebounceTimers[productId]) {
+            clearTimeout(qtyDebounceTimers[productId]);
+        }
+
+        qtyDebounceTimers[productId] = setTimeout(() => {
+            syncCartQtyWithServer(productId, current, numSpan, card);
+        }, 250);
+    }
+
+    function syncCartQtyWithServer(productId, quantity, numSpan, card) {
+        fetch(cartUpdateUrl, {
             method: 'POST',
             credentials: 'same-origin',
             headers: {
@@ -342,55 +404,70 @@
                 'X-Requested-With': 'XMLHttpRequest',
                 'Accept': 'application/json'
             },
-            body: JSON.stringify({ product_id: productId, quantity: current })
+            body: JSON.stringify({ product_id: productId, id: productId, quantity: quantity })
         })
         .then(res => {
             if (!res.ok) throw new Error('HTTP ' + res.status);
             return res.json();
         })
         .then(data => {
-            btn.disabled = false;
             if (data && data.success) {
+                if (data.discount_raw !== undefined) {
+                    currentDiscount = parseFloat(data.discount_raw) || 0;
+                }
                 updateSummaryDisplay(data);
-                if (data.item_quantity !== undefined) {
-                    numSpan.textContent = data.item_quantity;
-                }
-                const lineTotalEl = document.getElementById('lineTotal_' + productId) || (card ? card.querySelector('.cart-item-price') : null);
-                if (lineTotalEl && data.item_line_total) {
-                    lineTotalEl.textContent = currencySymbol + data.item_line_total;
-                }
-                const unitPriceEl = document.getElementById('unitPrice_' + productId);
-                if (unitPriceEl && data.item_unit_price) {
-                    if (data.item_quantity > 1) {
-                        unitPriceEl.textContent = `(${currencySymbol}${data.item_unit_price} each)`;
-                        unitPriceEl.style.display = 'block';
-                    } else {
-                        unitPriceEl.style.display = 'none';
-                    }
-                }
             }
         })
         .catch(err => {
-            btn.disabled = false;
-            console.error('Cart update error:', err);
+            console.error('Cart server sync error:', err);
         });
     }
 
-    // Remove Item Handler
+    // Remove Item Handler - Instant Realtime (0ms)
     function removeCartCard(btn, productId) {
-        const card = btn ? btn.closest('.cart-item-card') : document.querySelector(`.cart-item-card[data-product-id="${productId}"]`);
+        let card = null;
+        if (btn && typeof btn.closest === 'function') {
+            card = btn.closest('.cart-item-card');
+        }
+        if (!card && productId) {
+            card = document.querySelector(`.cart-item-card[data-product-id="${productId}"]`);
+        }
+        if (!productId && card) {
+            productId = card.getAttribute('data-product-id');
+        }
         if (!productId) return;
 
-        if (btn) btn.disabled = true;
-
-        if (card) {
-            card.style.opacity = '0.3';
-            card.style.transform = 'scale(0.95)';
-            card.style.transition = 'all 0.25s ease';
-            card.style.pointerEvents = 'none';
+        if (qtyDebounceTimers[productId]) {
+            clearTimeout(qtyDebounceTimers[productId]);
         }
 
-        fetch(`/cart/remove/${encodeURIComponent(productId)}`, {
+        // 1. Instant Removal from UI
+        if (card) {
+            card.remove();
+        }
+
+        recalculateClientCartTotals();
+
+        const remainingCards = document.querySelectorAll('.cart-item-card[data-product-id]');
+        if (remainingCards.length === 0) {
+            const container = document.getElementById('cartItemsContainer');
+            if (container) {
+                container.innerHTML = `
+                    <div style="background: var(--bg-card, #1c1d2e); border: 1px solid var(--border-color, rgba(255,255,255,0.07)); border-radius: 14px; padding: 40px; text-align: center; color: var(--text-muted);">
+                        <i class="bi bi-cart-x" style="font-size: 48px; color: var(--pink-accent, #FE2C55); display: block; margin-bottom: 12px;"></i>
+                        <h3 style="color: #fff; font-size: 18px; margin-bottom: 8px;">Your Shopping Cart is Empty</h3>
+                        <p style="font-size: 14px; margin-bottom: 20px;">Discover trending items, live shopping auctions, and exclusive creator drops.</p>
+                        <a href="{{ route('shop.index') }}" class="btn-shop-now-cyan" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px; padding: 10px 24px; border-radius: 8px; font-weight: 700; background: #00F0C8; color: #000;">
+                            <i class="bi bi-bag-plus-fill"></i> Explore Live Shopping
+                        </a>
+                    </div>
+                `;
+            }
+        }
+
+        // 2. Server Persistence Sync
+        const url = `${cartRemoveBaseUrl}/${encodeURIComponent(productId)}`;
+        fetch(url, {
             method: 'POST',
             credentials: 'same-origin',
             headers: {
@@ -398,41 +475,20 @@
                 'X-CSRF-TOKEN': csrfToken,
                 'X-Requested-With': 'XMLHttpRequest',
                 'Accept': 'application/json'
-            }
+            },
+            body: JSON.stringify({ id: productId, product_id: productId })
         })
         .then(res => {
             if (!res.ok) throw new Error('HTTP ' + res.status);
             return res.json();
         })
         .then(data => {
-            if (card) card.remove();
             if (data && data.success) {
                 updateSummaryDisplay(data);
-                if (data.cart_count === 0) {
-                    const container = document.getElementById('cartItemsContainer');
-                    if (container) {
-                        container.innerHTML = `
-                            <div style="background: var(--bg-card, #1c1d2e); border: 1px solid var(--border-color, rgba(255,255,255,0.07)); border-radius: 14px; padding: 40px; text-align: center; color: var(--text-muted);">
-                                <i class="bi bi-cart-x" style="font-size: 48px; color: var(--pink-accent, #FE2C55); display: block; margin-bottom: 12px;"></i>
-                                <h3 style="color: #fff; font-size: 18px; margin-bottom: 8px;">Your Shopping Cart is Empty</h3>
-                                <p style="font-size: 14px; margin-bottom: 20px;">Discover trending items, live shopping auctions, and exclusive creator drops.</p>
-                                <a href="/shop" class="btn-shop-now-cyan" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px; padding: 10px 24px; border-radius: 8px; font-weight: 700; background: #00F0C8; color: #000;">
-                                    <i class="bi bi-bag-plus-fill"></i> Explore Live Shopping
-                                </a>
-                            </div>
-                        `;
-                    }
-                }
             }
         })
         .catch(err => {
             console.error('Cart remove error:', err);
-            if (card) {
-                card.style.opacity = '1';
-                card.style.transform = 'none';
-                card.style.pointerEvents = 'auto';
-            }
-            if (btn) btn.disabled = false;
         });
     }
 
@@ -444,8 +500,6 @@
         }
         if (data.subtotal_raw !== undefined) {
             currentSubtotal = parseFloat(data.subtotal_raw) || currentSubtotal;
-        } else if (data.subtotal !== undefined) {
-            currentSubtotal = parseFloat(data.subtotal.toString().replace(/,/g, '')) || currentSubtotal;
         }
 
         const discountRow = document.getElementById('summaryDiscountRow');
@@ -476,8 +530,6 @@
 
         if (badge && data.cart_count !== undefined) {
             badge.textContent = data.cart_count;
-            badge.style.transform = 'scale(1.3)';
-            setTimeout(() => badge.style.transform = 'scale(1)', 200);
         }
 
         recalculateTotals();
@@ -509,7 +561,7 @@
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
 
-        fetch('/cart/coupon/apply', {
+        fetch(couponApplyUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -540,7 +592,7 @@
 
     // Promo Code Remove Handler
     function handleRemoveCoupon() {
-        fetch('/cart/coupon/remove', {
+        fetch(couponRemoveUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

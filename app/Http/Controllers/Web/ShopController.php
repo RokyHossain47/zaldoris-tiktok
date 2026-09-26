@@ -302,18 +302,22 @@ class ShopController extends Controller
         ]);
     }
 
-    public function removeFromCart($id)
+    public function removeFromCart(Request $request, $id = null)
     {
-        $idStr = (string)$id;
+        $idStr = (string)($id ?: $request->input('id') ?: $request->input('product_id') ?: $request->input('cart_key'));
         $cart = session()->get('cart', []);
         
-        if (isset($cart[$idStr])) {
-            unset($cart[$idStr]);
-        } else {
+        if ($idStr !== '') {
+            if (isset($cart[$idStr])) {
+                unset($cart[$idStr]);
+            }
             foreach ($cart as $k => $item) {
-                if ((string)($item['id'] ?? '') === $idStr || (string)($item['cart_key'] ?? '') === $idStr || (string)$k === $idStr) {
+                if (
+                    (string)$k === $idStr ||
+                    (string)($item['id'] ?? '') === $idStr ||
+                    (string)($item['cart_key'] ?? '') === $idStr
+                ) {
                     unset($cart[$k]);
-                    break;
                 }
             }
         }
@@ -348,19 +352,24 @@ class ShopController extends Controller
         $shipping = 0.00;
         $total = round($taxableAmount + $tax + $shipping, 2);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Item removed from cart.',
-            'cart_count' => $totalItems,
-            'subtotal' => number_format($subtotal, 2),
-            'subtotal_raw' => $subtotal,
-            'discount' => number_format($discount, 2),
-            'discount_raw' => $discount,
-            'tax' => number_format($tax, 2),
-            'shipping' => number_format($shipping, 2),
-            'total' => number_format($total, 2),
-            'coupon' => $couponSession,
-        ]);
+        if ($request->wantsJson() || $request->ajax() || $request->isJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Item removed from cart.',
+                'cart_count' => $totalItems,
+                'subtotal' => number_format($subtotal, 2),
+                'subtotal_raw' => $subtotal,
+                'discount' => number_format($discount, 2),
+                'discount_raw' => $discount,
+                'tax' => number_format($tax, 2),
+                'shipping' => number_format($shipping, 2),
+                'total' => number_format($total, 2),
+                'coupon' => $couponSession,
+                'cart' => $cart
+            ]);
+        }
+
+        return redirect()->route('shop.cart')->with('success', 'Item removed from cart.');
     }
 
     /**
@@ -526,11 +535,23 @@ class ShopController extends Controller
         $selectedShippingMethod = $defaultMethod ?? ($shippingMethods[0] ?? ['id' => 'standard_delivery', 'name' => 'Standard Ground Delivery', 'cost' => 0.00]);
         $shipping = (float)($selectedShippingMethod['cost'] ?? 0.00);
 
-        $taxableAmount = max(0, $subtotal - $discount);
-        $tax = round(($taxableAmount + $shipping) * 0.13, 2);
-        $total = round($taxableAmount + $tax + $shipping, 2);
+        $user = auth()->user();
+        $savedAddresses = $user ? $user->addresses()->orderBy('is_default', 'desc')->get() : collect();
+        $defaultAddress = $savedAddresses->firstWhere('is_default', true) ?? $savedAddresses->first();
 
-        return view('shop.checkout', compact('cart', 'subtotal', 'discount', 'tax', 'shipping', 'total', 'couponSession', 'shippingMethods', 'selectedShippingMethod'));
+        return view('shop.checkout', compact(
+            'cart', 
+            'subtotal', 
+            'discount', 
+            'tax', 
+            'shipping', 
+            'total', 
+            'couponSession', 
+            'shippingMethods', 
+            'selectedShippingMethod',
+            'savedAddresses',
+            'defaultAddress'
+        ));
     }
 
     public function payment()
@@ -546,6 +567,8 @@ class ShopController extends Controller
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
+            'recipient_name' => 'nullable|string',
+            'phone' => 'nullable|string',
             'street' => 'required|string',
             'city' => 'required|string',
             'province' => 'required|string',
@@ -654,6 +677,29 @@ class ShopController extends Controller
             foreach ($itemsToCreate as $itemData) {
                 $itemData['order_id'] = $order->id;
                 OrderItem::create($itemData);
+            }
+
+            // Save address to user address book if authenticated
+            if ($user && !empty($validated['street'])) {
+                $exists = UserAddress::where('user_id', $user->id)
+                    ->where('address_line1', $validated['street'])
+                    ->where('postal_code', $validated['postal_code'])
+                    ->exists();
+
+                if (!$exists) {
+                    $isDefault = !$user->addresses()->exists();
+                    UserAddress::create([
+                        'user_id' => $user->id,
+                        'recipient_name' => $validated['recipient_name'] ?: $user->name,
+                        'phone' => $validated['phone'] ?: ($user->phone ?? ''),
+                        'address_line1' => $validated['street'],
+                        'city' => $validated['city'],
+                        'region' => $validated['province'],
+                        'postal_code' => $validated['postal_code'],
+                        'country' => $validated['country'],
+                        'is_default' => $isDefault,
+                    ]);
+                }
             }
 
             // Track coupon usage & increment count

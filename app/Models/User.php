@@ -144,6 +144,16 @@ class User extends Authenticatable
         return in_array($this->role, ['seller', 'admin']);
     }
 
+    public function addresses(): HasMany
+    {
+        return $this->hasMany(UserAddress::class);
+    }
+
+    public function defaultAddress(): HasOne
+    {
+        return $this->hasOne(UserAddress::class)->where('is_default', true);
+    }
+
     public function isCreator(): bool
     {
         return in_array($this->role, ['creator', 'admin']);

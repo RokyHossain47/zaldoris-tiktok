@@ -57,7 +57,7 @@ Route::post('/product/{id}/review', [ShopController::class, 'storeReview'])->nam
 Route::get('/cart', [ShopController::class, 'cart'])->name('shop.cart');
 Route::post('/cart/add', [ShopController::class, 'addToCart'])->name('shop.cart.add');
 Route::post('/cart/update', [ShopController::class, 'updateCart'])->name('shop.cart.update');
-Route::match(['delete', 'post'], '/cart/remove/{id}', [ShopController::class, 'removeFromCart'])->name('shop.cart.remove');
+Route::match(['get', 'post', 'delete'], '/cart/remove/{id?}', [ShopController::class, 'removeFromCart'])->name('shop.cart.remove');
 Route::post('/cart/coupon/apply', [ShopController::class, 'applyCoupon'])->name('shop.coupon.apply');
 Route::post('/cart/coupon/remove', [ShopController::class, 'removeCoupon'])->name('shop.coupon.remove');
 Route::get('/checkout', [ShopController::class, 'checkout'])->name('shop.checkout');
@@ -103,10 +103,25 @@ Route::get('/subscribe.html', fn() => redirect('/subscribe', 301));
 Route::get('/subscriber.html', fn() => redirect('/subscribe', 301));
 
 
-// User Dashboards (Auth-Gated)
+// User Dashboards & Hub (Auth-Gated)
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard/seller', [DashboardController::class, 'seller'])->name('dashboard.seller');
     Route::get('/dashboard/creator', [DashboardController::class, 'creator'])->name('dashboard.creator');
+    Route::get('/profile', [DashboardController::class, 'creator'])->name('user.profile');
+    Route::get('/account', [DashboardController::class, 'creator'])->name('user.account');
+
+    // Profile updates & Password change
+    Route::post('/profile/update', [DashboardController::class, 'updateProfile'])->name('user.profile.update');
+    Route::post('/profile/password', [DashboardController::class, 'updatePassword'])->name('user.password.update');
+
+    // Shipping Address Management
+    Route::post('/address/store', [DashboardController::class, 'storeAddress'])->name('user.address.store');
+    Route::put('/address/{id}', [DashboardController::class, 'updateAddress'])->name('user.address.update');
+    Route::delete('/address/{id}', [DashboardController::class, 'deleteAddress'])->name('user.address.delete');
+    Route::post('/address/{id}/set-default', [DashboardController::class, 'setDefaultAddress'])->name('user.address.set_default');
+
+    // Follow & Unfollow
+    Route::post('/follow/toggle/{userId}', [DashboardController::class, 'toggleFollow'])->name('user.follow.toggle');
 });
 
 // Admin Authentication (Public Login)
